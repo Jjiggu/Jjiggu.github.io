@@ -449,6 +449,24 @@ window.DATA = {
   const P = Object.fromEntries(window.DATA.projects.map((p) => [p.id, p]));
   const CP = 'https://github.com/Jjiggu/CouponToyProject';
 
+  // 사내 서비스라 레포 대신 실제 사용 화면 (이름 등은 원본에서 가림)
+  P.unitblack.evidence = [
+    {
+      type: 'image', case: 0, label: '실제 화면',
+      title: '근로계약서 자동화 사용 화면',
+      desc: '계약마다 Slack 스레드 하나로 발송 → 근로자 서명 → 회사 서명 요청 → 체결 완료를 추적합니다. 오른쪽은 미서명자에게 가는 리마인드 DM입니다.',
+      img: 'assets/unitblack/contract-slack-screens.png', w: 2396, h: 985,
+      alt: '블랙이가 보낸 Slack 스레드: 근로계약서 발송, 근로자 서명 완료, 회사 서명 요청, 체결 완료 메시지와 서명 기한을 알리는 리마인드 DM. 대상자 정보는 가려져 있음',
+    },
+    {
+      type: 'image', case: 1, label: '실제 화면',
+      title: '사내 챗봇 ‘블랙이’ 런칭 공지와 사용 예시',
+      desc: '질문하면 노션 규정을 근거로 답하고, 출처 문서와 최종 수정일을 함께 보여 줍니다. 틀렸거나 아쉬운 답변은 버튼으로 피드백을 받아 매뉴얼을 보강합니다.',
+      img: 'assets/unitblack/chatbot-notice-usage.png', w: 2400, h: 1008,
+      alt: '왼쪽은 HR 챗봇 블랙이 런칭 공지, 오른쪽은 경조사 신청 절차를 물은 질문에 신청 과정, 준비 서류, 경조휴가 일수와 출처 문서 세 개, 피드백 버튼을 답한 Slack 화면',
+    },
+  ];
+
   P.coupon.repo = CP;
   P.coupon.evidence = [
     {

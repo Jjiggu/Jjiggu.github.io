@@ -136,7 +136,7 @@
       const host = lead ? sec.querySelector('.project__lead') : sec.querySelector(`.case-wrap[data-case="${ev.case}"]`);
       host.append(h('section', { className: `ev ev--${ev.type} split${lead ? ' ev--lead' : ''}` },
         h('header', { className: 'ev__head' },
-          h('p', { className: 'eyebrow', textContent: lead ? '전체 그림' : '근거' }),
+          h('p', { className: 'eyebrow', textContent: ev.label || (lead ? '전체 그림' : '근거') }),
           h('h4', { className: 'ev__title', textContent: ev.title }),
           h('p', { className: 'ev__desc', textContent: ev.desc || '' }),
           ev.src ? h('a', { className: 'ev__src', href: ev.src.url, target: '_blank', rel: 'noopener', textContent: '출처: ' + ev.src.label }) : null),
