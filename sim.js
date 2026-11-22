@@ -29,8 +29,16 @@
   /* ───────── 모델 (화면과 무관, node 에서도 실행됨) ───────── */
   // 같은 씨앗이면 같은 실행이 나오는 난수 (방문자의 요청을 미리 골라 두려고 씀)
   const seeded = (a) => () => { a |= 0; a = (a + 0x6d2b79f5) | 0; let t = Math.imul(a ^ (a >>> 15), 1 | a); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
-  // Streams 실행에서 강제 종료 순간 Consumer 가 들고 있을(PEL) 요청 하나를 방문자의 요청으로 고름
-  function pickMe(seed) { const s = createSim('stream', seeded(seed)); s.advance(STRATS.stream.killAt - 0.01); const pel = s.q.pel; return pel.length ? pel[Math.floor(pel.length / 2)].id : 1; }
+  // 방문자의 요청 하나를 고름. 같은 씨앗으로 미리 돌려 보고 방식마다 보여 줄 장면이 생기는 요청을 고름
+  // - Streams: 강제 종료 순간 Consumer 가 들고 있던(PEL) 요청 → 다시 처리돼 DB 에 저장됨
+  // - Pub/Sub: 202 를 받고 메모리 큐에 있다가 사라지는 요청
+  // - 나머지: 재고 안쪽 순번으로 일찍 도착한 요청 (먼저 와도 받는지 보려고)
+  function pickMe(key, seed) {
+    const S = STRATS[key];
+    if (key === 'stream') { const s = createSim(key, seeded(seed)); s.advance(S.killAt - 0.01); const pel = s.q.pel; return pel.length ? pel[Math.floor(pel.length / 2)].id : 1; }
+    if (key === 'pubsub') { const s = createSim(key, seeded(seed)); s.advance(Infinity); const lost = s.reqs.filter((r) => r.lost); return lost.length ? lost[lost.length >> 1].id : 1; }
+    return 1 + Math.floor(seeded(seed ^ 0x5bd1e995)() * Math.max(1, Math.floor(S.stock * 0.6)));
+  }
 
   function createSim(key, rand = Math.random, meId = 0) {
     const S = STRATS[key], isAsync = S.group === 1;
@@ -185,9 +193,13 @@
       }
     }
     { // 방문자의 요청: 강제 종료 때 PEL 에 있었고, 끝에는 DB 에 저장됨
-      const id = pickMe(7), s = createSim('stream', seeded(7), id);
+      const id = pickMe('stream', 7), s = createSim('stream', seeded(7), id);
       s.advance(Infinity);
       assert.ok(s.me && s.me.id === id && s.st.meInPel && s.me.stored && !s.me.lost, 'me: PEL 을 거쳐 저장');
+      const id2 = pickMe('pubsub', 7), s2 = createSim('pubsub', seeded(7), id2);
+      s2.advance(Infinity);
+      assert.ok(s2.me && s2.me.res === 'ok' && s2.me.lost, 'me: Pub/Sub 에서 202 받고 사라짐');
+      for (const k of Object.keys(STRATS)) { const m = createSim(k, seeded(3), pickMe(k, 3)); m.advance(Infinity); assert.ok(m.me && m.me.res, k + ': 내 요청이 결과를 받음'); }
     }
     for (const k in out) console.log(k.padEnd(12), out[k].slice(0, 5).join('  '));
     console.log('OK');
@@ -232,11 +244,11 @@
     el.trace.hidden = true; cardSig = '';
   }
 
-  function run(k, withMe) {
+  function run(k) {
     clearTimeout(timer);
     key = k;
-    if (withMe && k === 'stream') { const seed = (Math.random() * 1e9) | 0; sim = createSim(k, seeded(seed), pickMe(seed)); }
-    else sim = createSim(k);
+    const seed = (Math.random() * 1e9) | 0;
+    sim = createSim(k, seeded(seed), pickMe(k, seed)); // 실행마다 방문자의 요청 하나를 노란 고리로 표시
     dots = sim.reqs.map((r) => ({ r, lane: Math.random(), jit: Math.random(), x: 0, y: 0, a: 0, born: false }));
     t0 = last = performance.now();
     running = true;
@@ -250,7 +262,8 @@
   function verdict() {
     const { st, S } = sim;
     let text, tone = 'bad';
-    if (key === 'pubsub') text = `강제 종료 순간 메모리 큐의 ${fmt(st.lost)}건이 사라졌습니다. 접수 응답은 ${fmt(st.success)}건인데 DB 에는 ${fmt(st.stored)}건이 저장됐습니다.`;
+    const me = sim.me;
+    if (key === 'pubsub') { text = `강제 종료 순간 메모리 큐의 ${fmt(st.lost)}건이 사라졌습니다. 접수 응답은 ${fmt(st.success)}건인데 DB 에는 ${fmt(st.stored)}건이 저장됐습니다.`; if (me?.lost) text = `내 요청은 접수 응답(202)을 받았지만 구독자 메모리 큐에 있다가 사라져 DB 에 없습니다. ` + text; }
     else if (key === 'stream' && sim.me) { text = `방금 누른 요청은 ${fmt(sim.me.rank + 1)}번째로 접수됐습니다. 처리 도중 Consumer 가 강제 종료됐지만 PEL 에 남아 다시 처리됐고 DB 에 저장됐습니다. 접수 ${fmt(st.success)}건 = DB ${fmt(st.stored)}건, 유실 0건.`; tone = 'good'; }
     else if (key === 'stream') { text = `강제 종료 뒤 PEL ${fmt(st.redelivered)}건부터 다시 처리했습니다. 접수 ${fmt(st.success)}건 = DB ${fmt(st.stored)}건, 유실 0건.`; tone = 'good'; }
     else if (st.recorded > S.stock) text = `Redis Set 이 재고를 ${st.recorded - S.stock}건 넘겨 초과 예약이 생겼습니다. 레포 실측에서는 뒤의 DB 조건부 UPDATE 가 막아 최종 지급은 ${S.stock}장이었습니다.`;
@@ -258,6 +271,7 @@
     else if (st.recorded < S.stock) text = `재고가 남았는데 ${st.success}건만 지급됐습니다. 나머지 ${S.n - st.success}건은 충돌로 실패했습니다.`;
     else if (key === 'pessimistic') { text = `수량은 맞지만 한 건씩만 지나가고 먼저 온 ${S.stock}명 중 ${sim.reqs.filter((r) => r.res === 'ok' && r.id <= S.stock).length}명만 받았습니다. 도착 순서가 보장되지 않습니다.`; tone = 'slow'; }
     else { text = `초과·중복 지급은 0건이고 Redis 가 먼저 처리한 ${S.stock}명에게만 지급됐습니다.`; tone = 'good'; }
+    if (me && !sim.isAsync) text = `${fmt(me.id)}번째로 도착한 내 요청은 ${me.res === 'ok' ? '성공 응답을 받았습니다' : me.res === 'soldout' ? '매진 응답을 받았습니다' : '충돌로 실패했습니다'}. ` + text;
     el.verdict.dataset.tone = tone;
     el.verdict.setAttribute('aria-label', text);
     if (motion && window.ScrambleTextPlugin) gsap.to(el.verdict, { duration: 0.9, scrambleText: { text, chars: '01', speed: 0.6 } });
@@ -469,5 +483,5 @@
   head();
   el.verdict.textContent = '방식을 누르면 실행됩니다.';
   draw(0);
-  window.Sim = { start(opts) { auto = true; if (opts?.me) run('stream', true); else run(key); } };
+  window.Sim = { start() { auto = true; run(key); } };
 })();

@@ -7,23 +7,12 @@ window.DATA = {
   line: '측정으로 병목을 찾아 결과를 숫자로 남깁니다.',
   intro:
     '(주)유닛블랙 HR팀 AX 스쿼드에서 RAG 기반 사내 챗봇과 근로계약서 발송 자동화를 만들었습니다. 개인·팀 프로젝트에서는 락 경합, 캐시, 쿼리 병목을 측정으로 찾아 줄였고, 교수 리뷰 앱 Gasip은 MAU 1,560명 규모로 1년간 운영했습니다.',
-  contact: [
-    { label: '이메일', text: 'zh1229@naver.com', href: 'mailto:zh1229@naver.com' },
-    { label: 'GitHub', text: 'github.com/Jjiggu', href: 'https://github.com/Jjiggu' },
-    { label: 'LinkedIn', text: '', href: '' }, // ponytail: 주소를 받으면 채움. 비어 있으면 화면에 안 나옴
+  contact: [ // icon: main.js 의 ICONS
+    { label: 'GitHub', icon: 'github', href: 'https://github.com/Jjiggu' },
+    { label: 'LinkedIn', icon: 'linkedin', href: '' }, // ponytail: 주소를 받으면 채움. 비어 있으면 화면에 안 나옴
+    { label: '이메일', icon: 'mail', href: 'mailto:zh1229@naver.com', text: 'zh1229@naver.com' },
   ],
 
-  // 흐르는 띠(장식). 읽을 수 있는 목록은 stackGroups
-  stack: ['Java 17', 'Spring Boot', 'JPA', 'Querydsl', 'MySQL', 'Redis Streams', 'Lua Script', 'Redis Pub/Sub', 'Caffeine', 'AWS', 'Docker', 'GitHub Actions', 'k6', 'Prometheus', 'RAG'],
-  // [이름, 쓴 곳(project id 공백 구분)]
-  stackGroups: [
-    { h: '언어 · 프레임워크', items: [['Java 17', 'coupon nowait gasip'], ['Spring Boot 3', 'coupon nowait gasip'], ['Spring Data JPA', 'coupon nowait gasip'], ['Querydsl', 'nowait gasip'], ['JUnit 5', 'coupon']] },
-    { h: '데이터', items: [['MySQL', 'coupon nowait gasip'], ['Redis', 'coupon nowait gasip'], ['Redis Streams', 'coupon'], ['Lua Script', 'coupon nowait'], ['Redis Pub/Sub', 'nowait'], ['Redis Sorted Set', 'nowait'], ['Caffeine', 'nowait']] },
-    { h: '인프라 · 배포', items: [['AWS EC2', 'coupon nowait gasip'], ['AWS RDS', 'nowait gasip'], ['S3 · Lambda', 'nowait'], ['CodeDeploy', 'gasip'], ['Docker', 'nowait'], ['Docker Compose', 'coupon'], ['GitHub Actions', 'nowait gasip']] },
-    { h: '측정 · 모니터링', items: [['k6', 'coupon gasip'], ['nGrinder', 'gasip'], ['Prometheus', 'nowait'], ['Grafana', 'nowait']] },
-    { h: 'AI · 업무 자동화', items: [['RAG', 'unitblack'], ['Semantic Chunking', 'unitblack'], ['Kiwi', 'unitblack'], ['Notion API', 'unitblack'], ['Slack', 'unitblack'], ['Airtable', 'unitblack']] },
-  ],
-  short: { unitblack: '유닛블랙', coupon: '쿠폰', nowait: 'NoWait', gasip: 'Gasip' },
 
   projects: [
     {
@@ -137,7 +126,7 @@ window.DATA = {
       facts: [['형태', '개인 프로젝트']],
       stack: ['Java 17', 'Spring Boot 3.4', 'Spring Data JPA', 'MySQL', 'Redis', 'AWS EC2', 'Docker Compose', 'JUnit 5', 'k6'],
       headline: { a: '140', b: '4,800', unit: 'TPS', label: '쿠폰 지급 최대 처리량', note: '140 → 1,800 → 4,800 TPS, 초과·중복 지급 0건' },
-      demo: true,
+      demo: 'lead', // 사례보다 먼저: 움직이는 시뮬레이션이 전체 그림 역할
       cases: [
         {
           title: '쿠폰 재고 정합성을 지키기 위한 동시성 제어 방법 6가지 비교 후 Redis Lua script 선택',
@@ -459,39 +448,9 @@ window.DATA = {
 (() => {
   const P = Object.fromEntries(window.DATA.projects.map((p) => [p.id, p]));
   const CP = 'https://github.com/Jjiggu/CouponToyProject';
-  const flow = (f) => `assets/coupon/${f}-dark.png`;
 
   P.coupon.repo = CP;
   P.coupon.evidence = [
-    {
-      type: 'stages', at: 'head',
-      title: '한 번에 한 가지만 바꾸며 쌓은 11단계',
-      desc: '아래 사례 세 개는 1~3단계(동시성 제어 비교), 9단계(write-behind), 10단계(트랜잭션 없는 회원 확인)를 자세히 쓴 것입니다. 단계를 누르면 그 단계의 요청 흐름과 직접 실행해 확인한 결과가 나옵니다. 그림은 레포의 것입니다.',
-      src: { label: 'README · 단계별 플로우', url: CP + '#단계별-플로우' },
-      start: 0,
-      items: [
-        { n: '1', name: '격리 수준 비교', img: flow('stage1-isolation'), alt: 'k6 요청이 LabService 와 IsolationIssueCouponService 를 지나 MySQL 에 SELECT, INSERT, UPDATE 를 보내는 흐름',
-          text: '같은 로직을 격리 수준만 바꿔 실행. READ COMMITTED·REPEATABLE READ 는 갱신 손실과 초과 지급이 났고, SERIALIZABLE 은 초과 지급은 막았지만 데드락으로 재고 1000 에 103장만 지급(재시도 없음).' },
-        { n: '2', name: '비관적 락과 낙관적 락', img: flow('stage2-lock'), alt: 'LabService 에서 비관적 락 서비스와 낙관적 락 서비스로 나뉘어 MySQL 쿠폰 행에 접근하는 흐름',
-          text: '요청 50건, 재고 50 에서 비관적 락은 쿠폰 행 X 락에 줄을 세워 50장을 지급. 낙관적 락은 6장, 충돌만 최대 5회 재시도해도 26~34장에 그침.' },
-        { n: '3', name: 'Redis 지급 처리', img: flow('stage3-redis'), alt: 'RedisIssueCouponService 가 Redis 에 지급 처리를 하고 IssueConfirmService 가 MySQL 에 실제 지급하며, 실패하면 SREM 으로 취소하는 흐름',
-          text: 'SET 명령만 쓰면 명령 사이에 다른 요청이 끼어들어 Redis 지급 처리가 재고를 넘음. WATCH 와 Lua 는 판단과 지급 처리를 한 번에 해서 지켰고, 4단계부터 Lua 를 기준으로 사용.' },
-        { n: '4', name: '@Async', img: flow('stage4-async'), alt: '요청 스레드가 Redis 지급 처리 후 JVM 메모리 큐에 작업을 넣고 202 를 응답하면, 작업 스레드가 MySQL 에 실제 지급하는 흐름',
-          text: '지급 성공 응답(202)은 실제 지급 완료가 아님. 작업이 JVM 메모리 큐에 있어서, 강제 종료하면 큐의 작업이 사라지고 Redis 지급 처리만 남음(865~897건).' },
-        { n: '5', name: 'Redis Pub/Sub', img: flow('stage5-pubsub'), alt: '발행자 프로세스가 Redis 에 지급 처리와 PUBLISH 를 하고, 구독자 프로세스가 메시지를 받아 MySQL 에 실제 지급하는 흐름',
-          text: '발행자와 구독자를 프로세스로 나눴지만 메시지를 저장하지 않음. 받은 뒤 구독자를 강제 종료하면 구독자 큐의 메시지가 사라짐(952~967건).' },
-        { n: '6', name: 'Redis Streams', img: flow('stage6-stream'), alt: '발행자가 Lua 한 번으로 Stream 과 SET 에 기록하고, 소비자 프로세스가 XREADGROUP 으로 읽어 MySQL 커밋 뒤 XACK 하는 흐름',
-          text: 'DB 커밋 뒤에만 XACK. 소비자가 받은 뒤 강제 종료돼도 pending 에 남아 회수되어 유실 0건. 재처리는 UNIQUE 위반으로 끝나 issued_count 가 다시 늘지 않음.' },
-        { n: '7·8', name: 'EC2 부하 테스트', fig: '133~147 TPS',
-          text: '모든 요청이 쿠폰 한 장에 몰릴 때 실제 지급 상한. 비관적 락 133~137, 동기 Lua 144~145, @Async 144~147, Pub/Sub 145~146, Stream 145~146 TPS. 꽉 찬 것은 CPU 가 아니라 쿠폰 행의 락. 한계에서 MySQL CPU 는 24~28%, 락을 쥐는 시간이 한 건에 약 6.5ms 라 1 / 6.5ms ≈ 150 을 넘지 못함. 비동기로 바꿔도 응답만 빨라질 뿐 실제 지급 속도는 늘지 않음.' },
-        { n: '9', name: 'write-behind', img: flow('stage9-write-behind'), alt: '요청은 회원 확인과 Lua 한 번으로 202 를 응답하고, 적재기 프로세스가 Stream 을 읽어 MySQL 에 묶어서 INSERT 하며, 대사 API 가 Redis 명단과 DB 를 맞추는 흐름', fig: '140 → 1,800 req/s',
-          text: '요청 경로에서 DB 쓰기와 쿠폰 행 갱신을 빼고, 적재기가 묶어서 INSERT. 쿠폰 행 락 병목은 사라졌지만 DB 의 조건부 UPDATE 방어도 없어져서, Redis 가 기록을 잃으면 초과 지급을 막지 못함(영속화를 끄고 재시작해서 재현).' },
-        { n: '10', name: '트랜잭션 없는 회원 확인', img: flow('stage10-no-tx'), alt: '9단계와 같은 흐름에서 회원 확인만 MemberExistsRepository 로 바꿔 MySQL 에 SELECT 한 문장을 보내는 흐름', fig: '1,800 → 4,800 req/s',
-          text: '9단계와 같고, 회원 확인만 트랜잭션 없이 SELECT 한 문장. 9단계의 existsById 는 SimpleJpaRepository 의 클래스 단위 @Transactional(readOnly = true) 때문에 요청마다 SET 문장 4개와 COMMIT 이 함께 나갔음.' },
-        { n: '11', name: '이벤트 오픈 시나리오', fig: '1,230,712건 · 서버 오류 0',
-          text: '재고 7000, 회원 10만 명. 10초 동안 초당 4000건까지 올려 2분 유지하고, 3분에 걸쳐 800까지 줄인 뒤 5분 더 보냄. 요청의 5% 는 같은 회원이 같은 요청을 동시에 두 번 보냄. 지급 성공 응답 = Redis 명단 = DB 지급 행 = 대사 뒤 issued_count 모두 7000. 아래 차트가 이 실행의 분 단위 기록.' },
-      ],
-    },
     {
       type: 'line', case: 2,
       title: '9단계와 10단계의 요청 속도별 MySQL CPU',
@@ -518,58 +477,10 @@ window.DATA = {
         { name: 'MySQL CPU', unit: '%', values: [58, 62, 56, 39, 23, 13, 12, 13, 12, 13, 2] },
       ],
     },
-    {
-      type: 'code', case: 0,
-      title: '판단부터 적재 요청까지 묶은 Lua 스크립트',
-      desc: '중복 확인 → 재고 확인 → XADD → SADD 가 한 스크립트라 그 사이에 다른 요청이 끼지 않습니다. Lua 는 실행 중 오류가 나도 앞선 명령을 되돌리지 않아서 실패할 수 있는 XADD 를 SADD 보다 먼저 둡니다.',
-      src: { label: 'CouponIssuedRedisRepository.java', url: CP + '/blob/HEAD/src/main/java/couponToy/CouponToyProject/CouponIssue/repository/CouponIssuedRedisRepository.java' },
-      text: `-- KEYS[1] = coupon:issued:{couponId}, KEYS[2] = 스트림 키
--- ARGV[1] = memberId, ARGV[2] = totalCount, ARGV[3] = couponId
-if redis.call('SISMEMBER', KEYS[1], ARGV[1]) == 1 then
-  return 1
-end
-if redis.call('SCARD', KEYS[1]) >= tonumber(ARGV[2]) then
-  return 2
-end
-redis.call('XADD', KEYS[2], '*', 'memberId', ARGV[1], 'couponId', ARGV[3])
-redis.call('SADD', KEYS[1], ARGV[1])
-return 0`,
-    },
   ];
 
   const GS = 'https://github.com/GASIP-PROJECT/gasip-backend';
   P.gasip.repo = GS;
-  P.gasip.evidence = [
-    {
-      type: 'code', case: 0,
-      title: 'lastPostId 기반 No-Offset 조회',
-      desc: '마지막으로 본 글의 ID 보다 작은 글만 읽되 한 건을 더 읽어 다음 페이지가 있는지 판별합니다. 건너뛸 행을 읽지 않고 페이지 사이에 새 글이 들어와도 이미 본 글이 다시 나오지 않습니다.',
-      src: { label: 'BoardRepositoryCustomImpl.java', url: GS + '/blob/HEAD/src/main/java/com/example/gasip/board/repository/BoardRepositoryCustomImpl.java' },
-      text: `private BooleanExpression ltPostId(Long postId) {
-    if (postId == null) {
-        return board.postId.isNotNull();
-    }
-
-    return board.postId.lt(postId);
-}
-// ...
-        .from(board)
-        .leftJoin(board.professor, professor)
-        .where(
-                ltPostId(lastPostId)
-                .and(board.deleted.eq(0L))
-                .and(board.contentActivity.eq(ContentActivity.GENERAL))
-                .and(board.professor.profId.gt(0L))
-                .and(board.member.memberId.notIn(blockedIds))
-        )
-        .orderBy(board.postId.desc())
-        .limit(pageable.getPageSize() + 1)
-        .fetch();
-
-// hasNext 판별
-boolean hasNext = boardReadResponses.size() > pageable.getPageSize();`,
-    },
-  ];
 })();
 
 (() => {
@@ -596,52 +507,6 @@ boolean hasNext = boardReadResponses.size() > pageable.getPageSize();`,
         { name: '캐시 전 (JOIN + 인덱스)', pts: [[200, 0.11], [1000, 0.5], [2000, 0.99], [3000, 0.99], [4000, 0.99]], mark: { x: 2000, label: '2,000' } },
         { name: '캐시 후', pts: [[200, 0.04], [1000, 0.15], [2000, 0.31], [4000, 0.59], [6000, 0.88]], mark: { x: 4000, label: '4,000' } },
       ],
-    },
-    {
-      type: 'code', case: 0,
-      title: '무효화 메시지로 지우고 재구독 때 전체를 비우는 로컬 캐시',
-      desc: 'Pub/Sub 은 연결이 끊긴 동안의 메시지를 다시 주지 않습니다. 그래서 구독이 다시 맺어질 때 로컬 캐시 전체를 비워 놓친 무효화를 수습합니다.',
-      src: { label: 'DistributedCachedDao.java', url: NW + '/blob/HEAD/nowait-domain/domain-redis/src/main/java/com/nowait/domaincoreredis/common/cache/DistributedCachedDao.java' },
-      text: `@Override
-public void onMessage(Message message, byte[] pattern) {
-	String body = new String(message.getBody(), StandardCharsets.UTF_8);
-	if (CacheInvalidationPublisher.CLEAR.equals(body)) {
-		cache.invalidateAll();
-	} else if (body.startsWith(CacheInvalidationPublisher.INVALIDATE_PREFIX)) {
-		cache.invalidate(body.substring(CacheInvalidationPublisher.INVALIDATE_PREFIX.length()));
-	}
-}
-
-// 최초 구독 + 연결 끊김 후 재구독 시 호출된다 → 끊긴 동안 놓친 무효화를 전체 비우기로 수습
-@Override
-public void onChannelSubscribed(byte[] channel, long count) {
-	cache.invalidateAll();
-}`,
-    },
-    {
-      type: 'code', case: 1,
-      title: 'SET NX 한 번으로 선점하는 멱등 키와 커밋 뒤 응답 저장',
-      desc: '트랜잭션 안에서 부르면 바로 실패하도록 막아 두었습니다. TTL 은 처리 중일 때 1분, 완료되면 3분입니다. 같은 키 동시 요청 10건 중 1건만 실행되고 9건이 거절되는 것은 테스트(IdempotencyServiceTest)로 확인합니다.',
-      src: { label: 'IdempotencyService.java', url: NW + '/blob/HEAD/nowait-app-user-api/src/main/java/com/nowait/applicationuser/idempotency/IdempotencyService.java' },
-      text: `// 트랜잭션 안에서 부르면 action 이 끝나도 아직 커밋 전이라, 커밋이 실패해도 "완료"가 남는다
-Assert.state(!TransactionSynchronizationManager.isActualTransactionActive(),
-	"멱등 처리는 트랜잭션 바깥(컨트롤러 등)에서 호출해야 합니다");
-
-String key = "idempotency:" + scope + ":" + idempotencyKey;
-String fingerprint = fingerprint(request);
-
-// GET 후 SET 이면 그 사이에 같은 키 요청이 끼어든다. SET NX 한 번으로 선점한다
-if (!Boolean.TRUE.equals(redisTemplate.opsForValue().setIfAbsent(key, fingerprint + ":" + IN_PROGRESS, IN_PROGRESS_TTL))) {
-	return replay(key, fingerprint, responseType);
-}
-
-T response;
-try {
-	response = action.get();
-} catch (RuntimeException e) {
-	redisTemplate.delete(key); // 실패한 요청은 같은 키로 다시 시도할 수 있어야 한다
-	throw e;
-}`,
     },
   ];
 })();

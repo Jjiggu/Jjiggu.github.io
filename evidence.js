@@ -1,4 +1,4 @@
-/* 레포에서 가져온 근거 자료(실측 차트 · 단계별 흐름 · 코드)를 프로젝트 아래에 붙입니다.
+/* 레포에서 가져온 근거 자료(실측 차트 · 구성도)를 프로젝트 아래에 붙입니다.
    데이터는 data.js 의 project.evidence. gsap 없이도 동작합니다(모션 줄이기 환경 포함). */
 (() => {
   const D = window.DATA;
@@ -7,7 +7,6 @@
   const redraws = []; // 테마가 바뀌면 차트를 다시 그림
   const readTheme = () => { const v = getComputedStyle(document.documentElement), g = (n) => v.getPropertyValue(n).trim(); Object.assign(C, { ink: g('--ink'), mute: g('--mute'), sun: g('--chart-b'), coral: g('--coral'), blue: '#7d93ff', navy: g('--navy') }); C.grid = C.ink + '1f'; };
   readTheme();
-  const light = () => document.documentElement.dataset.theme === 'light';
   addEventListener('themechange', () => { readTheme(); redraws.forEach((f) => f()); });
   const h = (tag, props = {}, ...kids) => {
     const e = Object.assign(document.createElement(tag), props);
@@ -124,46 +123,18 @@
     return [wrap, table];
   }
 
-  /* ── 단계별 흐름 ── */
-  function stages(c) {
-    const img = h('img', { alt: '', loading: 'lazy', width: 2080, height: 1460 });
-    const title = h('p', { className: 'stages__name' }), text = h('p', { className: 'stages__text' }), fig = h('p', { className: 'stages__fig num' });
-    const tabs = c.items.map((it, i) => {
-      const b = h('button', { type: 'button' }, h('span', { className: 'num', textContent: it.n }), it.name);
-      b.addEventListener('click', () => { cur = i; pick(i); });
-      return b;
-    });
-    function pick(i) {
-      const it = c.items[i];
-      tabs.forEach((b, j) => b.setAttribute('aria-pressed', j === i));
-      title.textContent = `${it.n}단계 · ${it.name}`;
-      text.textContent = it.text;
-      fig.textContent = it.fig || '';
-      img.hidden = !it.img;
-      if (it.img) { img.src = light() ? it.img.replace('-dark.png', '.png') : it.img; img.alt = it.alt; }
-      window.ScrollTrigger?.refresh(); // 단계마다 높이가 달라 아래 섹션 등장 시점을 다시 계산
-    }
-    let cur = c.start ?? 0;
-    pick(cur);
-    redraws.push(() => pick(cur));
-    return [h('div', { className: 'stages' }, h('div', { className: 'stages__nav' }, tabs), h('div', { className: 'stages__view' }, fig, title, text, img))];
-  }
-
-  const code = (c) => [h('pre', { className: 'code', tabIndex: 0 }, h('code', { textContent: c.text }))];
-
   // 작은 화면에서 글자를 읽을 수 있게 누르면 원본을 새 탭으로 엶
   const image = (c) => [h('a', { href: c.img, target: '_blank', rel: 'noopener', className: 'ev__zoom' },
     h('img', { src: c.img, alt: c.alt, loading: 'lazy', width: c.w, height: c.h }), h('span', { textContent: '원본 크기로 보기 ↗' }))];
 
-  // 전체 그림(단계 흐름·구성도)은 프로젝트 첫머리에, 나머지는 해당 사례 바로 밑에 붙임.
-  // 모두 왼쪽 설명 | 오른쪽 자료. 단계 흐름만 탭이 있어 전체 폭을 씀
-  const kinds = { line: lineChart, bars: barCharts, stages, code, image };
+  // 전체 그림(구성도)은 프로젝트 첫머리에, 나머지는 해당 사례 바로 밑에 붙임. 모두 왼쪽 설명 | 오른쪽 자료
+  const kinds = { line: lineChart, bars: barCharts, image };
   D.projects.forEach((p) => {
     const sec = document.getElementById(p.id);
     (p.evidence || []).forEach((ev) => {
-      const lead = ev.at === 'head', wide = ev.type === 'stages';
+      const lead = ev.at === 'head';
       const host = lead ? sec.querySelector('.project__lead') : sec.querySelector(`.case-wrap[data-case="${ev.case}"]`);
-      host.append(h('section', { className: `ev ev--${ev.type}${lead ? ' ev--lead' : ''}${wide ? ' ev--wide' : ' split'}` },
+      host.append(h('section', { className: `ev ev--${ev.type} split${lead ? ' ev--lead' : ''}` },
         h('header', { className: 'ev__head' },
           h('p', { className: 'eyebrow', textContent: lead ? '전체 그림' : '근거' }),
           h('h4', { className: 'ev__title', textContent: ev.title }),

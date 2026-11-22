@@ -21,11 +21,10 @@
     <a class="nav__name" href="#top">김지훈</a>
     <nav aria-label="섹션 이동">
       <a href="#overview">한눈에</a>
-      <a href="#stack">스택</a>
       <a href="#career">경력</a>
       <a href="#projects">프로젝트</a>
       <a href="#edu">교육·자격</a>
-      <a href="#contact">연락</a>
+      <a href="#contact">Contact</a>
     </nav>
     <button type="button" class="theme" id="theme" aria-label="라이트 모드로 바꾸기">
       <svg class="moon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M20.3 14.6A8.5 8.5 0 0 1 9.4 3.7a8.5 8.5 0 1 0 10.9 10.9z"/></svg>
@@ -41,7 +40,7 @@
         <h1 class="hero__name" id="name"></h1>
         <p class="hero__line" id="line"></p>
         <p class="hero__intro" id="intro"></p>
-        <ul class="contact" id="hero-contact"></ul>
+        <ul class="links" id="hero-links" aria-label="연락처"></ul>
       </div>
     </section>
 
@@ -53,41 +52,31 @@
       <div class="overview__track" id="overview-track"></div>
     </section>
 
-    <section class="stack" id="stack" aria-labelledby="h-stack">
-      <div class="marquee" aria-hidden="true"><div class="marquee__row" id="marquee"></div></div>
-      <div class="block">
-        <header class="sec-head">
-          <span class="num">02</span><h2 id="h-stack">기술 스택</h2>
-          <p>오른쪽 작은 글씨는 그 기술을 쓴 곳입니다.</p>
-        </header>
-        <div id="stack-groups"></div>
-      </div>
-    </section>
-
     <section class="block" id="career" aria-labelledby="h-career">
-      <header class="sec-head"><span class="num">03</span><h2 id="h-career">경력</h2></header>
+      <header class="sec-head"><span class="num">02</span><h2 id="h-career">경력</h2></header>
       <div id="career-list"></div>
     </section>
 
     <section class="block" id="projects" aria-labelledby="h-projects">
-      <header class="sec-head"><span class="num">04</span><h2 id="h-projects">프로젝트</h2></header>
+      <header class="sec-head"><span class="num">03</span><h2 id="h-projects">프로젝트</h2></header>
       <div id="project-list"></div>
     </section>
 
     <section class="block" id="edu" aria-labelledby="h-edu">
-      <header class="sec-head"><span class="num">05</span><h2 id="h-edu">교육 · 자격 · 활동</h2></header>
+      <header class="sec-head"><span class="num">04</span><h2 id="h-edu">교육 · 자격 · 활동</h2></header>
       <div id="edu-list"></div>
     </section>
   </main>
 
   <footer class="foot" id="contact" aria-labelledby="h-contact">
-    <header class="sec-head"><span class="num">06</span><h2 id="h-contact">연락</h2></header>
-    <p class="foot__lead">채용이나 협업 제안은 이메일로 편하게 연락 주세요.</p>
-    <ul class="contact contact--big" id="foot-contact"></ul>
-    <p class="foot__name" id="foot-name"></p>
-    <div class="foot__row">
-      <p>사례 본문의 수치는 직접 측정한 값이고, 차트는 각 레포의 측정 문서를 따릅니다. 체험 화면의 숫자는 브라우저 안에서 계산한 모델 값입니다.<br>만든 도구: GSAP(ScrollTrigger · SplitText · ScrambleText), Lenis, Pretendard, Big Shoulders Display</p>
-      <a class="totop" href="#top">맨 위로</a>
+    <div class="foot__main">
+      <h2 class="foot__h" id="h-contact">Contact</h2>
+      <a class="foot__mail" id="foot-mail" href="#"></a>
+      <ul class="links" id="foot-links" aria-label="연락처"></ul>
+    </div>
+    <div class="foot__base">
+      <p>© 2026 김지훈 · 사례 본문의 수치는 직접 측정한 값이고, 차트는 각 레포의 측정 문서를 따릅니다. 체험 화면의 숫자는 브라우저 안에서 계산한 모델 값입니다.</p>
+      <a class="totop" href="#top">맨 위로 ↑</a>
     </div>
   </footer>
 
@@ -96,9 +85,9 @@
     <section class="demo cp" aria-label="선착순 쿠폰 동시성 시뮬레이션">
       <div class="split demo__intro">
         <header class="ev__head">
-          <p class="eyebrow">직접 해 보기</p>
+          <p class="eyebrow">전체 그림 · 직접 해 보기</p>
           <h4 class="ev__title">선착순 쿠폰 발급을 직접 돌려 보세요</h4>
-          <p class="ev__desc">방식을 고르면 요청이 가상 시간 위에서 실제로 끼어들며 실행됩니다. ‘재고 지키기’는 첫 번째 사례(동시성 제어 비교), ‘DB 에 옮겨 적기’는 두 번째 사례(write-behind)의 방식입니다.</p>
+          <p class="ev__desc">방식을 고르면 요청 수백~천 건이 가상 시간 위에서 실제로 끼어들며 실행됩니다. 노란 고리가 달린 점이 <b>내 요청</b>이고, 끝나면 내 요청이 어떻게 됐는지 아래 판정에 나옵니다. ‘재고 지키기’는 아래 첫 번째 사례(동시성 제어 비교), ‘DB 에 옮겨 적기’는 두 번째 사례(write-behind)의 방식입니다.</p>
         </header>
         <div class="dock">
           <p class="dock__title">시나리오 <span id="sim-scen"></span></p>

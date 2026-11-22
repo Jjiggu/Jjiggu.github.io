@@ -49,7 +49,6 @@
           <div><dt>화면에 가져온 리뷰</dt><dd class="num" id="gs-got">0</dd></div>
           <div><dt>이미 본 리뷰가 다시 나옴</dt><dd class="num" id="gs-dup">0</dd></div>
         </dl>
-        <pre class="code gs-sql" id="gs-sql"></pre>
         <p class="dock__fact"><b>실측</b> <span id="gs-fact"></span></p>
         <ol class="bk__log gs-log" id="gs-log" data-lenis-prevent aria-live="polite"></ol>
       </div>
@@ -100,7 +99,7 @@
     $('#gs-ex').textContent = fmt(r.examined);
     $('#gs-bar').style.width = Math.max(4, (Math.log10(r.examined) - 1) / 5 * 100) + '%';
     $('#gs-bar').dataset.heavy = r.examined > 1000;
-    $('#gs-sql').textContent = r.sql;
+    // ponytail: SQL 문은 화면에 안 냄(채용 담당자 피드백). r.sql 은 모델에 남겨 둠
     $('#gs-got').textContent = fmt(got);
     $('#gs-dup').textContent = fmt(dup);
     $('#gs-more').textContent = hasNext ? '아래로 내리면 다음 10건을 가져옵니다' : '마지막 글입니다';
