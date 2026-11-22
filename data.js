@@ -390,7 +390,8 @@ window.DATA = {
       headline: { a: '6,271', b: '0.90', unit: 'ms', label: '리뷰 목록 조회 SQL 실행 시간', note: 'OFFSET 8,300 기준 · MAU 1,560명 서비스' },
       demo: true,
       accent: ['#4f9dff', '#0a6cff'], // Gasip 파랑
-      cover: { type: 'pan', img: 'assets/gasip/app-screens.jpg', w: 3666, h: 1100, bg: '#007aff', alt: 'Gasip 앱스토어 소개 화면 7장: 가천대학교 유일 교수님 전문 리뷰앱, 가천인들만의 커뮤니티, 교수님 리뷰 확인·작성, 정보 공유, 전체 리뷰 화면' },
+      // 앱스토어 소개 화면 원본 해상도 그대로 (WebP 92%)
+      cover: { type: 'pan', img: 'assets/gasip/app-screens.webp', w: 4666, h: 1400, bg: '#007aff', alt: 'Gasip 앱스토어 소개 화면 7장: 가천대학교 유일 교수님 전문 리뷰앱, 가천인들만의 커뮤니티, 교수님 리뷰 확인·작성, 정보 공유, 전체 리뷰 화면' },
       cases: [
         {
           title: '리뷰 목록 조회 SQL 실행 시간 6,271ms → 0.90ms',
