@@ -2,7 +2,7 @@
    휴대폰 화면은 Gasip 프론트엔드(GASIP-PROJECT/gasip-frontend)의 색·크기·문구를 본떠 다시 만든 것이고,
    오른쪽이 gasip-demo.js 의 조회 모델입니다. */
 (() => {
-  const host = document.querySelector('#gasip .project__head');
+  const host = document.querySelector('#gasip .demo-slot');
   if (!host || !window.GasipBoard) return;
   const A = 'assets/gasip/';
   const fmt = (n) => n.toLocaleString('en-US');
@@ -15,13 +15,16 @@
   const REPLIES = ['저도 같은 생각이에요.', '이번 학기에 듣는데 도움이 됐어요.', '과제 제출 기한은 넉넉한가요?', '시험 범위 정보 감사합니다!', '다음 학기에 수강하려고요.'];
 
   const root = document.createElement('section');
-  root.className = 'nw gs';
+  root.className = 'nw gs demo';
   root.innerHTML = `
-    <figure class="nw__mock gs__video"><video src="assets/gasip/demo.mp4" controls muted playsinline preload="metadata"></video><figcaption>실제 앱 화면 영상. 출처: Gasip 백엔드 README</figcaption></figure>
-    <header class="ev__head">
-      <h3 class="ev__title">직접 눌러 보는 Gasip</h3>
-      <p class="ev__desc">왼쪽 휴대폰에서 리뷰 목록을 내려 보고 리뷰를 눌러 상세로 들어가거나 새 리뷰를 써 보세요. 목록을 10건 가져올 때마다 DB 가 몇 행을 읽는지 오른쪽에 나옵니다.</p>
-    </header>
+    <div class="split demo__intro">
+      <header class="ev__head">
+        <p class="eyebrow">직접 해 보기</p>
+        <h4 class="ev__title">직접 눌러 보는 Gasip</h4>
+        <p class="ev__desc">왼쪽 휴대폰에서 리뷰 목록을 내려 보고 리뷰를 눌러 상세로 들어가거나 새 리뷰를 써 보세요. 목록을 10건 가져올 때마다 DB 가 몇 행을 읽는지 오른쪽에 나옵니다. 조회 방식 세 개는 위 사례의 해결 과정 세 단계와 같습니다.</p>
+      </header>
+      <figure class="nw__mock gs__video"><video src="assets/gasip/demo.mp4#t=1" controls muted playsinline preload="metadata"></video><figcaption>실제 앱 화면 영상. 출처: Gasip 백엔드 README</figcaption></figure>
+    </div>
     <div class="gs__grid">
       <div class="nw__col"><p class="nw__label">학생 화면</p><div class="phone">
         <button type="button" class="gs-write" data-act="write">교수님 리뷰 작성하기</button>
@@ -47,12 +50,12 @@
           <div><dt>이미 본 리뷰가 다시 나옴</dt><dd class="num" id="gs-dup">0</dd></div>
         </dl>
         <pre class="code gs-sql" id="gs-sql"></pre>
-        <p class="dock__fact"><b>경력기술서 수치</b> <span id="gs-fact"></span></p>
+        <p class="dock__fact"><b>실측</b> <span id="gs-fact"></span></p>
         <ol class="bk__log gs-log" id="gs-log" data-lenis-prevent aria-live="polite"></ol>
       </div>
     </div>
-    <p class="nw__credit">화면 디자인과 앱은 Gasip 팀의 디자이너와 프론트엔드 개발자들이 만들었습니다(<a href="https://github.com/GASIP-PROJECT/gasip-frontend" target="_blank" rel="noopener">GASIP-PROJECT/gasip-frontend</a>). 여기서는 그 화면을 본떠 다시 그렸고 실제 서버에는 연결되지 않습니다. 리뷰·댓글 내용과 강의·교수·닉네임은 예시 데이터입니다. 읽은 행 수는 브라우저 안의 모델이 센 값입니다. 조회 방식을 화면에서 고르는 기능은 이 체험에만 있고 글쓰기의 교수 검색과 답글·신고는 생략했습니다.</p>`;
-  host.after(root);
+    <details class="nw__credit"><summary>화면 출처와 안내</summary><p>화면 디자인과 앱은 Gasip 팀의 디자이너와 프론트엔드 개발자들이 만들었습니다(<a href="https://github.com/GASIP-PROJECT/gasip-frontend" target="_blank" rel="noopener">GASIP-PROJECT/gasip-frontend</a>). 여기서는 그 화면을 본떠 다시 그렸고 실제 서버에는 연결되지 않습니다. 리뷰·댓글 내용과 강의·교수·닉네임은 예시 데이터입니다. 읽은 행 수는 브라우저 안의 모델이 센 값입니다. 조회 방식을 화면에서 고르는 기능은 이 체험에만 있고 글쓰기의 교수 검색과 답글·신고는 생략했습니다.</p></details>`;
+  host.append(root);
 
   const $ = (s) => root.querySelector(s);
   const phone = $('#gs-phone'), list = $('#gs-list'), logEl = $('#gs-log'), over = $('#gs-over');

@@ -151,16 +151,22 @@
 
   const code = (c) => [h('pre', { className: 'code', tabIndex: 0 }, h('code', { textContent: c.text }))];
 
-  const image = (c) => [h('img', { src: c.img, alt: c.alt, loading: 'lazy', width: c.w, height: c.h })];
+  // 작은 화면에서 글자를 읽을 수 있게 누르면 원본을 새 탭으로 엶
+  const image = (c) => [h('a', { href: c.img, target: '_blank', rel: 'noopener', className: 'ev__zoom' },
+    h('img', { src: c.img, alt: c.alt, loading: 'lazy', width: c.w, height: c.h }), h('span', { textContent: '원본 크기로 보기 ↗' }))];
 
+  // 전체 그림(단계 흐름·구성도)은 프로젝트 첫머리에, 나머지는 해당 사례 바로 밑에 붙임.
+  // 모두 왼쪽 설명 | 오른쪽 자료. 단계 흐름만 탭이 있어 전체 폭을 씀
   const kinds = { line: lineChart, bars: barCharts, stages, code, image };
   D.projects.forEach((p) => {
     const sec = document.getElementById(p.id);
-    if (p.repo) sec.querySelector('.project__sub').after(h('a', { className: 'project__repo', href: p.repo, target: '_blank', rel: 'noopener', textContent: 'GitHub 레포 보기' }));
     (p.evidence || []).forEach((ev) => {
-      sec.append(h('section', { className: `ev ev--${ev.type}` },
+      const lead = ev.at === 'head', wide = ev.type === 'stages';
+      const host = lead ? sec.querySelector('.project__lead') : sec.querySelector(`.case-wrap[data-case="${ev.case}"]`);
+      host.append(h('section', { className: `ev ev--${ev.type}${lead ? ' ev--lead' : ''}${wide ? ' ev--wide' : ' split'}` },
         h('header', { className: 'ev__head' },
-          h('h3', { className: 'ev__title', textContent: ev.title }),
+          h('p', { className: 'eyebrow', textContent: lead ? '전체 그림' : '근거' }),
+          h('h4', { className: 'ev__title', textContent: ev.title }),
           h('p', { className: 'ev__desc', textContent: ev.desc || '' }),
           ev.src ? h('a', { className: 'ev__src', href: ev.src.url, target: '_blank', rel: 'noopener', textContent: '출처: ' + ev.src.label }) : null),
         h('div', { className: 'ev__body' }, kinds[ev.type](ev))));

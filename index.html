@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>김지훈 · 포트폴리오</title>
-  <meta name="description" content="김지훈 경력기술서 기반 포트폴리오">
+  <meta name="description" content="서버 개발자 김지훈의 경력, 프로젝트, 측정 결과">
   <link rel="icon" href="data:,">
   <script>
     // 저장한 선택이 있으면 그것, 없으면 기기 설정을 따름 (첫 화면이 깜빡이지 않게 그리기 전에 정함)
@@ -14,24 +14,19 @@
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <div class="gate" id="gate">
-    <canvas id="gate-crowd" aria-hidden="true"></canvas>
-    <div class="gate__in">
-      <p class="gate__tag">선착순 쿠폰 이벤트 · 쿠폰 1,000장</p>
-      <h2 class="gate__title" id="gate-title">곧 이벤트가 시작됩니다</h2>
-      <p class="gate__count num" aria-hidden="true"><span>00</span><i>:</i><span id="gate-sec">05</span></p>
-      <p class="gate__wait">지금 <b class="num" id="gate-wait">0</b>명이 같이 기다리고 있습니다</p>
-      <button type="button" class="gate__btn" id="gate-btn" disabled>쿠폰 발급받기</button>
-      <button type="button" class="gate__skip" id="gate-skip">건너뛰고 포트폴리오 보기</button>
-    </div>
-    <p class="gate__by">김지훈 · Backend Engineer 포트폴리오</p>
-  </div>
   <div class="progress" aria-hidden="true"></div>
   <div class="cursor" aria-hidden="true"></div>
 
   <header class="nav">
     <a class="nav__name" href="#top">김지훈</a>
-    <nav id="nav" aria-label="섹션 이동"></nav>
+    <nav aria-label="섹션 이동">
+      <a href="#overview">한눈에</a>
+      <a href="#stack">스택</a>
+      <a href="#career">경력</a>
+      <a href="#projects">프로젝트</a>
+      <a href="#edu">교육·자격</a>
+      <a href="#contact">연락</a>
+    </nav>
     <button type="button" class="theme" id="theme" aria-label="라이트 모드로 바꾸기">
       <svg class="moon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M20.3 14.6A8.5 8.5 0 0 1 9.4 3.7a8.5 8.5 0 1 0 10.9 10.9z"/></svg>
       <svg class="sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4.2" fill="currentColor"/><path d="M12 2.5v2.4M12 19.1v2.4M2.5 12h2.4M19.1 12h2.4M5.3 5.3l1.7 1.7M17 17l1.7 1.7M18.7 5.3 17 7M7 17l-1.7 1.7"/></svg>
@@ -40,44 +35,83 @@
 
   <main>
     <section class="hero" id="top">
-      <div class="sim"><canvas id="sim" aria-hidden="true"></canvas><div class="sim__trace" id="sim-trace" aria-live="polite" hidden></div></div>
-      <div class="hero__bottom">
-        <div class="hero__copy">
-          <p class="hero__role" id="role"></p>
-          <h1 class="hero__name" id="name"></h1>
-          <p class="hero__line">측정으로 병목을 찾아 결과를 숫자로 남깁니다.</p>
-        </div>
-        <div class="dock" aria-label="선착순 쿠폰 동시성 시뮬레이션">
-          <p class="dock__title">선착순 쿠폰 발급을 직접 돌려 보세요. <span id="sim-scen"></span></p>
-          <div class="dock__tabs" id="sim-tabs"></div>
-          <dl class="dock__stats" id="sim-stats"></dl>
-          <p class="dock__verdict" id="sim-verdict" aria-live="polite"></p>
-          <p class="dock__fact"><b>경력기술서 실측</b> <span id="sim-fact"></span></p>
-          <p class="dock__note">위 숫자는 브라우저 안에서 지금 계산한 모델 값이고 느리게 재생합니다. 레포에서 실측한 값은 락을 쥐는 6.5ms뿐입니다. 강제 종료 시점은 실측 유실 범위에 맞췄습니다. <button type="button" id="sim-again">다시 실행</button></p>
-        </div>
+      <canvas id="hero-crowd" aria-hidden="true"></canvas>
+      <div class="hero__in">
+        <p class="hero__role" id="role"></p>
+        <h1 class="hero__name" id="name"></h1>
+        <p class="hero__line" id="line"></p>
+        <p class="hero__intro" id="intro"></p>
+        <ul class="contact" id="hero-contact"></ul>
       </div>
     </section>
 
-    <section class="intro">
-      <p id="intro"></p>
+    <section class="overview" id="overview" aria-labelledby="h-overview">
+      <header class="sec-head">
+        <span class="num">01</span><h2 id="h-overview">한눈에 보기</h2>
+        <p>경력 한 곳과 프로젝트 세 개의 대표 결과입니다. 누르면 해당 내용으로 이동합니다.</p>
+      </header>
+      <div class="overview__track" id="overview-track"></div>
     </section>
 
-    <section class="impact" id="impact" aria-label="결과 요약">
-      <div class="impact__track" id="impact-track"></div>
+    <section class="stack" id="stack" aria-labelledby="h-stack">
+      <div class="marquee" aria-hidden="true"><div class="marquee__row" id="marquee"></div></div>
+      <div class="block">
+        <header class="sec-head">
+          <span class="num">02</span><h2 id="h-stack">기술 스택</h2>
+          <p>오른쪽 작은 글씨는 그 기술을 쓴 곳입니다.</p>
+        </header>
+        <div id="stack-groups"></div>
+      </div>
     </section>
 
-    <div class="marquee" aria-hidden="true"><div class="marquee__row" id="marquee"></div></div>
+    <section class="block" id="career" aria-labelledby="h-career">
+      <header class="sec-head"><span class="num">03</span><h2 id="h-career">경력</h2></header>
+      <div id="career-list"></div>
+    </section>
 
-    <div id="work"></div>
+    <section class="block" id="projects" aria-labelledby="h-projects">
+      <header class="sec-head"><span class="num">04</span><h2 id="h-projects">프로젝트</h2></header>
+      <div id="project-list"></div>
+    </section>
+
+    <section class="block" id="edu" aria-labelledby="h-edu">
+      <header class="sec-head"><span class="num">05</span><h2 id="h-edu">교육 · 자격 · 활동</h2></header>
+      <div id="edu-list"></div>
+    </section>
   </main>
 
-  <footer class="foot">
+  <footer class="foot" id="contact" aria-labelledby="h-contact">
+    <header class="sec-head"><span class="num">06</span><h2 id="h-contact">연락</h2></header>
+    <p class="foot__lead">채용이나 협업 제안은 이메일로 편하게 연락 주세요.</p>
+    <ul class="contact contact--big" id="foot-contact"></ul>
     <p class="foot__name" id="foot-name"></p>
     <div class="foot__row">
-      <p>사례 본문의 수치는 경력기술서에서 옮겼고 차트는 각 레포의 측정 문서를 따릅니다. 체험 화면의 숫자는 브라우저 안 모델 값입니다.<br>만든 도구: GSAP(ScrollTrigger · SplitText · ScrambleText), Lenis, Pretendard, Big Shoulders Display</p>
+      <p>사례 본문의 수치는 직접 측정한 값이고, 차트는 각 레포의 측정 문서를 따릅니다. 체험 화면의 숫자는 브라우저 안에서 계산한 모델 값입니다.<br>만든 도구: GSAP(ScrollTrigger · SplitText · ScrambleText), Lenis, Pretendard, Big Shoulders Display</p>
       <a class="totop" href="#top">맨 위로</a>
     </div>
   </footer>
+
+  <!-- 쿠폰 프로젝트의 '직접 해 보기'. main.js 가 #coupon 의 사례 뒤에 붙인 뒤 sim.js 가 그립니다. -->
+  <template id="tpl-coupon-demo">
+    <section class="demo cp" aria-label="선착순 쿠폰 동시성 시뮬레이션">
+      <div class="split demo__intro">
+        <header class="ev__head">
+          <p class="eyebrow">직접 해 보기</p>
+          <h4 class="ev__title">선착순 쿠폰 발급을 직접 돌려 보세요</h4>
+          <p class="ev__desc">방식을 고르면 요청이 가상 시간 위에서 실제로 끼어들며 실행됩니다. ‘재고 지키기’는 첫 번째 사례(동시성 제어 비교), ‘DB 에 옮겨 적기’는 두 번째 사례(write-behind)의 방식입니다.</p>
+        </header>
+        <div class="dock">
+          <p class="dock__title">시나리오 <span id="sim-scen"></span></p>
+          <div class="dock__tabs" id="sim-tabs"></div>
+          <dl class="dock__stats" id="sim-stats"></dl>
+          <p class="dock__verdict" id="sim-verdict" aria-live="polite"></p>
+          <p class="dock__fact"><b>실측</b> <span id="sim-fact"></span></p>
+          <p class="dock__note">위 숫자는 브라우저 안에서 지금 계산한 모델 값이고 느리게 재생합니다. 레포에서 실측한 값은 락을 쥐는 6.5ms뿐입니다. 강제 종료 시점은 실측 유실 범위에 맞췄습니다. <button type="button" id="sim-again">다시 실행</button></p>
+        </div>
+      </div>
+      <div class="sim"><canvas id="sim" aria-hidden="true"></canvas><div class="sim__trace" id="sim-trace" aria-live="polite" hidden></div></div>
+    </section>
+  </template>
 
   <script src="vendor/gsap.min.js"></script>
   <script src="vendor/ScrollTrigger.min.js"></script>
@@ -85,8 +119,8 @@
   <script src="vendor/ScrambleTextPlugin.min.js"></script>
   <script src="vendor/lenis.min.js"></script>
   <script src="data.js"></script>
-  <script src="sim.js"></script>
   <script src="main.js"></script>
+  <script src="sim.js"></script>
   <script src="evidence.js"></script>
   <script src="nowait-demo.js"></script>
   <script src="nowait-ui.js"></script>

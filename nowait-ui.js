@@ -2,7 +2,7 @@
    휴대폰과 운영자 화면은 NoWait 프론트엔드(GTable/NoWait_FE)의 색·문구·배치를 본떠 다시 만든 것이고,
    가운데가 nowait-demo.js 의 백엔드 모델입니다. 화면의 문구는 프론트 레포 원문을 따랐습니다. */
 (() => {
-  const host = document.querySelector('#nowait .project__head');
+  const host = document.querySelector('#nowait .demo-slot');
   if (!host || !window.NoWaitBackend) return;
   const A = 'assets/nowait/fe/', ME = 1, TABLE = 5;
   const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
@@ -10,25 +10,28 @@
   const hhmm = (t) => new Date(t).toTimeString().slice(0, 5);
 
   const root = document.createElement('section');
-  root.className = 'nw';
+  root.className = 'nw demo';
   root.innerHTML = `
-    <figure class="nw__mock"><img src="assets/nowait/service.png" alt="NoWait 서비스 화면 모음: 주점 목록, 메뉴, 주문, 대기 등록 화면" loading="lazy" width="2400" height="1350"><figcaption>실제 서비스 화면. 출처: NoWait 프론트엔드 README</figcaption></figure>
-    <header class="ev__head">
-      <h3 class="ev__title">직접 눌러 보는 NoWait</h3>
-      <p class="ev__desc">왼쪽 휴대폰에서 줄을 서거나 테이블에서 주문하고 오른쪽 운영자 화면에서 처리해 보세요. 가운데에 그때 서버 안에서 일어나는 일이 그대로 나옵니다.</p>
-      <div class="bk__actions nw__flow"><button type="button" data-act="flow" data-f="wait">원격 줄서기</button><button type="button" data-act="flow" data-f="order">테이블 주문 (QR)</button></div>
-    </header>
+    <div class="split demo__intro">
+      <header class="ev__head">
+        <p class="eyebrow">직접 해 보기</p>
+        <h4 class="ev__title">직접 눌러 보는 NoWait</h4>
+        <p class="ev__desc">휴대폰에서 줄을 서거나 테이블에서 주문하면 바로 오른쪽에 그때 서버 안에서 일어나는 일이 나옵니다. 아래 운영자 화면에서 입장 호출과 주문 처리를 해 보세요. 위 두 사례(캐시 무효화, 멱등 키)가 여기서 그대로 돌아갑니다.</p>
+        <div class="bk__actions nw__flow"><button type="button" data-act="flow" data-f="wait">원격 줄서기</button><button type="button" data-act="flow" data-f="order">테이블 주문 (QR)</button></div>
+      </header>
+      <figure class="nw__mock"><img src="assets/nowait/service.png" alt="NoWait 서비스 화면 모음: 주점 목록, 메뉴, 주문, 대기 등록 화면" loading="lazy" width="2400" height="1350"><figcaption>실제 서비스 화면. 출처: NoWait 프론트엔드 README</figcaption></figure>
+    </div>
     <div class="nw__grid">
       <div class="nw__col"><p class="nw__label">손님 화면</p><div class="phone"><div class="phone__screen" id="nw-phone" data-lenis-prevent></div></div></div>
-      <div class="nw__col"><p class="nw__label">운영자 화면 (태블릿)</p><div class="ipad"><div class="ipad__screen admin" id="nw-admin" data-lenis-prevent></div></div></div>
       <div class="nw__col bk nw__server">
         <p class="nw__label">서버 안에서 일어나는 일</p>
         <div class="bk__actions" id="nw-actions"></div>
         <div class="bk__split"><div class="bk__state" id="nw-state"></div><ol class="bk__log" id="nw-log" data-lenis-prevent aria-live="polite"></ol></div>
       </div>
+      <div class="nw__col nw__admin"><p class="nw__label">운영자 화면</p><div class="ipad"><div class="ipad__screen admin" id="nw-admin" data-lenis-prevent></div></div></div>
     </div>
-    <p class="nw__credit">화면 디자인과 프론트엔드는 NoWait 팀의 디자이너와 프론트엔드 개발자들이 만들었습니다(<a href="https://github.com/GTable/NoWait_FE" target="_blank" rel="noopener">GTable/NoWait_FE</a>). 여기서는 그 화면을 본떠 다시 그렸습니다. 실제 서버에 연결되지 않으며 실제 송금도 일어나지 않습니다. 음식 사진은 위키미디어 공용의 CC0(퍼블릭 도메인) 사진입니다: <a href="https://commons.wikimedia.org/wiki/File:Garaetteok_Tteokbokki.jpg" target="_blank" rel="noopener">Garaetteok Tteokbokki</a>(Kimseoeun2023079825), <a href="https://commons.wikimedia.org/wiki/File:Mozzarella-kimchi-buchimgae.jpg" target="_blank" rel="noopener">Mozzarella-kimchi-buchimgae</a>(b00142), <a href="https://commons.wikimedia.org/wiki/File:Eomuk-tang_2.jpg" target="_blank" rel="noopener">Eomuk-tang 2</a>(bigtorica), <a href="https://commons.wikimedia.org/wiki/File:Korean_corn_with_cheese.jpg" target="_blank" rel="noopener">Korean corn with cheese</a>(Fumikas Sagisavas). 카카오페이·토스·네이버페이 로고는 각 회사의 상표입니다. 주점·메뉴·대기 팀, 주점 위치·소개글·공지, 손님 이름은 모두 예시 데이터이고 전화번호는 가렸습니다. 줄서기의 멱등 키는 이 체험 화면이 붙여 보냅니다. 운영자 화면은 위쪽 탭 구성을 단순하게 바꿨고 확인 창은 생략했습니다.</p>`;
-  host.after(root);
+    <details class="nw__credit"><summary>화면 출처와 안내</summary><p>화면 디자인과 프론트엔드는 NoWait 팀의 디자이너와 프론트엔드 개발자들이 만들었습니다(<a href="https://github.com/GTable/NoWait_FE" target="_blank" rel="noopener">GTable/NoWait_FE</a>). 여기서는 그 화면을 본떠 다시 그렸습니다. 실제 서버에 연결되지 않으며 실제 송금도 일어나지 않습니다. 음식 사진은 위키미디어 공용의 CC0(퍼블릭 도메인) 사진입니다: <a href="https://commons.wikimedia.org/wiki/File:Garaetteok_Tteokbokki.jpg" target="_blank" rel="noopener">Garaetteok Tteokbokki</a>(Kimseoeun2023079825), <a href="https://commons.wikimedia.org/wiki/File:Mozzarella-kimchi-buchimgae.jpg" target="_blank" rel="noopener">Mozzarella-kimchi-buchimgae</a>(b00142), <a href="https://commons.wikimedia.org/wiki/File:Eomuk-tang_2.jpg" target="_blank" rel="noopener">Eomuk-tang 2</a>(bigtorica), <a href="https://commons.wikimedia.org/wiki/File:Korean_corn_with_cheese.jpg" target="_blank" rel="noopener">Korean corn with cheese</a>(Fumikas Sagisavas). 카카오페이·토스·네이버페이 로고는 각 회사의 상표입니다. 주점·메뉴·대기 팀, 주점 위치·소개글·공지, 손님 이름은 모두 예시 데이터이고 전화번호는 가렸습니다. 줄서기의 멱등 키는 이 체험 화면이 붙여 보냅니다. 운영자 화면은 위쪽 탭 구성을 단순하게 바꿨고 확인 창은 생략했습니다.</p></details>`;
+  host.append(root);
 
   const $ = (s) => root.querySelector(s);
   const phone = $('#nw-phone'), admin = $('#nw-admin'), logEl = $('#nw-log');

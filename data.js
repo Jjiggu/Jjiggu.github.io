@@ -1,32 +1,69 @@
-// 경력기술서_1.pdf 원문을 그대로 옮긴 데이터. 숫자는 원문과 한 글자도 다르지 않게 유지합니다.
+// 이력서·경력기술서 원문을 옮긴 데이터. 숫자는 원문과 한 글자도 다르지 않게 유지합니다.
 // metrics: a(이전) → b(이후). bar 는 막대 비율용 숫자 [이전, 이후].
+// solution 묶음의 pick: 'x' = 검토 후 제외, 'ok' = 선택. 표시가 없으면 단계(순서대로 한 일).
 window.DATA = {
   name: '김지훈',
-  role: 'Backend Engineer', // 원문에 직함 표기는 없음 — 필요하면 수정
+  role: 'Server Developer · Java / Spring Boot',
+  line: '측정으로 병목을 찾아 결과를 숫자로 남깁니다.',
   intro:
-    '(주)유닛블랙에서는 사내 챗봇의 검색 품질을 개선하고 개인정보 마스킹 게이트를 적용했습니다. 근로계약서 전자계약도 자동화했습니다. 선착순 쿠폰 발급 시스템, NoWait, Gasip에서는 락 경합과 캐시, 쿼리 병목을 측정해서 줄였습니다.',
-
-  stack: [
-    'Redis Streams', 'Lua Script', 'MySQL', 'InnoDB', 'JPA', 'HikariCP', 'Caffeine', 'Redis Pub/Sub',
-    'k6', 'AWS Lambda', 'S3', 'EC2', 'GitHub Actions', 'Docker', 'Semantic Chunking', 'Kiwi',
-    'Notion API', 'Airtable', 'Slack',
+    '(주)유닛블랙 HR팀 AX 스쿼드에서 RAG 기반 사내 챗봇과 근로계약서 발송 자동화를 만들었습니다. 개인·팀 프로젝트에서는 락 경합, 캐시, 쿼리 병목을 측정으로 찾아 줄였고, 교수 리뷰 앱 Gasip은 MAU 1,560명 규모로 1년간 운영했습니다.',
+  contact: [
+    { label: '이메일', text: 'zh1229@naver.com', href: 'mailto:zh1229@naver.com' },
+    { label: 'GitHub', text: 'github.com/Jjiggu', href: 'https://github.com/Jjiggu' },
+    { label: 'LinkedIn', text: '', href: '' }, // ponytail: 주소를 받으면 채움. 비어 있으면 화면에 안 나옴
   ],
 
-  impact: [
-    { a: '140', b: '4,800', unit: 'TPS', label: '쿠폰 지급 최대 처리량', note: '140 → 1,800 → 4,800 TPS · 선착순 쿠폰 발급 시스템' },
-    { a: '6,271', b: '0.90', unit: 'ms', label: '리뷰 목록 조회 SQL 실행 시간', note: 'OFFSET 8,300 기준 · Gasip' },
-    { a: '59,808', b: '123', unit: '회', label: '메뉴 조회 쿼리 99.8% 감소', note: '1,000 rps - 60초 기준 · NoWait' },
-    { a: '약 30', b: '2', unit: '분 이내', label: '근로계약서 1건 작업 시간', note: '약 30분 → 2분 이내, 2주간 116건 체결 · (주)유닛블랙' },
-    { a: '', b: '0.92', unit: 'recall@5', label: '사내 챗봇 검색 품질', note: '골든셋 128건 기준, MRR 0.85 · (주)유닛블랙' },
+  // 흐르는 띠(장식). 읽을 수 있는 목록은 stackGroups
+  stack: ['Java 17', 'Spring Boot', 'JPA', 'Querydsl', 'MySQL', 'Redis Streams', 'Lua Script', 'Redis Pub/Sub', 'Caffeine', 'AWS', 'Docker', 'GitHub Actions', 'k6', 'Prometheus', 'RAG'],
+  // [이름, 쓴 곳(project id 공백 구분)]
+  stackGroups: [
+    { h: '언어 · 프레임워크', items: [['Java 17', 'coupon nowait gasip'], ['Spring Boot 3', 'coupon nowait gasip'], ['Spring Data JPA', 'coupon nowait gasip'], ['Querydsl', 'nowait gasip'], ['JUnit 5', 'coupon']] },
+    { h: '데이터', items: [['MySQL', 'coupon nowait gasip'], ['Redis', 'coupon nowait gasip'], ['Redis Streams', 'coupon'], ['Lua Script', 'coupon nowait'], ['Redis Pub/Sub', 'nowait'], ['Redis Sorted Set', 'nowait'], ['Caffeine', 'nowait']] },
+    { h: '인프라 · 배포', items: [['AWS EC2', 'coupon nowait gasip'], ['AWS RDS', 'nowait gasip'], ['S3 · Lambda', 'nowait'], ['CodeDeploy', 'gasip'], ['Docker', 'nowait'], ['Docker Compose', 'coupon'], ['GitHub Actions', 'nowait gasip']] },
+    { h: '측정 · 모니터링', items: [['k6', 'coupon gasip'], ['nGrinder', 'gasip'], ['Prometheus', 'nowait'], ['Grafana', 'nowait']] },
+    { h: 'AI · 업무 자동화', items: [['RAG', 'unitblack'], ['Semantic Chunking', 'unitblack'], ['Kiwi', 'unitblack'], ['Notion API', 'unitblack'], ['Slack', 'unitblack'], ['Airtable', 'unitblack']] },
   ],
+  short: { unitblack: '유닛블랙', coupon: '쿠폰', nowait: 'NoWait', gasip: 'Gasip' },
 
   projects: [
     {
       id: 'unitblack',
+      group: 'career',
       name: '(주)유닛블랙',
-      sub: '',
+      kind: '경력 · 프리랜서 계약직',
+      sub: 'HR팀 AX 스쿼드 / GA. 사내 챗봇 ‘블랙이’(2026.07 ~ 운영중)와 근로계약서 발송 자동화 시스템(2026.09 ~ 2026.10)을 만들었습니다.',
       period: '2025.12 ~ 현재',
+      facts: [
+        ['소속', 'HR팀 AX 스쿼드 / GA'],
+        ['담당', 'RAG 파이프라인 단독 구현, 근로계약서 발송 자동화'],
+      ],
+      stack: ['RAG', 'Semantic Chunking', 'Kiwi', 'Notion API', 'Slack', 'Airtable'],
+      headline: { a: '약 30', b: '2', unit: '분 이내', label: '근로계약서 1건 작업 시간', note: '2주간 116건 체결, 누적 약 54시간 절감' },
       cases: [
+        {
+          title: '근로계약서 전자계약 자동화로 건당 작업 시간 93% 절감',
+          metrics: [
+            { a: '약 30', b: '2', unit: '분 이내', label: '근로계약서 1건 작업 시간', bar: [30, 2] },
+            { a: '3', b: '1.96', unit: '일', label: '회수 기간 평균, 약 35% 단축', bar: [3, 1.96] },
+            { b: '116', unit: '건', label: '2주간 체결' },
+            { b: '54', unit: '시간', label: '누적 절감 (약)' },
+          ],
+          problem: [
+            '연봉 협상 중 담당 인력 퇴사로 공백 발생, 급여 반영 일정은 변경 불가',
+            '근로계약서 대면 서명 방식은 건당 30분 이상 소요되어 연봉 협상 대상자의 계약서를 하나씩 체결하기에는 시간이 부족',
+          ],
+          solution: [
+            'Airtable 내 이름, 주민번호, 임금, 기간 값으로 계약서를 채운 뒤, 미리보기 확인 후 승인 건 발송 자동화',
+            '발송 전 같은 계약의 기존 문서를 확인, 레코드 ID를 search_code로 실어 보내 외부 문서함 조회 후 중복이면 계약서 발송 차단',
+            '발송 실패 시 최대 3회 재시도 로직 수행. 계약서 생성 전 앞선 시도로 생긴 계약서가 있는지 조회해 이중 발송 방지',
+            '서명 누락 방지를 위해 미서명자에게 발송 3일 뒤와 만료 2일 전 Slack 리마인드 발송',
+          ],
+          result: [
+            '근로계약서 회수 기간 평균 3일 → 1.96일, 자동화 도입 전 대비 약 35% 단축',
+            '근로계약서 1건 작업 시간 약 30분 → 2분 이내로 줄어 2주간 116건 체결, 누적 약 54시간 절감',
+            '리마인드 알림을 받은 32명 중 25명이 1시간 안에 서명',
+          ],
+        },
         {
           title: '문서 수집 로직 재설계, Semantic Chunking 적용으로 사내 챗봇 검색 품질 개선',
           metrics: [
@@ -72,37 +109,82 @@ window.DATA = {
             '외부 LLM, 슬랙, DB로 가는 모든 경로에 게이트를 적용. 사내 매뉴얼 DB 적재 전 점검을 통해 개인정보 7종 형식 기준 원문 노출 방지',
           ],
         },
-        {
-          title: '근로계약서 전자계약 자동화로 건당 작업 시간 93% 절감',
-          metrics: [
-            { a: '약 30', b: '2', unit: '분 이내', label: '근로계약서 1건 작업 시간', bar: [30, 2] },
-            { a: '3', b: '1.96', unit: '일', label: '회수 기간 평균, 약 35% 단축', bar: [3, 1.96] },
-            { b: '116', unit: '건', label: '2주간 체결' },
-            { b: '54', unit: '시간', label: '누적 절감 (약)' },
-          ],
-          problem: [
-            '연봉 협상 중 담당 인력 퇴사로 공백 발생, 급여 반영 일정은 변경 불가',
-            '근로계약서 대면 서명 방식은 건당 30분 이상 소요되어 연봉 협상 대상자의 계약서를 하나씩 체결하기에는 시간이 부족',
-          ],
-          solution: [
-            'Airtable 내 이름, 주민번호, 임금, 기간 값으로 계약서를 채운 뒤, 미리보기 확인 후 승인 건 발송 자동화',
-            '발송 전 같은 계약의 기존 문서를 확인, 레코드 ID를 search_code로 실어 보내 외부 문서함 조회 후 중복이면 계약서 발송 차단',
-            '발송 실패 시 최대 3회 재시도 로직 수행. 계약서 생성 전 앞선 시도로 생긴 계약서가 있는지 조회해 이중 발송 방지',
-            '서명 누락 방지를 위해 미서명자에게 발송 3일 뒤와 만료 2일 전 Slack 리마인드 발송',
-          ],
-          result: [
-            '근로계약서 회수 기간 평균 3일 → 1.96일, 자동화 도입 전 대비 약 35% 단축',
-            '근로계약서 1건 작업 시간 약 30분 → 2분 이내로 줄어 2주간 116건 체결, 누적 약 54시간 절감',
-          ],
-        },
+      ],
+      more: [
+        { title: 'RAG 기반 사내 챗봇 ‘블랙이’ 기획 · 설계 · 개발', text: '노션 지식베이스 수집, 청킹, 키워드 랭킹 검색, LLM 답변 생성 RAG 파이프라인을 단독 구현해 Slack에 연동. HR팀으로 들어오던 업무요청 문의를 약 30% 줄였습니다.' },
+        { title: '답변 모델 변경으로 비용 단가 1/20 감축', text: '답변 모델을 Sonnet 5.5에서 Haiku 5.5로 변경해 답변 품질은 유지하며 비용 단가 1/20 감축' },
+      ],
+    },
+    {
+      id: 'hecto',
+      group: 'career',
+      name: '(주)헥토큐앤엠',
+      kind: '현장실습생 · QA Engineer / QA3팀',
+      sub: '드시모네몰 Frontend, Backend QA',
+      period: '2024.09 ~ 2024.12',
+      points: [
+        '기획서, 요구사항명세서 기반 기능 검증을 위한 테스트 케이스를 설계해 주 1회 정기 배포마다 140~500건 검증',
+        '드시모네몰 상품, 주문, 결제, 정기구독, 쿠폰, 이벤트 배너 기능 검증으로 변경된 정기 배송 정책 미적용 케이스 16건 검출',
       ],
     },
     {
       id: 'coupon',
+      group: 'project',
       name: '선착순 쿠폰 발급 시스템',
-      sub: '',
+      kind: '개인 프로젝트',
+      sub: '요청이 한 번에 몰리는 선착순 쿠폰 이벤트에서 정합성을 지키며 처리량을 높이는 구조를 단계별로 검증했습니다.',
       period: '2026.09 ~ 2026.10',
+      facts: [['형태', '개인 프로젝트']],
+      stack: ['Java 17', 'Spring Boot 3.4', 'Spring Data JPA', 'MySQL', 'Redis', 'AWS EC2', 'Docker Compose', 'JUnit 5', 'k6'],
+      headline: { a: '140', b: '4,800', unit: 'TPS', label: '쿠폰 지급 최대 처리량', note: '140 → 1,800 → 4,800 TPS, 초과·중복 지급 0건' },
+      demo: true,
       cases: [
+        {
+          title: '쿠폰 재고 정합성을 지키기 위한 동시성 제어 방법 6가지 비교 후 Redis Lua script 선택',
+          metrics: [
+            { a: '431~704', b: '1,667~3,125', unit: 'rps', label: '응답 처리량, 비관적 락 → Lua (재고 100장, 요청 1,000건)', bar: [704, 3125] },
+            { b: '0', unit: '건', label: '초과/중복 지급 (테스트 3회 모두)' },
+          ],
+          problem: ['선착순 쿠폰 이벤트에서 재고 정합성, 1인 1장, 선착순, 트래픽 처리 성능을 모두 잡을 수 있는 방법 필요'],
+          solution: [
+            {
+              h: 'DB 격리 수준 조정', pick: 'x',
+              items: [
+                {
+                  h: 'READ COMMITTED, REPEATABLE READ',
+                  items: ['재고 50장, 동시 요청 50건 테스트에서 성공 응답은 50건이었지만 실제 issued_count는 5~6. 읽은 issued_count에 +1한 값을 덮어써 갱신 손실 발생'],
+                },
+                { h: 'SERIALIZABLE', items: ['S 락을 쥔 채 X 락으로 issued_count를 갱신하는 구조라 데드락 발생'] },
+              ],
+            },
+            {
+              h: 'DB 수준 락 방식', pick: 'x',
+              items: [
+                { h: '낙관적 락', items: ['Retry가 없으면 50건 중 6건만 지급되었으며, Retry하면 선착순이 보장되지 않아 제외'] },
+                { h: '비관적 락', items: ['락 대기로 인해 단순 조회 p95가 10ms → 444ms, CATS 알고리즘의 가중치에 따라 선착순이 보장되지 않음을 확인해 제외'] },
+              ],
+            },
+            {
+              h: 'Redis Set', pick: 'x',
+              items: [
+                'SCARD + SADD: 총 수량을 체크하는 SCARD와 지급 처리하는 SADD 사이에 다른 요청의 커맨드가 끼어들어 초과 지급이 발생해 제외',
+                'MULTI/EXEC(Redis Transaction): 커맨드를 묶어 실행할 뿐 결과로 분기하지 못해, 초과 시 SREM으로 되돌리는 별도 Rollback 로직이 필요해 제외',
+                'WATCH: 충돌한 요청을 재처리하면서 선착순이 보장되지 않아 제외',
+              ],
+            },
+            {
+              h: 'Lua Script', pick: 'ok',
+              items: [
+                '선착순 기준을 Redis 처리 순서로 재정의',
+                '별도 Rollback 로직이 필요 없고, 단일 스레드에서 스크립트 전체가 한 번에 실행되어, 중복 확인 → 재고 확인 → SADD 사이에 다른 요청이 끼어들 수 없어 동시성 문제를 해결할 수 있어 적합하다고 판단',
+              ],
+            },
+          ],
+          result: [
+            '재고 100장, 요청 1,000건(로컬 k6, 3회)에서 응답 처리량이 비관적 락 431~704 rps에서 Lua 1,667~3,125 rps로 증가',
+            '테스트 3회 모두 초과/중복 지급 0건, Redis 처리 순서 기준 선착순 100명에게만 지급',
+          ],
+        },
         {
           title: 'Redis Streams 기반 write-behind 전략으로 쿠폰 쓰기 병목 해소',
           metrics: [{ a: '140', b: '1,800', unit: 'TPS', label: '쿠폰 지급 처리량', bar: [140, 1800] }],
@@ -112,14 +194,14 @@ window.DATA = {
           ],
           solution: [
             {
-              h: 'Redis Pub/Sub',
+              h: 'Redis Pub/Sub', pick: 'x',
               items: [
                 'Redis Pub/Sub은 At-Most-Once이기 때문에 메시지 유실 가능성이 있어 적합하지 않다고 판단.',
                 'subscriber 프로세스를 SIGKILL로 종료하자 지급 접수 성공 응답(202)을 받은 1,000건 중 967건이 유실되는 것을 확인',
               ],
             },
             {
-              h: 'write-behind 전략 (Redis Streams)',
+              h: 'write-behind 전략 (Redis Streams)', pick: 'ok',
               items: [
                 'Redis Set의 쿠폰별 지급 회원 명단을 1차 Single Source of Truth로 사용',
                 'Producer가 Stream에 메시지를 발행하고, Consumer가 최대 100건을 다중 행 INSERT로 묶어 DB에 적재',
@@ -175,59 +257,22 @@ window.DATA = {
             '실제 쿠폰 이벤트 사례(여기어때 네고왕, 약 3,600 TPS)를 기준으로 재고 7,000장, 최대 4,000 rps, 10분 이벤트 시나리오를 구성 → 요청 약 123만 건에서 5xx 0건, 초과 지급 0건, 지급 성공 응답 7,000건 = DB 지급 7,000건, 부하 종료 후 1초 안에 적재 완료',
           ],
         },
-        {
-          title: '쿠폰 재고 정합성을 지키기 위한 동시성 제어 방법 6가지 비교 후 Redis Lua script 선택',
-          metrics: [
-            { a: '431~704', b: '1,667~3,125', unit: 'rps', label: '응답 처리량, 비관적 락 → Lua (재고 100장, 요청 1,000건)', bar: [704, 3125] },
-            { b: '0', unit: '건', label: '초과/중복 지급 (테스트 3회 모두)' },
-          ],
-          problem: ['선착순 쿠폰 이벤트에서 재고 정합성, 1인 1장, 선착순, 트래픽 처리 성능을 모두 잡을 수 있는 방법 필요'],
-          solution: [
-            {
-              h: 'DB 격리 수준 조정',
-              items: [
-                {
-                  h: 'READ COMMITTED, REPEATABLE READ',
-                  items: ['재고 50장, 동시 요청 50건 테스트에서 성공 응답은 50건이었지만 실제 issued_count는 5~6. 읽은 issued_count에 +1한 값을 덮어써 갱신 손실 발생'],
-                },
-                { h: 'SERIALIZABLE', items: ['S 락을 쥔 채 X 락으로 issued_count를 갱신하는 구조라 데드락 발생'] },
-              ],
-            },
-            {
-              h: 'DB 수준 락 방식',
-              items: [
-                { h: '낙관적 락', items: ['Retry가 없으면 50건 중 6건만 지급되었으며, Retry하면 선착순이 보장되지 않아 제외'] },
-                { h: '비관적 락', items: ['락 대기로 인해 단순 조회 p95가 10ms → 444ms, CATS 알고리즘의 가중치에 따라 선착순이 보장되지 않음을 확인해 제외'] },
-              ],
-            },
-            {
-              h: 'Redis Set',
-              items: [
-                'SCARD + SADD: 총 수량을 체크하는 SCARD와 지급 처리하는 SADD 사이에 다른 요청의 커맨드가 끼어들어 초과 지급이 발생해 제외',
-                'MULTI/EXEC(Redis Transaction): 커맨드를 묶어 실행할 뿐 결과로 분기하지 못해, 초과 시 SREM으로 되돌리는 별도 Rollback 로직이 필요해 제외',
-                'WATCH: 충돌한 요청을 재처리하면서 선착순이 보장되지 않아 제외',
-              ],
-            },
-            {
-              h: 'Lua Script',
-              items: [
-                '선착순 기준을 Redis 처리 순서로 재정의',
-                '별도 Rollback 로직이 필요 없고, 단일 스레드에서 스크립트 전체가 한 번에 실행되어, 중복 확인 → 재고 확인 → SADD 사이에 다른 요청이 끼어들 수 없어 동시성 문제를 해결할 수 있어 적합하다고 판단',
-              ],
-            },
-          ],
-          result: [
-            '재고 100장, 요청 1,000건(로컬 k6, 3회)에서 응답 처리량이 비관적 락 431~704 rps에서 Lua 1,667~3,125 rps로 증가',
-            '테스트 3회 모두 초과/중복 지급 0건, Redis 처리 순서 기준 선착순 100명에게만 지급',
-          ],
-        },
       ],
     },
     {
       id: 'nowait',
+      group: 'project',
       name: 'NoWait',
-      sub: '축제 원격 줄서기, 테이블 오더 서비스',
+      kind: '팀 프로젝트',
+      sub: '축제 부스 원격 줄서기와 음식 주문을 테이블오더로 처리하고 관리자에게 주문 접수, 입장 관리, 매출 통계를 제공하는 서비스',
       period: '2025.06 ~ 2026.02',
+      facts: [
+        ['참여인력', '백엔드 2명 / 프론트엔드 3명 / 디자이너 1명'],
+        ['담당', '팀 빌딩, 기획, 배포, 서비스 제공을 위한 대학교 컨택'],
+      ],
+      stack: ['Java 17', 'Spring Boot 3.5', 'Spring Data JPA', 'Querydsl', 'MySQL', 'Redis', 'AWS(EC2, RDS, S3, Lambda)', 'Docker', 'GitHub Actions', 'Prometheus', 'Grafana'],
+      headline: { a: '59,808', b: '123', unit: '회', label: '메뉴 조회 쿼리 99.8% 감소', note: '1,000 rps - 60초 기준, 캐시 히트율 99.8%' },
+      demo: true,
       cases: [
         {
           title: 'Caffeine 캐시와 Redis Pub/Sub 기반 무효화로 RDB로 향하는 메뉴 조회 쿼리 99.8% 감소',
@@ -243,13 +288,13 @@ window.DATA = {
           ],
           solution: [
             {
-              h: '글로벌 캐시',
+              h: '글로벌 캐시', pick: 'x',
               items: [
                 '모든 조회 요청이 Redis를 거치는 글로벌 캐시는 캐시 부하가 Redis로 집중돼 Redis 자체가 성능 병목 지점이 될 수 있음. 원격 줄서기도 같은 Redis에서 처리하고 있어, 메뉴 조회가 몰리면 원격 줄서기의 성능 및 안정성 저하로 이어질 수 있다고 판단해 제외',
               ],
             },
             {
-              h: 'Redis Pub/Sub 기반 무효화',
+              h: 'Redis Pub/Sub 기반 무효화', pick: 'ok',
               items: [
                 '메뉴 변경 시 RDB 업데이트 완료 후 Redis Pub/Sub으로 캐시 무효화 메시지를 발행하고, 메시지를 받은 모든 인스턴스가 Caffeine 기반 로컬 캐시에서 해당 주점 키 삭제',
                 'TTL을 5분으로 설정해 만료로 인한 캐시 미스를 줄이고, 무효화 메시지 발행 실패에 대비해 TTL 자체는 유지',
@@ -286,12 +331,10 @@ window.DATA = {
             '커밋이 끝난 요청만 저장된 응답을 돌려주고, 커밋에 실패한 요청은 재시도 때 다시 처리',
           ],
         },
+      ],
+      more: [
         {
           title: 'Redis Replication / 영속화 설정으로 Redis 대기열 유실 리스크 방지',
-          metrics: [
-            { b: '1', unit: '대', label: 'Master' },
-            { b: '2', unit: '대', label: 'Replica' },
-          ],
           problem: [
             '원격줄서기 데이터를 Redis Sorted Set에 저장해 인스턴스 장애 시 대기열 데이터 전체 유실 위험',
             'Redis 인스턴스 1대 운영, 웨이팅 데이터는 입장 호출, 입장 취소 전까지 Redis에만 저장돼 인스턴스 장애 시 복구 불가능',
@@ -301,7 +344,7 @@ window.DATA = {
         },
         {
           title: 'S3 이벤트, AWS Lambda로 이미지 리사이징 분리',
-          metrics: [{ b: '30', unit: '%', label: '서버 CPU 부하 감소' }],
+          metric: '서버 CPU 부하 30% 감소',
           problem: [
             '사용자가 올리는 원본 이미지의 크기와 비율이 제각각이라 썸네일, 배너 등 용도별 리사이징 필요',
             '백엔드 서버에서 직접 리사이징하면 업로드하는 동안 커넥션을 잡고 있고 CPU 사용량이 늘어 서버 부담이 될 수 있음',
@@ -314,34 +357,47 @@ window.DATA = {
         },
         {
           title: 'GitHub Actions 기반 CI/CD 자동화 파이프라인 구축',
-          metrics: [{ a: '약 10', b: '1', unit: '분 이내', label: '배포 시간 (90% 단축)', bar: [10, 1] }],
+          metric: '배포 시간 약 10분 → 1분 이내',
           problem: [
             '배포마다 AWS EC2에서 직접 git pull, application.yml 작성, 수동 빌드, JAR 실행을 반복해 실수가 잦고 10분 이상 소요',
             '환경 변수 설정과 빌드 명령 등 사람이 직접 처리하는 단계가 많음',
             '개발 환경과 운영 서버의 설정 차이로 로컬에서 정상이던 코드가 운영에서 실패',
           ],
           solution: [
-            { h: 'Jenkins', items: ['유연하지만 별도 서버 구축·관리가 필요해 보류'] },
-            { h: 'Bamboo', items: ['NoWait 팀은 Jira를 쓰지 않아 도입 효과가 작다고 판단'] },
-            { h: 'GitHub Actions', items: ['클라우드 러너로 별도 서버 없이 자동화할 수 있고 YAML 워크플로로 관리하기 쉬워 선택'] },
-            { h: 'Docker', items: ['변경 경로에 맞는 앱의 bootJar와 이미지를 빌드해 배포, 컨테이너로 실행 환경을 통일할 수 있어 선택'] },
+            { h: 'Jenkins', pick: 'x', items: ['유연하지만 별도 서버 구축·관리가 필요해 보류'] },
+            { h: 'Bamboo', pick: 'x', items: ['NoWait 팀은 Jira를 쓰지 않아 도입 효과가 작다고 판단'] },
+            { h: 'GitHub Actions', pick: 'ok', items: ['클라우드 러너로 별도 서버 없이 자동화할 수 있고 YAML 워크플로로 관리하기 쉬워 선택'] },
+            { h: 'Docker', pick: 'ok', items: ['변경 경로에 맞는 앱의 bootJar와 이미지를 빌드해 배포, 컨테이너로 실행 환경을 통일할 수 있어 선택'] },
           ],
           result: ['배포 시간 약 10분 → 1분 이내(90% 단축)', '환경 불일치와 수동 작업에서 생기던 오류 감소'],
         },
+        { title: 'Lua script로 대기 번호 발급과 대기열 등록을 한 번에', text: '원격 줄서기 대기 번호와 실제 대기 순서 정합성을 맞추기 위해 Lua script로 중복 확인, 대기 번호 발급, Redis Sorted Set 등록을 한 번에 처리. score는 Redis 서버 시각을 ms로 변환 후 대기열 최댓값보다 크게 설정해 순서 정합성 보장' },
+        { title: 'Discord 에러 알림으로 오류 대응 시간 5분 이내', metric: '평균 30분 → 5분 이내', text: '오류마다 EC2에 접속해 Docker 로그를 보느라 평균 30분 걸리던 대응을 전역 예외 처리에서 OpenFeign으로 API, 요청 정보, 스택 트레이스를 Discord 에러 알림 채널에 보내 오류 대응 시간 5분 이내로 단축' },
+        { title: '송금 화면 진입 4단계 → 1단계', text: '와이어프레임 테스트에서 30명 중 23명이 불편하다고 답한 테이블 오더 송금 과정을 주점별 토스, 카카오페이, 네이버페이 송금 링크 저장으로 바꿔 송금 화면 진입 4단계 → 1단계 단축으로 사용자경험 개선' },
       ],
     },
     {
       id: 'gasip',
+      group: 'project',
       name: 'Gasip',
-      sub: '',
+      kind: '팀 프로젝트',
+      sub: '가천대학교 교수님 익명 리뷰 커뮤니티 앱. 재학생이 교수님 강의 평가를 공유하고 자유롭게 리뷰를 작성합니다. 앱스토어에 출시하고 에브리타임으로 사용자를 모집해 1년간 AWS EC2, RDS 기반 클라우드 환경에서 운영했습니다.',
       period: '2023.08 ~ 2025.03',
+      facts: [
+        ['참여인력', '백엔드 2명 / 프론트엔드 2명 / 디자이너 1명'],
+        ['담당', '팀 빌딩, 기획, 배포, 운영'],
+        ['운영', 'MAU 1,560명 · 앱스토어 평점 4.8점 · 15개월 동안 Prod 중요도 high 이상 장애 0건'],
+      ],
+      stack: ['Java 17', 'Spring Boot 3.1', 'Spring Data JPA', 'Querydsl', 'MySQL', 'Redis', 'AWS(EC2, RDS, CodeDeploy)', 'GitHub Actions', 'nGrinder', 'k6'],
+      headline: { a: '6,271', b: '0.90', unit: 'ms', label: '리뷰 목록 조회 SQL 실행 시간', note: 'OFFSET 8,300 기준 · MAU 1,560명 서비스' },
+      demo: true,
       cases: [
         {
           title: '리뷰 목록 조회 SQL 실행 시간 6,271ms → 0.90ms',
           metrics: [
             { a: '6,271', b: '0.90', unit: 'ms', label: 'SQL 실행 시간 (OFFSET 8,300 기준)', bar: [6271, 0.9] },
             { a: '31', b: '211.8', unit: 'TPS', label: 'OFFSET 100,000 기준 (p95 152ms)', bar: [31, 211.8] },
-            { b: '205.8', unit: 'TPS', label: 'OFFSET 8,300 기준, 커넥션 타임아웃 → (p95 156ms)' },
+            { a: '타임아웃', b: '205.8', unit: 'TPS', label: 'OFFSET 8,300 기준 (p95 156ms)' },
           ],
           problem: [
             '전교생 22,000명의 80%가 피크 1시간에 리뷰 게시판을 15회 조회한다고 가정해 목표 75 TPS, p95 1,000ms 이하로 설정',
@@ -359,7 +415,7 @@ window.DATA = {
               ],
             },
             {
-              h: 'No-Offset',
+              h: 'No-Offset', pick: 'ok',
               items: ['앱이 무한 스크롤이라 페이지 번호 이동이 필요 없고, No Offset은 페이지 사이에 글이 추가돼도 중복 노출이 없어 lastPostId 기반 No-Offset으로 전환'],
             },
           ],
@@ -370,6 +426,29 @@ window.DATA = {
             '새 리뷰가 등록돼도 이미 본 리뷰가 중복 노출되지 않아 사용자가 지적한 불편 해소',
           ],
         },
+      ],
+      more: [
+        { title: '출시 첫날 장애 이후 stage 서버와 배포 워크플로 추가', metric: '15개월 high 이상 장애 0건', text: '출시 첫날 회원가입 이메일 인증 장애로 가입하려던 학생들이 50명 이상 이탈해 운영 배포 전에 검증할 stage 서버와 배포 워크플로를 추가하고 ERROR 로그 Discord 알림을 붙여 15개월동안 운영하며 Prod 환경 중요도 high 이상 장애 0건 달성' },
+      ],
+    },
+  ],
+
+  edu: [
+    { h: '학력', items: [{ t: '가천대학교', p: '2018.03 ~ 2025.02', d: ['컴퓨터공학과 전공', '의료인공지능 융합전공'] }] },
+    {
+      h: '활동',
+      items: [
+        { t: 'MMMIL 학부 연구 인턴', p: '2022.07 ~ 2022.12', d: ['VGG16 기반 chest X-ray 이진 분류 AI 모델 연구 보조', 'DentisDB 치과 진료 데이터 플랫폼의 로그인 및 역할별 접근권한 기능 개발'] },
+        { t: '테크 칼럼 스터디 운영', p: '9개월째 운영 중', d: ['4명 규모, 매주 겪은 문제를 리뷰하며 문제 해결 방법을 공유'] },
+      ],
+    },
+    {
+      h: '자격 · 어학',
+      items: [
+        { t: '정보처리기사', p: '2023.11.15', d: ['한국산업인력공단'] },
+        { t: 'SQLD', p: '2023.12.15', d: ['한국데이터산업진흥원'] },
+        { t: '리눅스마스터 2급', p: '2024.06.28', d: ['한국정보통신진흥협회'] },
+        { t: 'OPIc IH', p: '2026.09.11', d: ['ACTFL'] },
       ],
     },
   ],
@@ -385,11 +464,11 @@ window.DATA = {
   P.coupon.repo = CP;
   P.coupon.evidence = [
     {
-      type: 'stages',
-      title: '한 번에 한 가지만 바꾸며 쌓은 10단계',
-      desc: '단계를 누르면 그 단계의 요청 흐름과 직접 실행해 확인한 결과가 나옵니다. 그림은 레포의 것입니다.',
+      type: 'stages', at: 'head',
+      title: '한 번에 한 가지만 바꾸며 쌓은 11단계',
+      desc: '아래 사례 세 개는 1~3단계(동시성 제어 비교), 9단계(write-behind), 10단계(트랜잭션 없는 회원 확인)를 자세히 쓴 것입니다. 단계를 누르면 그 단계의 요청 흐름과 직접 실행해 확인한 결과가 나옵니다. 그림은 레포의 것입니다.',
       src: { label: 'README · 단계별 플로우', url: CP + '#단계별-플로우' },
-      start: 7,
+      start: 0,
       items: [
         { n: '1', name: '격리 수준 비교', img: flow('stage1-isolation'), alt: 'k6 요청이 LabService 와 IsolationIssueCouponService 를 지나 MySQL 에 SELECT, INSERT, UPDATE 를 보내는 흐름',
           text: '같은 로직을 격리 수준만 바꿔 실행. READ COMMITTED·REPEATABLE READ 는 갱신 손실과 초과 지급이 났고, SERIALIZABLE 은 초과 지급은 막았지만 데드락으로 재고 1000 에 103장만 지급(재시도 없음).' },
@@ -414,7 +493,7 @@ window.DATA = {
       ],
     },
     {
-      type: 'line',
+      type: 'line', case: 2,
       title: '9단계와 10단계의 요청 속도별 MySQL CPU',
       desc: '같은 날·같은 인스턴스(2026-10-23). 9단계는 1,800 req/s 에서 CPU 가 가득 찼습니다. 10단계에서는 회원 확인의 트랜잭션 설정 문장을 뺐고 4,800 req/s 까지 따라갔습니다. 동그라미는 두 회차 모두 조건을 만족한 속도 중 가장 높은 값입니다. 10단계의 2,000~4,500 은 탐색 1회 값이고 나머지는 2회 평균입니다. 5,400 에서는 무너져 그리지 않았습니다.',
       src: { label: '10단계 EC2 측정 원본', url: CP + '/blob/HEAD/docs/learning/results/2026-10-23-stage10-ec2.md' },
@@ -426,7 +505,7 @@ window.DATA = {
       ],
     },
     {
-      type: 'bars',
+      type: 'bars', case: 2,
       title: '이벤트 오픈 10분의 분 단위 기록',
       desc: '2026-10-25, 10단계 방식 1회 실행. 보낸 요청은 더블클릭 58,715쌍을 포함해 1,230,712건입니다. 202 접수가 7,000건, 409 거절이 1,223,712건이었고 서버 오류는 0건이었습니다. 재고는 오픈 6.0초에 소진됐고 DB 적재는 7.1초에 끝났습니다. 둘 다 1초 표본이라 ±1초 오차가 있습니다.',
       src: { label: '이벤트 시나리오 측정 원본', url: CP + '/blob/HEAD/docs/learning/results/2026-10-25-event-ec2.md' },
@@ -440,7 +519,7 @@ window.DATA = {
       ],
     },
     {
-      type: 'code',
+      type: 'code', case: 0,
       title: '판단부터 적재 요청까지 묶은 Lua 스크립트',
       desc: '중복 확인 → 재고 확인 → XADD → SADD 가 한 스크립트라 그 사이에 다른 요청이 끼지 않습니다. Lua 는 실행 중 오류가 나도 앞선 명령을 되돌리지 않아서 실패할 수 있는 XADD 를 SADD 보다 먼저 둡니다.',
       src: { label: 'CouponIssuedRedisRepository.java', url: CP + '/blob/HEAD/src/main/java/couponToy/CouponToyProject/CouponIssue/repository/CouponIssuedRedisRepository.java' },
@@ -462,7 +541,7 @@ return 0`,
   P.gasip.repo = GS;
   P.gasip.evidence = [
     {
-      type: 'code',
+      type: 'code', case: 0,
       title: 'lastPostId 기반 No-Offset 조회',
       desc: '마지막으로 본 글의 ID 보다 작은 글만 읽되 한 건을 더 읽어 다음 페이지가 있는지 판별합니다. 건너뛸 행을 읽지 않고 페이지 사이에 새 글이 들어와도 이미 본 글이 다시 나오지 않습니다.',
       src: { label: 'BoardRepositoryCustomImpl.java', url: GS + '/blob/HEAD/src/main/java/com/example/gasip/board/repository/BoardRepositoryCustomImpl.java' },
@@ -499,7 +578,7 @@ boolean hasNext = boardReadResponses.size() > pageable.getPageSize();`,
   P.nowait.repo = NW;
   P.nowait.evidence = [
     {
-      type: 'image',
+      type: 'image', at: 'head',
       title: '시스템 구성',
       desc: 'user-api 와 admin-api 가 다른 인스턴스로 돌고 메뉴가 바뀌면 Redis Pub/Sub 으로 user-api 의 Caffeine 캐시를 무효화합니다. 대기열은 Redis Sorted Set 으로 만들었습니다. 이미지는 S3 원본 → Lambda → S3 리사이즈 순서로 처리합니다. 배포 흐름은 GitHub Actions → Docker Hub → compose pull 입니다.',
       src: { label: 'README · System Architecture', url: NW },
@@ -507,7 +586,7 @@ boolean hasNext = boardReadResponses.size() > pageable.getPageSize();`,
       alt: '손님과 주점 운영자가 웹을 거쳐 EC2 의 user-api, admin-api 로 요청하고, Redis Master 와 복제본 2대, RDS MySQL, S3 와 Lambda, Prometheus 와 Grafana, GitHub Actions 와 Docker Hub 배포 경로가 연결된 구성도',
     },
     {
-      type: 'line',
+      type: 'line', case: 0,
       title: '캐시 전후의 요청 속도별 MySQL CPU',
       desc: 'EC2, 2026-10-26, 속도마다 60초씩 1회. MySQL 컨테이너는 1 CPU 로 제한해서 1.0 코어가 한계입니다. 캐시 전에는 JOIN + 인덱스로 조회했고 2,000 req/s 에서 0.99 코어로 가득 찼습니다. 캐시 후에는 같은 속도에서 0.31 코어였습니다. 동그라미는 p95 200ms 안에서 처리한 최대 부하입니다. 측정 당시 캐시 TTL 은 1일이었습니다.',
       src: { label: 'performance/menu-cache/03-cache.md', url: NW + '/blob/HEAD/performance/menu-cache/03-cache.md' },
@@ -519,7 +598,7 @@ boolean hasNext = boardReadResponses.size() > pageable.getPageSize();`,
       ],
     },
     {
-      type: 'code',
+      type: 'code', case: 0,
       title: '무효화 메시지로 지우고 재구독 때 전체를 비우는 로컬 캐시',
       desc: 'Pub/Sub 은 연결이 끊긴 동안의 메시지를 다시 주지 않습니다. 그래서 구독이 다시 맺어질 때 로컬 캐시 전체를 비워 놓친 무효화를 수습합니다.',
       src: { label: 'DistributedCachedDao.java', url: NW + '/blob/HEAD/nowait-domain/domain-redis/src/main/java/com/nowait/domaincoreredis/common/cache/DistributedCachedDao.java' },
@@ -540,7 +619,7 @@ public void onChannelSubscribed(byte[] channel, long count) {
 }`,
     },
     {
-      type: 'code',
+      type: 'code', case: 1,
       title: 'SET NX 한 번으로 선점하는 멱등 키와 커밋 뒤 응답 저장',
       desc: '트랜잭션 안에서 부르면 바로 실패하도록 막아 두었습니다. TTL 은 처리 중일 때 1분, 완료되면 3분입니다. 같은 키 동시 요청 10건 중 1건만 실행되고 9건이 거절되는 것은 테스트(IdempotencyServiceTest)로 확인합니다.',
       src: { label: 'IdempotencyService.java', url: NW + '/blob/HEAD/nowait-app-user-api/src/main/java/com/nowait/applicationuser/idempotency/IdempotencyService.java' },
