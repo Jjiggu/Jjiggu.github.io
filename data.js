@@ -127,6 +127,8 @@ window.DATA = {
       stack: ['Java 17', 'Spring Boot 3.4', 'Spring Data JPA', 'MySQL', 'Redis', 'AWS EC2', 'Docker Compose', 'JUnit 5', 'k6'],
       headline: { a: '140', b: '4,800', unit: 'TPS', label: '쿠폰 지급 최대 처리량', note: '140 → 1,800 → 4,800 TPS, 초과·중복 지급 0건' },
       demo: 'lead', // 사례보다 먼저: 움직이는 시뮬레이션이 전체 그림 역할
+      // 표지: 프로젝트로 넘어갈 때 화면을 꽉 채우는 장면. crowd = 몰려드는 요청 / expand = 이미지가 화면 가득 펼쳐짐 / pan = 긴 이미지가 옆으로 흐름
+      cover: { type: 'crowd', big: '쿠폰 100장에 1,000명이 동시에', small: '초과 지급 없이, 먼저 온 순서대로 나눠 주는 구조를 단계별로 실험했습니다.' },
       cases: [
         {
           title: '쿠폰 재고 정합성을 지키기 위한 동시성 제어 방법 6가지 비교 후 Redis Lua script 선택',
@@ -262,6 +264,7 @@ window.DATA = {
       stack: ['Java 17', 'Spring Boot 3.5', 'Spring Data JPA', 'Querydsl', 'MySQL', 'Redis', 'AWS(EC2, RDS, S3, Lambda)', 'Docker', 'GitHub Actions', 'Prometheus', 'Grafana'],
       headline: { a: '59,808', b: '123', unit: '회', label: '메뉴 조회 쿼리 99.8% 감소', note: '1,000 rps - 60초 기준, 캐시 히트율 99.8%' },
       demo: true,
+      cover: { type: 'expand', img: 'assets/nowait/service.png', w: 2400, h: 1350, bg: '#fff', alt: 'NoWait 서비스 화면 모음: 노웨잇 로고와 “기다림 없는 즐거운 축제” 문구, 부스 목록·메뉴·주문·송금·대기 등록 화면' },
       cases: [
         {
           title: 'Caffeine 캐시와 Redis Pub/Sub 기반 무효화로 RDB로 향하는 메뉴 조회 쿼리 99.8% 감소',
@@ -380,6 +383,7 @@ window.DATA = {
       stack: ['Java 17', 'Spring Boot 3.1', 'Spring Data JPA', 'Querydsl', 'MySQL', 'Redis', 'AWS(EC2, RDS, CodeDeploy)', 'GitHub Actions', 'nGrinder', 'k6'],
       headline: { a: '6,271', b: '0.90', unit: 'ms', label: '리뷰 목록 조회 SQL 실행 시간', note: 'OFFSET 8,300 기준 · MAU 1,560명 서비스' },
       demo: true,
+      cover: { type: 'pan', img: 'assets/gasip/app-screens.jpg', w: 3666, h: 1100, bg: '#007aff', alt: 'Gasip 앱스토어 소개 화면 7장: 가천대학교 유일 교수님 전문 리뷰앱, 가천인들만의 커뮤니티, 교수님 리뷰 확인·작성, 정보 공유, 전체 리뷰 화면' },
       cases: [
         {
           title: '리뷰 목록 조회 SQL 실행 시간 6,271ms → 0.90ms',

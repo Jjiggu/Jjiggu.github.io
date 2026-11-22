@@ -12,14 +12,13 @@
   const root = document.createElement('section');
   root.className = 'nw demo';
   root.innerHTML = `
-    <div class="split demo__intro">
+    <div class="demo__intro">
       <header class="ev__head">
         <p class="eyebrow">직접 해 보기</p>
         <h4 class="ev__title">직접 눌러 보는 NoWait</h4>
         <p class="ev__desc">휴대폰에서 줄을 서거나 테이블에서 주문하면 바로 오른쪽에 그때 서버 안에서 일어나는 일이 나옵니다. 아래 운영자 화면에서 입장 호출과 주문 처리를 해 보세요. 위 두 사례(캐시 무효화, 멱등 키)가 여기서 그대로 돌아갑니다.</p>
         <div class="bk__actions nw__flow"><button type="button" data-act="flow" data-f="wait">원격 줄서기</button><button type="button" data-act="flow" data-f="order">테이블 주문 (QR)</button></div>
       </header>
-      <figure class="nw__mock"><img src="assets/nowait/service.png" alt="NoWait 서비스 화면 모음: 주점 목록, 메뉴, 주문, 대기 등록 화면" loading="lazy" width="2400" height="1350"><figcaption>실제 서비스 화면. 출처: NoWait 프론트엔드 README</figcaption></figure>
     </div>
     <div class="nw__grid">
       <div class="nw__col"><p class="nw__label">손님 화면</p><div class="phone"><div class="phone__screen" id="nw-phone" data-lenis-prevent></div></div></div>

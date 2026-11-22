@@ -828,3 +828,22 @@ html[data-theme='light'] .theme .sun { display: block; }
 html { transition: background-color 0.3s; }
 body { transition: background-color 0.3s, color 0.3s; }
 
+
+/* ───── 프로젝트 표지: 넘어갈 때 화면을 꽉 채우는 장면 ───── */
+.cover { margin: clamp(3rem, 8vw, 6rem) calc(-1 * var(--pad)) 0; }
+.cover__stage { height: 100svh; overflow: hidden; }
+.cover__frame { position: relative; height: 100%; overflow: hidden; background: var(--cover-bg, var(--navy)); }
+.cover--expand .cover__img { display: block; width: 100%; height: 100%; object-fit: contain; } /* 로고까지 들어간 키 비주얼이라 자르지 않음 */
+.cover--pan .cover__img { display: block; height: 100%; width: auto; max-width: none; }
+.cover--crowd { --dot: #9db0ff; --ink: #eef0ff; --mute: #8f97cc; --cover-bg: #060916; color: var(--ink); } /* 두 모드에서 같은 어두운 장면 */
+.cover__crowd { position: absolute; inset: 0; width: 100%; height: 100%; }
+.cover__say { position: absolute; inset: 0; display: grid; place-content: center; gap: 1rem; padding: 0 var(--pad); text-align: center; pointer-events: none; }
+.cover__big { font-size: clamp(2.2rem, 6vw, 6rem); font-weight: 900; line-height: 1.1; letter-spacing: -0.04em; text-wrap: balance; text-shadow: 0 0 40px #060916; }
+.cover__small { justify-self: center; max-width: 34rem; font-size: clamp(1rem, 1.3vw, 1.2rem); color: color-mix(in srgb, var(--ink) 82%, transparent); text-wrap: balance; text-shadow: 0 0 20px #060916; }
+.demo__intro:not(.split) .ev__head { max-width: 46rem; }
+@media (max-width: 899px) { /* 고정 없이 이미지 비율대로, 긴 이미지는 손가락으로 밀어서 봄 */
+  .cover__stage { height: auto; }
+  .cover--expand .cover__frame { aspect-ratio: 16 / 9; }
+  .cover--pan .cover__frame { height: 64svh; overflow-x: auto; scrollbar-width: none; }
+  .cover--crowd .cover__frame { height: 80svh; }
+}

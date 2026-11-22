@@ -89,7 +89,15 @@
       </li>`).join('')}</ul>
     </section>`;
 
+  // 표지: 프로젝트로 넘어갈 때 화면을 꽉 채우는 장면 (data.js 의 cover)
+  const coverHtml = (c) => `<div class="cover cover--${c.type}" data-type="${c.type}"${c.bg ? ` style="--cover-bg:${c.bg}"` : ''}>
+      <div class="cover__stage"><div class="cover__frame">${c.type === 'crowd'
+        ? `<canvas class="cover__crowd" aria-hidden="true"></canvas><div class="cover__say"><p class="cover__big">${esc(c.big)}</p><p class="cover__small">${esc(c.small)}</p></div>`
+        : `<img class="cover__img" src="${c.img}" alt="${esc(c.alt)}" width="${c.w}" height="${c.h}" loading="lazy" decoding="async">`}</div></div>
+    </div>`;
+
   const projectHtml = (p) => `<section class="project${p.cases ? '' : ' project--compact'}" id="${p.id}">
+      ${p.cover ? coverHtml(p.cover) : ''}
       <header class="project__head">
         <p class="project__kind"><span>${esc(p.kind)}</span><span class="num">${p.period}</span></p>
         <h3 class="project__name">${esc(p.name)}</h3>
@@ -145,31 +153,32 @@
     });
   }
 
-  /* ───────── 4. 히어로 배경: 몰려드는 요청 ─────────
-     예전 첫 화면(쿠폰 이벤트 대기)의 점 무리. 이름 오른쪽 빈 곳을 맴돌고 마우스를 비켜 감. */
-  (() => {
-    const cv = $('#hero-crowd'), ctx = cv.getContext('2d'), N = 700, t0 = performance.now();
+  /* ───────── 4. 몰려드는 요청(점 무리) ─────────
+     예전 첫 화면(쿠폰 이벤트 대기)의 점 무리. 히어로에서는 이름 오른쪽을 맴돌고, 쿠폰 표지에서는 스크롤할수록 가운데로 빨려 듦.
+     place(W, H) → { cx, cy, spread, alpha }, squeeze 0~1 이 클수록 가운데로 모임. 마우스는 비켜 감. */
+  function swarm(cv, place, N = 700) {
+    const ctx = cv.getContext('2d'), t0 = performance.now();
     const ps = Array.from({ length: N }, (_, i) => ({ a: Math.random() * 6.283, r: 0.18 + Math.random() * 0.5, sp: (Math.random() - 0.5) * 0.5, born: (i / N) * 2600 + Math.random() * 300, x: 0, y: 0, on: false, s: 1 + Math.random() * 1.4 }));
-    const st = { mx: -999, my: -999, on: true, color: '#eef0ff' };
-    const readColor = () => { st.color = getComputedStyle(document.documentElement).getPropertyValue('--dot').trim(); };
+    const st = { mx: -999, my: -999, on: true, color: '#9db0ff', squeeze: 0 };
+    const readColor = () => { st.color = getComputedStyle(cv).getPropertyValue('--dot').trim() || st.color; };
     readColor(); addEventListener('themechange', readColor);
     let W = 0, H = 0;
     const fit = () => { const d = Math.min(devicePixelRatio || 1, 2); W = cv.clientWidth; H = cv.clientHeight; cv.width = W * d; cv.height = H * d; ctx.setTransform(d, 0, 0, d, 0, 0); };
-    fit(); addEventListener('resize', fit);
+    fit(); new ResizeObserver(fit).observe(cv);
     cv.parentElement.addEventListener('pointermove', (e) => { const r = cv.getBoundingClientRect(); st.mx = e.clientX - r.left; st.my = e.clientY - r.top; });
     cv.parentElement.addEventListener('pointerleave', () => { st.mx = st.my = -999; });
     function loop(now) {
       if (!st.on) return;
-      const el = now - t0, wide = W >= 900, cx = W * (wide ? 0.72 : 0.5), cy = H * (wide ? 0.46 : 0.3), R = Math.max(W, H);
+      const el = now - t0, P = place(W, H), R = Math.max(W, H), k = 1 - 0.92 * st.squeeze;
       ctx.clearRect(0, 0, W, H);
       ctx.fillStyle = st.color;
-      ctx.globalAlpha = wide ? 0.5 : 0.28; // 좁은 화면에서는 글자 뒤로 지나가므로 옅게
+      ctx.globalAlpha = P.alpha;
       for (const p of ps) {
         if (el < p.born) continue;
-        if (!p.on) { p.on = true; p.x = cx + Math.cos(p.a) * R; p.y = cy + Math.sin(p.a) * R; }
-        p.a += p.sp * 0.006;
-        const rr = p.r * Math.min(W * (wide ? 0.45 : 1), H) * (0.7 + 0.08 * Math.sin(now / 900 + p.a * 3));
-        let tx = cx + Math.cos(p.a) * rr * 1.4, ty = cy + Math.sin(p.a) * rr;
+        if (!p.on) { p.on = true; p.x = P.cx + Math.cos(p.a) * R; p.y = P.cy + Math.sin(p.a) * R; }
+        p.a += p.sp * 0.006 * (1 + 4 * st.squeeze); // 모일수록 빨리 돎
+        const rr = p.r * P.spread * k * (0.7 + 0.08 * Math.sin(now / 900 + p.a * 3));
+        let tx = P.cx + Math.cos(p.a) * rr * 1.4, ty = P.cy + Math.sin(p.a) * rr;
         const dx = p.x - st.mx, dy = p.y - st.my;
         if (dx * dx + dy * dy < 9000) { tx += dx * 0.6; ty += dy * 0.6; }
         p.x += (tx - p.x) * 0.035; p.y += (ty - p.y) * 0.035;
@@ -180,7 +189,11 @@
     // 화면 밖이면 멈춤
     new IntersectionObserver(([e]) => { const was = st.on; st.on = e.isIntersecting; if (st.on && !was) requestAnimationFrame(loop); }).observe(cv);
     requestAnimationFrame(loop);
-  })();
+    return st;
+  }
+  // 좁은 화면의 히어로에서는 글자 뒤로 지나가므로 옅게
+  swarm($('#hero-crowd'), (W, H) => (W >= 900 ? { cx: W * 0.72, cy: H * 0.46, spread: Math.min(W * 0.45, H), alpha: 0.5 } : { cx: W * 0.5, cy: H * 0.3, spread: Math.min(W, H), alpha: 0.28 }));
+  const crowds = new Map($$('.cover__crowd').map((cv) => [cv, swarm(cv, (W, H) => ({ cx: W / 2, cy: H / 2, spread: Math.min(W * 0.42, H * 0.95), alpha: 0.6 }), 1000)]));
 
   /* ───────── 5. 나머지 모션은 폰트와 근거·데모가 모두 붙은 뒤 ───────── */
   const fonts = Promise.race([document.fonts.ready, new Promise((r) => setTimeout(r, 2500))]);
@@ -219,6 +232,26 @@
     });
     mm.add('(max-width: 899px)', () => {
       panels.forEach((p) => ScrollTrigger.create({ trigger: p, start: 'top 80%', once: true, onEnter: () => countUp($('[data-count]', p)) }));
+    });
+
+    // 프로젝트 표지: 넓은 화면에서는 화면에 고정한 채 스크롤로 장면을 진행
+    //  expand: 가운데 카드가 화면 가득 펼쳐짐 / pan: 화면 높이로 세운 긴 이미지가 옆으로 흐름 / crowd: 1,000개 점이 가운데로 빨려 듦
+    $$('.cover').forEach((cv) => {
+      const type = cv.dataset.type, stage = $('.cover__stage', cv), frame = $('.cover__frame', cv), img = $('.cover__img', cv), say = $('.cover__say', cv);
+      const card = { clipPath: 'inset(13% 11% 13% 11% round 28px)' }, full = { clipPath: 'inset(0% 0% 0% 0% round 0px)', ease: 'none' };
+      mm.add('(min-width: 900px)', () => {
+        const pan = () => (img ? Math.max(img.offsetWidth - innerWidth, 0) : 0);
+        const tl = gsap.timeline({ scrollTrigger: { trigger: stage, start: 'top top', end: () => '+=' + (type === 'pan' ? pan() + innerHeight * 0.4 : innerHeight * 0.9), pin: true, scrub: 0.6, invalidateOnRefresh: true } });
+        // expand 는 로고까지 든 키 비주얼이라 자르지 않고 카드째로 키움, 나머지는 잘린 카드가 열림
+        if (type === 'expand') tl.fromTo(frame, { scale: 0.74, borderRadius: 28 }, { scale: 1, borderRadius: 0, ease: 'none', duration: 1 }, 0);
+        else tl.fromTo(frame, card, { ...full, duration: type === 'pan' ? 0.25 : 1 }, 0);
+        if (type === 'pan') tl.to(img, { x: () => -pan(), ease: 'none', duration: 1 }, 0.2);
+        if (type === 'crowd') tl.to(crowds.get($('.cover__crowd', cv)), { squeeze: 1, ease: 'none', duration: 1 }, 0).from(say.children, { opacity: 0, y: 40, stagger: 0.15, duration: 0.4 }, 0.1);
+      });
+      mm.add('(max-width: 899px)', () => {
+        gsap.fromTo(frame, { clipPath: 'inset(6% 6% 6% 6% round 20px)' }, { clipPath: 'inset(0% 0% 0% 0% round 0px)', duration: 1.2, ease: 'power3.out', scrollTrigger: { trigger: frame, start: 'top 80%', once: true } });
+        if (say) gsap.from(say.children, { opacity: 0, y: 30, stagger: 0.12, duration: 0.8, scrollTrigger: { trigger: frame, start: 'top 70%', once: true } });
+      });
     });
 
     // 프로젝트 제목
