@@ -250,11 +250,12 @@
     const seed = (Math.random() * 1e9) | 0;
     sim = createSim(k, seeded(seed), pickMe(k, seed)); // 실행마다 방문자의 요청 하나를 노란 고리로 표시
     dots = sim.reqs.map((r) => ({ r, lane: Math.random(), jit: Math.random(), x: 0, y: 0, a: 0, born: false }));
-    t0 = last = performance.now();
+    t0 = last = hiddenAt = performance.now(); // 화면 밖에서 시작하면 보이는 순간부터 흐르게
     running = true;
     head();
     if (motion) gsap.killTweensOf(el.verdict);
     el.verdict.textContent = '실행 중';
+    el.verdict.removeAttribute('aria-label'); // 지난 실행의 판정이 읽히지 않게
     el.verdict.dataset.tone = '';
     if (!raf && visible) raf = requestAnimationFrame(frame);
   }
@@ -483,5 +484,7 @@
   head();
   el.verdict.textContent = '방식을 누르면 실행됩니다.';
   draw(0);
-  window.Sim = { start() { auto = true; run(key); } };
+  // start: 화면에 들어오면 자동으로 방식을 돌려 봄 / play: 방문자가 직접 누른 실행(자동 재생이 덮어쓰지 않게)
+  let touched = false;
+  window.Sim = { start() { if (touched) return; auto = true; run(key); }, play(k) { touched = true; auto = false; run(k); } };
 })();

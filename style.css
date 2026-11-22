@@ -846,7 +846,6 @@ body { transition: background-color 0.3s, color 0.3s; }
   .cover__stage { height: auto; }
   .cover--expand .cover__frame { aspect-ratio: 16 / 9; }
   .cover--pan .cover__frame { height: 64svh; overflow-x: auto; scrollbar-width: none; }
-  .cover--crowd .cover__frame { height: 80svh; }
 }
 
 /* 프로젝트마다 그 서비스의 색으로 강조 (NoWait 주황, Gasip 파랑). 안쪽의 --sun 을 쓰는 모든 것이 따라 바뀜 */
@@ -872,3 +871,32 @@ html[data-theme='light'] .project.has-accent { --sun: var(--acc-l); }
 .flow__steps li::before { content: counter(s); position: absolute; left: 0; top: 0.4rem; display: grid; place-items: center; width: 1.4rem; height: 1.4rem; border-radius: 50%; border: 1.5px solid currentColor; font-size: 0.75rem; font-weight: 800; }
 .flow__steps li.is-on { color: var(--ink); }
 .flow__steps li.is-on::before { background: var(--sun); border-color: var(--sun); color: var(--navy); }
+
+/* 쿠폰 표지 안의 선착순 이벤트 화면 (예전 첫 화면 게이트를 옮김) */
+.cover--crowd { --sun: #ffd84a; --navy: #060916; }
+.cover__kicker { font-size: clamp(0.95rem, 1.2vw, 1.1rem); font-weight: 700; color: var(--sun); }
+.cover__gate { position: absolute; inset: 0; display: grid; place-content: center; justify-items: center; padding: 0 var(--pad); text-align: center; }
+.gate__tag { font-size: clamp(0.85rem, 1.1vw, 1rem); font-weight: 700; padding: 0.4rem 0.9rem; border: 1.5px solid currentColor; border-radius: 99px; background: color-mix(in srgb, var(--navy) 60%, transparent); }
+.gate__title { margin-top: clamp(1rem, 3vh, 1.75rem); font-size: clamp(1.6rem, 3.6vw, 3.2rem); font-weight: 800; letter-spacing: -0.03em; line-height: 1.2; text-shadow: 0 0 30px var(--navy); }
+.gate__count { display: flex; align-items: baseline; font-size: clamp(5.5rem, 17vw, 14rem); color: var(--sun); line-height: 0.95; text-shadow: 0 0 40px var(--navy); transition: color 0.4s; }
+.gate__count span { display: inline-block; min-width: 1.02em; }
+.gate__count i { font-style: normal; margin: 0 0.02em; animation: gate-blink 1s steps(2, jump-none) infinite; }
+@keyframes gate-blink { 50% { opacity: 0.25; } }
+.gate__btn {
+  margin-top: clamp(1rem, 3vh, 2rem); min-width: min(22rem, 78vw); height: 68px; padding: 0 2rem;
+  border: 2px solid color-mix(in srgb, var(--ink) 35%, transparent); border-radius: 18px;
+  background: color-mix(in srgb, var(--navy) 70%, transparent); color: color-mix(in srgb, var(--ink) 55%, transparent);
+  font: inherit; font-size: 1.25rem; font-weight: 800; letter-spacing: -0.01em; cursor: not-allowed;
+  transition: background 0.3s, color 0.3s, border-color 0.3s, box-shadow 0.3s;
+}
+.cover__gate.is-open .gate__btn { background: var(--sun); border-color: var(--sun); color: var(--navy); cursor: pointer; animation: gate-pulse 1.4s ease-out infinite; }
+.cover__gate.is-open .gate__btn:hover { background: #fff; border-color: #fff; }
+.cover__gate.is-open .gate__count { color: color-mix(in srgb, var(--ink) 30%, transparent); }
+@keyframes gate-pulse { 0% { box-shadow: 0 0 0 0 rgba(255, 216, 74, 0.6); } 100% { box-shadow: 0 0 0 26px rgba(255, 216, 74, 0); } }
+.gate__hint { margin-top: 1rem; max-width: 30rem; font-size: 0.92rem; color: color-mix(in srgb, var(--ink) 78%, transparent); text-wrap: balance; text-shadow: 0 0 20px var(--navy); }
+.cover__gate :focus-visible { outline: 3px solid #fff; outline-offset: 4px; }
+@media (max-width: 899px) { /* 고정 없이 시나리오 문구와 이벤트 화면을 위아래로 */
+  .cover--crowd .cover__frame { height: auto; display: grid; gap: 14vh; padding: 16vh 0; }
+  .cover--crowd .cover__say, .cover--crowd .cover__gate { position: relative; inset: auto; }
+}
+@media (prefers-reduced-motion: reduce) { .gate__count i, .cover__gate.is-open .gate__btn { animation: none; } }

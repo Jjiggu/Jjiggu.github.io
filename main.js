@@ -92,12 +92,21 @@
   // 표지: 프로젝트로 넘어갈 때 화면을 꽉 채우는 장면 (data.js 의 cover)
   const coverHtml = (c) => `<div class="cover cover--${c.type}" data-type="${c.type}"${c.bg ? ` style="--cover-bg:${c.bg}"` : ''}>
       <div class="cover__stage"><div class="cover__frame">${c.type === 'crowd'
-        ? `<canvas class="cover__crowd" aria-hidden="true"></canvas><div class="cover__say"><p class="cover__big">${esc(c.big)}</p><p class="cover__small">${esc(c.small)}</p></div>`
+        ? `<canvas class="cover__crowd" aria-hidden="true"></canvas>
+           <div class="cover__say"><p class="cover__kicker">${esc(c.kicker)}</p><p class="cover__big">${esc(c.big)}</p><p class="cover__small">${esc(c.small)}</p></div>
+           ${c.gate ? `<div class="cover__gate">
+             <p class="gate__tag">${esc(c.gate.tag)}</p>
+             <h4 class="gate__title">${esc(c.gate.wait)}</h4>
+             <p class="gate__count num" aria-hidden="true"><span>00</span><i>:</i><span class="gate__sec">05</span></p>
+             <button type="button" class="gate__btn" disabled>${esc(c.gate.btn)}</button>
+             <p class="gate__hint">${esc(c.gate.hint)}</p>
+           </div>` : ''}`
         : `<img class="cover__img" src="${c.img}" alt="${esc(c.alt)}" width="${c.w}" height="${c.h}" loading="lazy" decoding="async">`}</div></div>
     </div>`;
 
   const projectHtml = (p) => `<section class="project${p.cases ? '' : ' project--compact'}${p.accent ? ' has-accent' : ''}" id="${p.id}"${p.accent ? ` style="--acc-d:${p.accent[0]};--acc-l:${p.accent[1]}"` : ''}>
       ${p.cover ? coverHtml(p.cover) : ''}
+      ${p.demo === 'cover' ? '<div class="demo-slot"></div>' : ''}
       <header class="project__head">
         <p class="project__kind"><span>${esc(p.kind)}</span><span class="num">${p.period}</span></p>
         <h3 class="project__name">${esc(p.name)}</h3>
@@ -107,7 +116,7 @@
         </div>
         <div class="project__rule"></div>
       </header>
-      <div class="project__lead">${p.demo === 'lead' ? '<div class="demo-slot"></div>' : ''}</div>
+      <div class="project__lead"></div>
       ${(p.cases || []).map(caseHtml).join('')}
       ${p.points ? `<div class="row split"><p class="row__h">주요 업무</p><div class="phase">${list(p.points)}</div></div>` : ''}
       ${p.demo === true ? '<div class="demo-slot"></div>' : ''}
@@ -123,10 +132,22 @@
       .map((it) => `<li><p class="edu__t"><b>${esc(it.t)}</b><span class="num">${it.p}</span></p>${it.d.map((x) => `<p>${esc(x)}</p>`).join('')}</li>`).join('')}</ul></div>`)
     .join('');
 
+  // 쿠폰 표지의 이벤트 화면: 버튼을 누르면 바로 아래 시뮬레이션에서 내 요청을 Redis Streams 로 흘려 보냄
+  const gate = $('#coupon .cover__gate'), G = D.projects.find((p) => p.id === 'coupon').cover.gate;
+  const sendMine = () => window.Sim?.play('stream');
+
   /* 모션을 줄이도록 설정한 환경: 내용만 그대로 보여 주고 끝 */
-  if (reduce || !window.gsap) return; // 시뮬레이션은 자동 재생 없이, 방식을 누를 때만 실행
+  if (reduce || !window.gsap) { // 시뮬레이션은 자동 재생 없이, 누를 때만 실행
+    if (gate) {
+      const btn = $('.gate__btn', gate);
+      gate.classList.add('is-open'); btn.disabled = false; $('.gate__title', gate).textContent = G.open;
+      btn.addEventListener('click', () => { sendMine(); $('#coupon .cp').scrollIntoView(); });
+    }
+    return;
+  }
 
   gsap.registerPlugin(ScrollTrigger, SplitText);
+  if (window.ScrambleTextPlugin) gsap.registerPlugin(ScrambleTextPlugin);
 
   /* ───────── 2. 부드러운 스크롤 (Lenis ↔ ScrollTrigger) ───────── */
   const lenis = new Lenis({ anchors: { offset: -64 } }); // 고정 메뉴 높이만큼 덜 내려감
@@ -159,8 +180,9 @@
   function swarm(cv, place, N = 700) {
     const ctx = cv.getContext('2d'), t0 = performance.now();
     const ps = Array.from({ length: N }, (_, i) => ({ a: Math.random() * 6.283, r: 0.18 + Math.random() * 0.5, sp: (Math.random() - 0.5) * 0.5, born: (i / N) * 2600 + Math.random() * 300, x: 0, y: 0, on: false, s: 1 + Math.random() * 1.4 }));
-    const st = { mx: -999, my: -999, on: true, color: '#9db0ff', squeeze: 0 };
-    const readColor = () => { st.color = getComputedStyle(cv).getPropertyValue('--dot').trim() || st.color; };
+    // focus: 모일 지점(없으면 place 의 중심) / suck: 1 이면 focus 한 점으로 한꺼번에 빨려 듦 / me: 1 이면 focus 에 '내 요청' 표시
+    const st = { mx: -999, my: -999, on: true, color: '#9db0ff', sun: '#ffd84a', squeeze: 0, focus: null, suck: 0, me: 0 };
+    const readColor = () => { const cs = getComputedStyle(cv); st.color = cs.getPropertyValue('--dot').trim() || st.color; st.sun = cs.getPropertyValue('--sun').trim() || st.sun; };
     readColor(); addEventListener('themechange', readColor);
     let W = 0, H = 0;
     const fit = () => { const d = Math.min(devicePixelRatio || 1, 2); W = cv.clientWidth; H = cv.clientHeight; cv.width = W * d; cv.height = H * d; ctx.setTransform(d, 0, 0, d, 0, 0); };
@@ -169,10 +191,11 @@
     cv.parentElement.addEventListener('pointerleave', () => { st.mx = st.my = -999; });
     function loop(now) {
       if (!st.on) return;
-      const el = now - t0, P = place(W, H), R = Math.max(W, H), k = 1 - 0.92 * st.squeeze;
+      const el = now - t0, P = { ...place(W, H), ...(st.focus && { cx: st.focus.x, cy: st.focus.y }) }, R = Math.max(W, H);
+      const k = st.suck ? 0 : 1 - 0.92 * st.squeeze, lerp = st.suck ? 0.14 : 0.035;
       ctx.clearRect(0, 0, W, H);
       ctx.fillStyle = st.color;
-      ctx.globalAlpha = P.alpha;
+      ctx.globalAlpha = st.suck ? 0.9 : P.alpha;
       for (const p of ps) {
         if (el < p.born) continue;
         if (!p.on) { p.on = true; p.x = P.cx + Math.cos(p.a) * R; p.y = P.cy + Math.sin(p.a) * R; }
@@ -181,8 +204,15 @@
         let tx = P.cx + Math.cos(p.a) * rr * 1.4, ty = P.cy + Math.sin(p.a) * rr;
         const dx = p.x - st.mx, dy = p.y - st.my;
         if (dx * dx + dy * dy < 9000) { tx += dx * 0.6; ty += dy * 0.6; }
-        p.x += (tx - p.x) * 0.035; p.y += (ty - p.y) * 0.035;
+        p.x += (tx - p.x) * lerp; p.y += (ty - p.y) * lerp;
         ctx.beginPath(); ctx.arc(p.x, p.y, p.s, 0, 6.283); ctx.fill();
+      }
+      if (st.me && st.focus) { // 내가 누른 요청: 시뮬레이션의 '내 요청' 표시와 같은 모양
+        const { x, y } = st.focus, rr = 16 + 4 * Math.sin(now / 160);
+        ctx.globalAlpha = 1; ctx.strokeStyle = ctx.fillStyle = st.sun; ctx.lineWidth = 2;
+        ctx.beginPath(); ctx.arc(x, y, 6, 0, 6.283); ctx.fill();
+        ctx.beginPath(); ctx.arc(x, y, rr, 0, 6.283); ctx.stroke();
+        ctx.font = '700 14px Pretendard, sans-serif'; ctx.textAlign = 'left'; ctx.fillText('내 요청', x + rr + 8, y + 5);
       }
       requestAnimationFrame(loop);
     }
@@ -193,6 +223,45 @@
   }
   // 히어로는 hero-gl.js(Three.js)가 이름을 점으로 그림
   const crowds = new Map($$('.cover__crowd').map((cv) => [cv, swarm(cv, (W, H) => ({ cx: W / 2, cy: H / 2, spread: Math.min(W * 0.42, H * 0.95), alpha: 0.6 }), 1000)]));
+
+  const gateCtl = gate && (() => {
+    const btn = $('.gate__btn', gate), sec = $('.gate__sec', gate), title = $('.gate__title', gate);
+    const cvs = $('#coupon .cover__crowd'), sw = crowds.get(cvs);
+    let started = false, fired = false;
+    const open = () => {
+      gate.classList.add('is-open'); btn.disabled = false;
+      gsap.to(title, { duration: 0.8, scrambleText: { text: G.open, chars: '01', speed: 0.6 } });
+      gsap.fromTo(btn, { scale: 0.9 }, { scale: 1, duration: 0.7, ease: 'elastic.out(1, 0.45)' });
+    };
+    btn.addEventListener('click', () => {
+      if (fired) return;
+      fired = true;
+      const b = btn.getBoundingClientRect(), c = cvs.getBoundingClientRect();
+      Object.assign(sw, { focus: { x: b.left + b.width / 2 - c.left, y: b.top + b.height / 2 - c.top }, suck: 1, me: 1 }); // 기다리던 요청이 버튼 자리로 몰림
+      btn.textContent = G.sent;
+      sendMine();
+      // 이벤트 화면을 잠깐 걷어 내 점과 '내 요청' 표시가 보이게 한 뒤, 바로 아래 시뮬레이션으로 내려감
+      gsap.to(gate, { autoAlpha: 0, scale: 1.04, duration: 0.35, ease: 'power2.in' });
+      // 요청 흐름 캔버스가 화면 아래쪽에 다 들어오게 (위로는 수치·판정이 보임)
+      gsap.delayedCall(1.2, () => { const sim = $('#coupon .cp .sim'); lenis.scrollTo(sim, { offset: -Math.max(innerHeight - sim.offsetHeight - 24, 72), duration: 1.6 }); });
+      gsap.delayedCall(4, () => {
+        Object.assign(sw, { focus: null, suck: 0, me: 0 }); fired = false; btn.textContent = G.again;
+        gsap.to(gate, { autoAlpha: 1, scale: 1, duration: 0.4 });
+      });
+    });
+    return {
+      start() { // 5초 카운트다운 (한 번만)
+        if (started) return;
+        started = true;
+        let left = 5;
+        const iv = setInterval(() => {
+          sec.textContent = String(--left).padStart(2, '0');
+          gsap.fromTo(sec, { yPercent: -45, opacity: 0 }, { yPercent: 0, opacity: 1, duration: 0.35, ease: 'power3.out' });
+          if (left <= 0) { clearInterval(iv); open(); }
+        }, 1000);
+      },
+    };
+  })();
 
   /* ───────── 5. 나머지 모션은 폰트와 근거·데모가 모두 붙은 뒤 ───────── */
   const fonts = Promise.race([document.fonts.ready, new Promise((r) => setTimeout(r, 2500))]);
@@ -240,16 +309,30 @@
       const card = { clipPath: 'inset(13% 11% 13% 11% round 28px)' }, full = { clipPath: 'inset(0% 0% 0% 0% round 0px)', ease: 'none' };
       mm.add('(min-width: 900px)', () => {
         const pan = () => (img ? Math.max(img.offsetWidth - innerWidth, 0) : 0);
-        const tl = gsap.timeline({ scrollTrigger: { trigger: stage, start: 'top top', end: () => '+=' + (type === 'pan' ? pan() + innerHeight * 0.4 : innerHeight * 0.9), pin: true, scrub: 0.6, invalidateOnRefresh: true } });
+        const len = { pan: () => pan() + innerHeight * 0.4, crowd: () => innerHeight * (gate ? 2 : 0.9), expand: () => innerHeight * 0.9 }[type];
+        const tl = gsap.timeline({ scrollTrigger: { trigger: stage, start: 'top top', end: () => '+=' + len(), pin: true, scrub: 0.6, invalidateOnRefresh: true } });
         // expand 는 로고까지 든 키 비주얼이라 자르지 않고 카드째로 키움, 나머지는 잘린 카드가 열림
         if (type === 'expand') tl.fromTo(frame, { scale: 0.74, borderRadius: 28 }, { scale: 1, borderRadius: 0, ease: 'none', duration: 1 }, 0);
         else tl.fromTo(frame, card, { ...full, duration: type === 'pan' ? 0.25 : 1 }, 0);
         if (type === 'pan') tl.to(img, { x: () => -pan(), ease: 'none', duration: 1 }, 0.2);
-        if (type === 'crowd') tl.to(crowds.get($('.cover__crowd', cv)), { squeeze: 1, ease: 'none', duration: 1 }, 0).from(say.children, { opacity: 0, y: 40, stagger: 0.15, duration: 0.4 }, 0.1);
+        if (type === 'crowd') {
+          const sw = crowds.get($('.cover__crowd', cv)), g = $('.cover__gate', cv);
+          tl.to(sw, { squeeze: 1, ease: 'none', duration: 1 }, 0).from(say.children, { opacity: 0, y: 40, stagger: 0.15, duration: 0.4 }, 0.1);
+          if (g) {
+            gsap.set(g, { autoAlpha: 0 });
+            tl.to(say, { autoAlpha: 0, y: -50, duration: 0.3 }, 1.15)            // 시나리오 문구가 빠지고
+              .to(sw, { squeeze: 0.45, ease: 'none', duration: 0.4 }, 1.15)      // 점이 다시 퍼져 이벤트 화면을 둘러쌈
+              .fromTo(g, { autoAlpha: 0, y: 50 }, { autoAlpha: 1, y: 0, duration: 0.3 }, 1.3)
+              .call(() => gateCtl?.start(), null, 1.45)                         // 이벤트 화면이 보이면 카운트다운
+              .to({}, { duration: 0.4 });                                       // 누를 시간 동안 고정
+          }
+        }
       });
       mm.add('(max-width: 899px)', () => {
         gsap.fromTo(frame, { clipPath: 'inset(6% 6% 6% 6% round 20px)' }, { clipPath: 'inset(0% 0% 0% 0% round 0px)', duration: 1.2, ease: 'power3.out', scrollTrigger: { trigger: frame, start: 'top 80%', once: true } });
         if (say) gsap.from(say.children, { opacity: 0, y: 30, stagger: 0.12, duration: 0.8, scrollTrigger: { trigger: frame, start: 'top 70%', once: true } });
+        const g = $('.cover__gate', cv);
+        if (g) ScrollTrigger.create({ trigger: g, start: 'top 75%', once: true, onEnter: () => gateCtl?.start() });
       });
     });
 
