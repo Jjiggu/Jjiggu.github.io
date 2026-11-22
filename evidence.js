@@ -127,8 +127,76 @@
   const image = (c) => [h('a', { href: c.img, target: '_blank', rel: 'noopener', className: 'ev__zoom' },
     h('img', { src: c.img, alt: c.alt, loading: 'lazy', width: c.w, height: c.h }), h('span', { textContent: '원본 크기로 보기 ↗' }))];
 
+  /* ── 동작 흐름: 캐시 무효화가 어떻게 오가는지 움직이는 도식 ──
+     선은 GSAP DrawSVG 로 그려지고, 요청·메시지(점)는 MotionPath 로 선을 따라 이동. 화면에 보일 때만 반복 재생.
+     gsap 이 없거나 모션 줄이기 환경이면 도식과 단계 목록만 보임. */
+  function flow(c) {
+    const box = (id, x, y, w, hh, label, sub) => `<g class="fl-node" data-n="${id}"><rect x="${x}" y="${y}" width="${w}" height="${hh}" rx="14"/><text class="fl-t" x="${x + 18}" y="${y + 30}">${label}</text>${sub ? `<text class="fl-s" x="${x + 18}" y="${y + 52}">${sub}</text>` : ''}</g>`;
+    const cell = (id, x, y) => `<g class="fl-cell is-full" data-c="${id}"><rect x="${x}" y="${y}" width="78" height="26" rx="7"/><text x="${x + 39}" y="${y + 18}">주점 7</text></g>`;
+    const path = (id, d, label, lx, ly) => `<path id="fl-${id}" d="${d}"/>${label ? `<text class="fl-l" x="${lx}" y="${ly}">${label}</text>` : ''}`;
+    const wrap = h('div', { className: 'flow' });
+    wrap.innerHTML = `<svg viewBox="0 0 760 420" role="img" aria-label="${c.title}">
+      <g class="fl-paths">
+        ${path('p1', 'M150 88 C 220 88, 230 76, 300 76', 'GET /menus', 168, 70)}
+        ${path('p2', 'M150 88 C 220 88, 230 176, 300 176')}
+        ${path('p3', 'M150 330 L 300 330', 'PATCH 품절', 178, 320)}
+        ${path('p4', 'M520 330 L 580 330', 'COMMIT', 524, 320)}
+        ${path('p5', 'M470 296 C 470 250, 640 260, 650 212', 'PUBLISH INVALIDATE-7', 530, 262)}
+        ${path('p6', 'M600 140 C 570 110, 560 82, 520 82')}
+        ${path('p7', 'M580 180 L 520 180')}
+        ${path('p8', 'M430 212 C 430 260, 600 250, 640 296', '', 0, 0)}
+      </g>
+      ${box('cust', 20, 60, 130, 56, '손님')}
+      ${box('admin', 20, 302, 130, 56, '운영자')}
+      ${box('u1', 300, 40, 220, 76, 'User API ①', 'Caffeine')}
+      ${box('u2', 300, 140, 220, 76, 'User API ②', 'Caffeine')}
+      ${box('adm', 300, 296, 220, 70, 'Admin API')}
+      ${box('redis', 580, 140, 160, 72, 'Redis', 'Pub/Sub')}
+      ${box('db', 580, 296, 160, 70, 'MySQL')}
+      ${cell('u1', 424, 64)}${cell('u2', 424, 164)}
+      <g class="fl-dots">${'<circle class="fl-dot" r="7" cx="-20" cy="-20"/>'.repeat(3)}</g>
+    </svg>`;
+    const steps = h('ol', { className: 'flow__steps' }, c.steps.map((s) => h('li', { textContent: s })));
+    if (!window.gsap || !window.MotionPathPlugin || !window.DrawSVGPlugin || matchMedia('(prefers-reduced-motion: reduce)').matches) return [wrap, steps];
+
+    gsap.registerPlugin(MotionPathPlugin, DrawSVGPlugin);
+    const q = (s) => wrap.querySelector(s), dots = [...wrap.querySelectorAll('.fl-dot')], items = [...steps.children];
+    const say = (i) => () => items.forEach((li, j) => li.classList.toggle('is-on', i === j));
+    const lit = (n) => () => { const el = q(`[data-n="${n}"]`); el.classList.add('is-on'); setTimeout(() => el.classList.remove('is-on'), 700); };
+    const fill = (id, on) => () => wrap.querySelectorAll(id ? `[data-c="${id}"]` : '.fl-cell').forEach((e) => e.classList.toggle('is-full', on));
+    // 점 하나를 선을 따라 보냄(back 이면 거꾸로)
+    const go = (dot, p, dur = 0.7, back = false) => gsap.fromTo(dot, { opacity: 1 }, { motionPath: { path: `#fl-${p}`, align: `#fl-${p}`, alignOrigin: [0.5, 0.5], start: back ? 1 : 0, end: back ? 0 : 1 }, duration: dur, ease: 'power1.inOut', immediateRender: false });
+    const [a, b, m] = dots;
+    const tl = gsap.timeline({ paused: true, repeat: -1, repeatDelay: 1.4 })
+      .call(say(0)).call(fill(null, true))
+      .add(go(a, 'p1')).call(lit('u1')).add(go(a, 'p1', 0.5, true))
+      .add(go(b, 'p2'), '-=0.9').call(lit('u2')).add(go(b, 'p2', 0.5, true))
+      .set([a, b], { opacity: 0 })
+      .call(say(1), null, '+=0.3').add(go(m, 'p3', 0.8)).call(lit('adm')).add(go(m, 'p4', 0.5)).call(lit('db'))
+      .call(say(2), null, '+=0.3').add(go(m, 'p5', 0.9)).call(lit('redis'))
+      .call(say(3), null, '+=0.2').set(m, { opacity: 0 }).add(go(a, 'p6', 0.6)).add(go(b, 'p7', 0.6), '<')
+      .call(lit('u1')).call(lit('u2')).call(fill(null, false)).set([a, b], { opacity: 0 })
+      .call(say(4), null, '+=0.6').add(go(b, 'p2', 0.7)).call(lit('u2')).add(go(b, 'p8', 0.8)).call(lit('db')).add(go(b, 'p8', 0.6, true)).call(fill('u2', true))
+      .add(go(b, 'p2', 0.5, true)).call(lit('u2')).set(b, { opacity: 0 });
+    let drawn = false;
+    if (window.ScrollTrigger) ScrollTrigger.create({
+      trigger: wrap, start: 'top 85%', end: 'bottom 15%',
+      onToggle: (s) => {
+        if (!s.isActive) return tl.pause();
+        if (drawn) return tl.play();
+        drawn = true; // 처음 볼 때 선이 그려지고 상자가 들어온 뒤 재생
+        gsap.timeline({ onComplete: () => tl.play() })
+          .from(wrap.querySelectorAll('.fl-node, .fl-cell'), { opacity: 0, scale: 0.9, transformOrigin: '50% 50%', duration: 0.5, stagger: 0.05, ease: 'back.out(1.6)' })
+          .from(wrap.querySelectorAll('.fl-paths path'), { drawSVG: 0, duration: 0.9, stagger: 0.08, ease: 'power2.inOut' }, 0.2)
+          .from(wrap.querySelectorAll('.fl-l'), { opacity: 0, duration: 0.4, stagger: 0.05 }, '-=0.4');
+      },
+    });
+    else tl.play();
+    return [wrap, steps];
+  }
+
   // 전체 그림(구성도)은 프로젝트 첫머리에, 나머지는 해당 사례 바로 밑에 붙임. 모두 왼쪽 설명 | 오른쪽 자료
-  const kinds = { line: lineChart, bars: barCharts, image };
+  const kinds = { line: lineChart, bars: barCharts, image, flow };
   D.projects.forEach((p) => {
     const sec = document.getElementById(p.id);
     (p.evidence || []).forEach((ev) => {

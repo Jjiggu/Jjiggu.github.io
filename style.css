@@ -107,7 +107,8 @@ a { color: inherit; text-decoration: none; }
   padding: calc(var(--nav-h) + 2rem) var(--pad) clamp(2.5rem, 9vh, 6rem);
   background: radial-gradient(120% 80% at 70% 20%, var(--navy-2), var(--navy) 70%);
 }
-#hero-crowd { position: absolute; inset: 0; width: 100%; height: 100%; }
+#hero-gl { position: absolute; inset: 0; width: 100%; height: 100%; }
+.gl-hero .hero__name { color: transparent; } /* 점(WebGL)이 글자를 대신 그림. 글자는 스크린리더·검색용으로 남김 */
 .hero__in { position: relative; max-width: 62rem; }
 .hero__role { font-size: clamp(1rem, 1.4vw, 1.25rem); font-weight: 700; color: var(--sun); }
 .hero__name {
@@ -847,3 +848,27 @@ body { transition: background-color 0.3s, color 0.3s; }
   .cover--pan .cover__frame { height: 64svh; overflow-x: auto; scrollbar-width: none; }
   .cover--crowd .cover__frame { height: 80svh; }
 }
+
+/* 프로젝트마다 그 서비스의 색으로 강조 (NoWait 주황, Gasip 파랑). 안쪽의 --sun 을 쓰는 모든 것이 따라 바뀜 */
+.project.has-accent { --sun: var(--acc-d); }
+html[data-theme='light'] .project.has-accent { --sun: var(--acc-l); }
+
+/* 동작 흐름 도식 (GSAP DrawSVG + MotionPath) */
+.flow { overflow-x: auto; scrollbar-width: none; }
+.flow svg { display: block; width: 100%; min-width: 560px; height: auto; overflow: visible; }
+.fl-paths path { fill: none; stroke: color-mix(in srgb, var(--ink) 38%, transparent); stroke-width: 1.5; stroke-dasharray: none; }
+.fl-l { font-size: 12px; font-weight: 600; fill: var(--mute); }
+.fl-node rect { fill: color-mix(in srgb, var(--ink) 4%, var(--navy)); stroke: var(--line); stroke-width: 1.5; transition: stroke 0.3s, fill 0.3s; }
+.fl-node.is-on rect { stroke: var(--sun); fill: color-mix(in srgb, var(--sun) 14%, var(--navy)); }
+.fl-t { font-size: 16px; font-weight: 800; fill: var(--ink); }
+.fl-s { font-size: 12px; font-weight: 600; fill: var(--mute); }
+.fl-cell rect { fill: transparent; stroke: var(--mute); stroke-width: 1.2; stroke-dasharray: 4 3; transition: fill 0.35s, stroke 0.35s; }
+.fl-cell text { font-size: 11px; font-weight: 700; fill: var(--mute); text-anchor: middle; transition: fill 0.35s; }
+.fl-cell.is-full rect { fill: var(--sun); stroke: var(--sun); stroke-dasharray: none; }
+.fl-cell.is-full text { fill: var(--navy); }
+.fl-dot { fill: var(--sun); opacity: 0; filter: drop-shadow(0 0 6px var(--sun)); }
+.flow__steps { list-style: none; counter-reset: s; display: grid; gap: 0.35rem; margin-top: 1.25rem; padding: 0; }
+.flow__steps li { counter-increment: s; position: relative; padding: 0.35rem 0 0.35rem 2rem; color: var(--mute); transition: color 0.3s; }
+.flow__steps li::before { content: counter(s); position: absolute; left: 0; top: 0.4rem; display: grid; place-items: center; width: 1.4rem; height: 1.4rem; border-radius: 50%; border: 1.5px solid currentColor; font-size: 0.75rem; font-weight: 800; }
+.flow__steps li.is-on { color: var(--ink); }
+.flow__steps li.is-on::before { background: var(--sun); border-color: var(--sun); color: var(--navy); }

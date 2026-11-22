@@ -96,7 +96,7 @@
         : `<img class="cover__img" src="${c.img}" alt="${esc(c.alt)}" width="${c.w}" height="${c.h}" loading="lazy" decoding="async">`}</div></div>
     </div>`;
 
-  const projectHtml = (p) => `<section class="project${p.cases ? '' : ' project--compact'}" id="${p.id}">
+  const projectHtml = (p) => `<section class="project${p.cases ? '' : ' project--compact'}${p.accent ? ' has-accent' : ''}" id="${p.id}"${p.accent ? ` style="--acc-d:${p.accent[0]};--acc-l:${p.accent[1]}"` : ''}>
       ${p.cover ? coverHtml(p.cover) : ''}
       <header class="project__head">
         <p class="project__kind"><span>${esc(p.kind)}</span><span class="num">${p.period}</span></p>
@@ -154,7 +154,7 @@
   }
 
   /* ───────── 4. 몰려드는 요청(점 무리) ─────────
-     예전 첫 화면(쿠폰 이벤트 대기)의 점 무리. 히어로에서는 이름 오른쪽을 맴돌고, 쿠폰 표지에서는 스크롤할수록 가운데로 빨려 듦.
+     예전 첫 화면(쿠폰 이벤트 대기)의 점 무리. 쿠폰 표지에서 스크롤할수록 가운데로 빨려 듦.
      place(W, H) → { cx, cy, spread, alpha }, squeeze 0~1 이 클수록 가운데로 모임. 마우스는 비켜 감. */
   function swarm(cv, place, N = 700) {
     const ctx = cv.getContext('2d'), t0 = performance.now();
@@ -191,8 +191,7 @@
     requestAnimationFrame(loop);
     return st;
   }
-  // 좁은 화면의 히어로에서는 글자 뒤로 지나가므로 옅게
-  swarm($('#hero-crowd'), (W, H) => (W >= 900 ? { cx: W * 0.72, cy: H * 0.46, spread: Math.min(W * 0.45, H), alpha: 0.5 } : { cx: W * 0.5, cy: H * 0.3, spread: Math.min(W, H), alpha: 0.28 }));
+  // 히어로는 hero-gl.js(Three.js)가 이름을 점으로 그림
   const crowds = new Map($$('.cover__crowd').map((cv) => [cv, swarm(cv, (W, H) => ({ cx: W / 2, cy: H / 2, spread: Math.min(W * 0.42, H * 0.95), alpha: 0.6 }), 1000)]));
 
   /* ───────── 5. 나머지 모션은 폰트와 근거·데모가 모두 붙은 뒤 ───────── */

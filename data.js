@@ -264,6 +264,7 @@ window.DATA = {
       stack: ['Java 17', 'Spring Boot 3.5', 'Spring Data JPA', 'Querydsl', 'MySQL', 'Redis', 'AWS(EC2, RDS, S3, Lambda)', 'Docker', 'GitHub Actions', 'Prometheus', 'Grafana'],
       headline: { a: '59,808', b: '123', unit: '회', label: '메뉴 조회 쿼리 99.8% 감소', note: '1,000 rps - 60초 기준, 캐시 히트율 99.8%' },
       demo: true,
+      accent: ['#ff7a45', '#e2470c'], // 프로젝트 안의 강조색 [다크, 라이트]: NoWait 주황
       cover: { type: 'expand', img: 'assets/nowait/service.png', w: 2400, h: 1350, bg: '#fff', alt: 'NoWait 서비스 화면 모음: 노웨잇 로고와 “기다림 없는 즐거운 축제” 문구, 부스 목록·메뉴·주문·송금·대기 등록 화면' },
       cases: [
         {
@@ -383,6 +384,7 @@ window.DATA = {
       stack: ['Java 17', 'Spring Boot 3.1', 'Spring Data JPA', 'Querydsl', 'MySQL', 'Redis', 'AWS(EC2, RDS, CodeDeploy)', 'GitHub Actions', 'nGrinder', 'k6'],
       headline: { a: '6,271', b: '0.90', unit: 'ms', label: '리뷰 목록 조회 SQL 실행 시간', note: 'OFFSET 8,300 기준 · MAU 1,560명 서비스' },
       demo: true,
+      accent: ['#4f9dff', '#0a6cff'], // Gasip 파랑
       cover: { type: 'pan', img: 'assets/gasip/app-screens.jpg', w: 3666, h: 1100, bg: '#007aff', alt: 'Gasip 앱스토어 소개 화면 7장: 가천대학교 유일 교수님 전문 리뷰앱, 가천인들만의 커뮤니티, 교수님 리뷰 확인·작성, 정보 공유, 전체 리뷰 화면' },
       cases: [
         {
@@ -517,6 +519,18 @@ window.DATA = {
       src: { label: 'README · System Architecture', url: NW },
       img: 'assets/nowait/architecture.png', w: 2880, h: 2140,
       alt: '손님과 주점 운영자가 웹을 거쳐 EC2 의 user-api, admin-api 로 요청하고, Redis Master 와 복제본 2대, RDS MySQL, S3 와 Lambda, Prometheus 와 Grafana, GitHub Actions 와 Docker Hub 배포 경로가 연결된 구성도',
+    },
+    {
+      type: 'flow', case: 0, label: '동작 흐름',
+      title: '메뉴가 바뀌면 그 주점의 키 하나만 지우는 캐시 무효화',
+      desc: '조회는 각 User API 의 Caffeine 캐시에서 바로 응답하고, Redis 는 무효화 메시지만 나릅니다. 점이 요청과 메시지입니다.',
+      steps: [
+        '손님의 메뉴 조회는 User API 의 Caffeine 캐시에서 바로 응답합니다.',
+        '운영자가 메뉴를 품절로 바꾸면 Admin API 가 DB 업데이트를 커밋합니다.',
+        '커밋이 끝난 뒤 Redis Pub/Sub 으로 무효화 메시지를 발행합니다.',
+        '메시지를 받은 모든 User API 가 해당 주점 키만 로컬 캐시에서 지웁니다.',
+        '다음 조회에서 한 번만 DB 를 읽어 다시 캐시에 담습니다.',
+      ],
     },
     {
       type: 'line', case: 0,
