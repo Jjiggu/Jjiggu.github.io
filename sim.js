@@ -221,8 +221,8 @@
 
   const group = (g, label) => `<div class="dock__group"><span>${label}</span>${Object.entries(STRATS).filter(([, s]) => s.group === g).map(([k, s]) => `<button type="button" data-k="${k}" aria-pressed="false">${s.name}</button>`).join('')}</div>`;
   el.tabs.innerHTML = group(0, '재고 지키기') + group(1, 'DB 에 옮겨 적기');
-  el.tabs.addEventListener('click', (e) => { const b = e.target.closest('button'); if (!b) return; auto = false; run(b.dataset.k); });
-  $('#sim-again').addEventListener('click', () => { auto = false; run(key); });
+  el.tabs.addEventListener('click', (e) => { const b = e.target.closest('button'); if (!b) return; auto = false; run(b.dataset.k, true); });
+  $('#sim-again').addEventListener('click', () => { auto = false; run(key, true); });
 
   function resize() {
     const dpr = Math.min(devicePixelRatio || 1, 2);
@@ -244,11 +244,12 @@
     el.trace.hidden = true; cardSig = '';
   }
 
-  function run(k) {
+  // mine: 방문자가 직접 누른 실행이면 그 요청 하나를 '내 요청'(노란 고리)으로 표시. 자동 재생에는 없음
+  function run(k, mine = false) {
     clearTimeout(timer);
     key = k;
     const seed = (Math.random() * 1e9) | 0;
-    sim = createSim(k, seeded(seed), pickMe(k, seed)); // 실행마다 방문자의 요청 하나를 노란 고리로 표시
+    sim = createSim(k, seeded(seed), mine ? pickMe(k, seed) : 0);
     dots = sim.reqs.map((r) => ({ r, lane: Math.random(), jit: Math.random(), x: 0, y: 0, a: 0, born: false }));
     t0 = last = hiddenAt = performance.now(); // 화면 밖에서 시작하면 보이는 순간부터 흐르게
     running = true;
@@ -486,5 +487,5 @@
   draw(0);
   // start: 화면에 들어오면 자동으로 방식을 돌려 봄 / play: 방문자가 직접 누른 실행(자동 재생이 덮어쓰지 않게)
   let touched = false;
-  window.Sim = { start() { if (touched) return; auto = true; run(key); }, play(k) { touched = true; auto = false; run(k); } };
+  window.Sim = { start() { if (touched) return; auto = true; run(key); }, play(k) { touched = true; auto = false; run(k, true); } };
 })();
