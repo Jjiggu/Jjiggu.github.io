@@ -92,7 +92,7 @@ a { color: inherit; text-decoration: none; }
 @media (max-width: 420px) { .nav nav { gap: 0.7rem; font-size: 0.8rem; } .theme { margin-left: 0.5rem; } }
 .skip { position: fixed; left: 0.5rem; top: -4rem; z-index: 60; padding: 0.6rem 1rem; border-radius: 8px; background: var(--ink); color: var(--navy); font-weight: 700; }
 .skip:focus { top: 0.5rem; }
-.cp { scroll-margin-top: var(--nav-h); }
+main, section[id], footer[id], .cp { scroll-margin-top: var(--nav-h); } /* 고정 메뉴에 가리지 않게. Lenis 도 이 값을 따름 */
 
 /* ───── hero: 이름 · 한 줄 · 소개 · 연락처 ───── */
 .hero {
@@ -175,7 +175,7 @@ a { color: inherit; text-decoration: none; }
 .facts dt { padding-top: 0.15rem; font-size: 0.85rem; font-weight: 700; color: var(--mute); }
 .facts dd { margin: 0; }
 .chips { display: flex; flex-wrap: wrap; gap: 0.35rem; }
-.chips li { padding: 0.18rem 0.6rem; border: 1px solid var(--line); border-radius: 99px; font-size: 0.82rem; font-weight: 600; white-space: nowrap; }
+.chips li { padding: 0.18rem 0.6rem; border: 1px solid var(--line); border-radius: 99px; font-size: 0.82rem; font-weight: 600; max-width: 100%; }
 .project__rule { height: 3px; margin-top: clamp(1.5rem, 3vw, 2.5rem); background: var(--ink); transform-origin: 0 50%; }
 
 .case-wrap { padding-bottom: clamp(2rem, 4vw, 3.5rem); border-bottom: 1px solid var(--line); }
@@ -314,7 +314,7 @@ a { color: inherit; text-decoration: none; }
 .tip span { opacity: 0.75; }
 
 @media (max-width: 900px) {
-  .multiples { grid-template-columns: 1fr; }
+  .multiples { grid-template-columns: minmax(0, 1fr); }
 }
 
 /* ───── 직접 해 보기(데모) 공통: 왼쪽 설명 | 오른쪽 조작·화면, 그 아래 체험 ───── */
@@ -801,7 +801,7 @@ html[data-theme='light'] {
   color-scheme: light;
 }
 /* 파란 띠(로더 · 결과 요약 · 푸터)는 두 모드에서 같은 색을 씁니다 */
-html[data-theme='light'] .sim__trace li.is-bad { color: var(--coral); }
+html[data-theme='light'] .sim__trace li.is-bad { color: #a82a19; } /* 분홍 바탕 위 12px 글자라 --coral 보다 어둡게 */
 html[data-theme='light'] .bk__log [data-src='mysql'] b { color: #3f55d6; }
 html[data-theme='light'] .bk__log [data-src='http'] span, html[data-theme='light'] .bk__log [data-src='http'] b { color: #1b33d6; }
 html[data-theme='light'] .phone, html[data-theme='light'] .ipad { box-shadow: 0 0 0 2px #c9cfe8, 0 24px 48px rgba(16, 22, 58, 0.18); }

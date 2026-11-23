@@ -376,7 +376,7 @@
     return { title: '동시성 이슈 재현', lanes: [`요청 #${X}`, Y ? `요청 #${Y}` : ''], rows, note };
   }
   function drawCard() {
-    const sig = `${key}|${sim.st.firstBad}|${sim.st.sys}|${sim.st.sold > 0}|${sim.finished()}`;
+    const sig = `${key}|${sim.st.firstBad}|${sim.st.sys}|${sim.st.sold > 0}|${sim.finished()}|${sim.st.redelivered}|${!!sim.st.restarted && !sim.q.pel.length}`; // 뒤의 둘: 재시작 뒤 INSERT·XACK 줄이 생기는 시점
     if (sig === cardSig) return;
     cardSig = sig;
     const c = card();
