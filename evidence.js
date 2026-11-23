@@ -45,7 +45,7 @@
 
   const tableView = (head, rows) =>
     h('details', { className: 'ev__table' }, h('summary', { textContent: '표로 보기' }),
-      h('table', {}, h('thead', {}, h('tr', {}, head.map((t) => h('th', { textContent: t })))),
+      h('table', {}, h('thead', {}, h('tr', {}, head.map((t) => h('th', { textContent: t, scope: 'col' })))),
         h('tbody', {}, rows.map((r) => h('tr', {}, r.map((t) => h('td', { textContent: t })))))));
 
   /* ── 선 차트 (y축 하나, 계열 2개 이하) ── */

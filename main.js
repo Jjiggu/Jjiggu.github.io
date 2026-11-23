@@ -57,7 +57,7 @@
   const mail = D.contact.find((c) => c.icon === 'mail');
 
   $('#role').textContent = D.role;
-  $('#name').innerHTML = D.name.split(' ').map(esc).join('<br>'); // 이름 아래 성
+  $('#name').innerHTML = D.name.split(' ').map(esc).join(' <br>'); // 이름 아래 성
   $('#line').textContent = D.line;
   $('#hero-links').innerHTML = links;
   $('#foot-links').innerHTML = linkList(D.contact.filter((c) => c.icon !== 'mail')); // 메일은 바로 옆에 주소로 적혀 있음
@@ -100,7 +100,7 @@
           <div class="p-old__box"><span>노웨잇대디자인과학생회</span><u class="is-hot">기업은행 000-000000-00-000 <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V6a2 2 0 0 1 2-2h9"/></svg></u><b>24,000원</b></div></div>
         <div class="p-foot"><button type="button" class="p-big">다음</button></div>` : `
         <p class="p-navtitle">주문하기</p>
-        <section class="p-pad p-remit"><h2 class="p-t18">송금 수단</h2>
+        <section class="p-pad p-remit"><h2 class="p-t18" role="presentation">송금 수단</h2>
           <div class="p-paybox"><p>간편 송금</p>${[['카카오페이', 'kakaoPay.png', 42, 18], ['토스', 'tossPay.png', 46, 16], ['네이버페이', 'naverPay.png', 43, 15]].map(([p, f, w, h]) => radio(p, c.pay === p, `<img src="${NW}${f}" width="${w}" height="${h}" alt="">`)).join('')}</div>
           <div class="p-paybox">${radio('계좌로 직접 이체하기', false)}</div>
           <div class="p-total"><span>결제 금액</span><b>24,000원</b></div></section>
@@ -126,7 +126,7 @@
            <div class="cover__say"><p class="cover__kicker">${esc(c.kicker)}</p><p class="cover__big">${esc(c.big)}</p><p class="cover__small">${esc(c.small)}</p></div>
            ${c.gate ? `<div class="cover__gate">
              <p class="gate__tag">${esc(c.gate.tag)}</p>
-             <h4 class="gate__title">${esc(c.gate.wait)}</h4>
+             <p class="gate__title">${esc(c.gate.wait)}</p>
              <p class="gate__count num" aria-hidden="true"><span>00</span><i>:</i><span class="gate__sec">05</span></p>
              <button type="button" class="gate__btn" disabled>${esc(c.gate.btn)}</button>
              <p class="gate__hint">${esc(c.gate.hint)}</p>
@@ -165,7 +165,7 @@
   if (reduce || !window.gsap) { // 시뮬레이션은 자동 재생 없이, 누를 때만 실행
     if (gate) {
       const btn = $('.gate__btn', gate);
-      gate.classList.add('is-open'); btn.disabled = false; $('.gate__title', gate).textContent = G.open;
+      gate.classList.add('is-open'); btn.disabled = false; $('.gate__title', gate).textContent = G.open; $('.gate__sec', gate).textContent = '00';
       btn.addEventListener('click', () => { sendMine(); $('#coupon .cp').scrollIntoView(); });
     }
     return;
@@ -186,7 +186,7 @@
   const isNum = (s) => /^[\d,]+(\.\d+)?$/.test(s);
   const toNum = (s) => parseFloat(s.replace(/,/g, ''));
   function countUp(el) {
-    const txt = el.textContent;
+    const txt = (el.dataset.to ||= el.textContent); // 다시 불려도(화면 폭 구간이 바뀔 때) 원문 값으로 끝남
     if (!isNum(txt)) return;
     const from = el.dataset.from;
     const dec = (txt.split('.')[1] || '').length;
@@ -324,7 +324,19 @@
         // 처음 두 장은 가로 이동 전부터 보이므로 세로 기준으로 시작
         ScrollTrigger.create(i > 1 ? { trigger: p, containerAnimation: tw, start: 'left 80%', once: true, onEnter: run } : { trigger: sec, start: 'top 60%', once: true, onEnter: run });
       });
-      return () => sec.classList.remove('is-h');
+      // 키보드로 화면 밖 카드에 포커스가 가면 그 카드가 보이는 세로 위치로 이동 (.overview 는 overflow: clip 이라 가로로 밀리지 않음)
+      const onFocus = (e) => {
+        const p = e.target.closest('.panel');
+        if (!p || !e.target.matches(':focus-visible')) return;
+        const x = p.getBoundingClientRect().left - track.getBoundingClientRect().left;
+        lenis.scrollTo(tw.scrollTrigger.start + Math.min(x, dist()), { immediate: true });
+      };
+      track.addEventListener('focusin', onFocus);
+      // 메뉴의 Summary: 아래에서 올라와도 가로 구간의 시작에 도착 (Lenis 기본 앵커는 끝 쪽에 멈춤)
+      const toStart = (e) => { e.preventDefault(); e.stopPropagation(); lenis.scrollTo(tw.scrollTrigger.start); };
+      const tops = $$('a[href="#overview"]');
+      tops.forEach((a) => a.addEventListener('click', toStart));
+      return () => { sec.classList.remove('is-h'); track.removeEventListener('focusin', onFocus); tops.forEach((a) => a.removeEventListener('click', toStart)); };
     });
     mm.add('(max-width: 899px)', () => {
       panels.forEach((p) => ScrollTrigger.create({ trigger: p, start: 'top 80%', once: true, onEnter: () => countUp($('[data-count]', p)) }));
@@ -391,6 +403,7 @@
     ScrollTrigger.create({ trigger: '.cp .sim', start: 'top 85%', once: true, onEnter: () => window.Sim?.start() });
 
     ScrollTrigger.refresh();
+    document.addEventListener('toggle', () => ScrollTrigger.refresh(), true); // details 를 열고 닫으면 본문 높이가 바뀌어 뒤쪽 고정 구간을 다시 계산
     window.motionReady = true; dispatchEvent(new Event('motionready')); // fx.js 는 이 뒤에 붙음 (고정 구간 계산 순서)
   });
 })();
