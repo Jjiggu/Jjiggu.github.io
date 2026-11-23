@@ -76,9 +76,9 @@
           <button type="button" class="p-cancel" data-act="askCancel"><img src="${A}close.svg" alt="">대기 취소</button>`
           : '<div class="p-empty">대기 중인 주점이 없어요</div>'}
         <h2 class="p-t20b">대기가 가장 적어요</h2>
-        <button type="button" class="p-pick" data-act="go" data-to="store"><img src="${B.STORE.banners[0]}" alt=""><em>대기 ${queue().length}팀</em><span>${B.STORE.name}<small>${B.STORE.dept}</small></span></button>
+        <button type="button" class="p-pick" data-act="go" data-to="store"><img src="${B.STORE.banners[0]}" alt=""><em>${B.STORE.isActive ? `대기 ${queue().length}팀` : '접수 마감'}</em><span>${B.STORE.name}<small>${B.STORE.dept}</small></span></button>
         <h2 class="p-t20b">모든 주점</h2>
-        <button type="button" class="p-store-row" data-act="go" data-to="store"><img src="${A}default-department.png" alt=""><span><small>${B.STORE.dept}</small>${B.STORE.name}</span><em>대기 ${queue().length}팀</em></button>
+        <button type="button" class="p-store-row" data-act="go" data-to="store"><img src="${A}default-department.png" alt=""><span><small>${B.STORE.dept}</small>${B.STORE.name}</span>${B.STORE.isActive ? `<em>대기 ${queue().length}팀</em>` : '<em class="is-closed">접수 마감</em>'}</button>
         <button type="button" class="p-store-row" data-act="go" data-to="store2"><img src="${A}default-department.png" alt=""><span><small>${B.OTHER.dept}</small>${B.OTHER.name}</span><em class="is-closed">접수 마감</em></button></section>`;
     },
     store2() { return this.store(B.OTHER); },
@@ -91,7 +91,7 @@
         <div class="p-info"><p><img src="${A}subtract.svg" alt="위치">${esc(S.location)}</p><p><img src="${A}clock.svg" alt="운영 시간">${esc(S.hours)}</p>
           <p class="p-desc">${esc(S.desc)}</p>
           ${S.notice ? `<button type="button" class="p-notice" data-act="go" data-to="notice"><span>${esc(S.notice.title)}</span><img src="${A}arrow-right.svg" alt=""></button>` : ''}</div></section><div class="p-divider"></div>
-        <section class="p-pad p-menu-sec">${menuList(false, S.menus)}</section>${mine ? footer(waiting ? '대기 중이에요' : '대기하기', 'data-act="toParty"', waiting) : footer('대기 접수가 마감됐어요', '', true)}`;
+        <section class="p-pad p-menu-sec">${menuList(false, S.menus)}</section>${mine && (waiting || S.isActive) ? footer(waiting ? '대기 중이에요' : '대기하기', 'data-act="toParty"', waiting) : footer('대기 접수가 마감됐어요', '', true)}`;
     },
     notice: () => `${back('store')}<p class="p-navtitle">공지사항</p><section class="p-pad p-notice-body"><h1>${esc(B.STORE.notice.title)}</h1><p>${esc(B.STORE.notice.content)}</p></section>`,
     party: () => `${back('store')}<section class="p-pad p-form"><h1 class="p-h24">대기 등록을 위해<br>인원 수를 입력해주세요</h1>
@@ -119,6 +119,8 @@
         <section class="p-pad p-remit"><h2 class="p-t18">입금자명</h2><p class="p-hint">이후 주문은 동일한 입금자명으로 들어가요</p>
           <input type="text" id="nw-name" placeholder="입금자명 입력" maxlength="20" value="${esc(st.depositor)}" autocomplete="off">${st.nameErr ? `<p class="p-err">${st.nameErr}</p>` : ''}
           <h2 class="p-t18 p-gap">송금 수단</h2><div class="p-paybox"><p>간편 송금</p>${[['카카오페이', 'kakaoPay.png', 42, 18], ['토스', 'tossPay.png', 46, 16], ['네이버페이', 'naverPay.png', 43, 15]].map(([p, f, w, h]) => `<button type="button" role="radio" aria-checked="${st.pay === p}" aria-label="${p}" data-act="pay" data-p="${p}"><i></i><img src="${A}${f}" width="${w}" height="${h}" alt="">${p}</button>`).join('')}</div>
+          <div class="p-paybox"><button type="button" role="radio" aria-checked="${st.pay === 'direct'}" data-act="pay" data-p="direct"><i></i>계좌로 직접 이체하기</button>${st.pay === 'direct' ? `<p class="p-acct-hint">아래의 계좌로 직접 이체해주셔야 돼요</p>
+            <div class="p-acct"><img src="${A}bankImage.png" alt=""><div><b>노웨잇대학생회</b><span>카카오뱅크 0000-00-0000000</span></div><button type="button" class="p-copy" data-act="copyAcct">복사</button></div>` : ''}</div>
           <div class="p-total"><span>결제 금액</span><b>${won(total())}</b></div></section>${footer(`${won(total())} 이체하기`, 'data-act="toWait"')}`,
     owait: () => `${back('oremit')}${center('remittanceWait.webp', '<h1 class="p-h24">이체가 진행되고 있어요</h1>', '아직 주문이 완료되지 않았어요<br>이체를 완료하셨다면 버튼을 눌러주세요')}${footer(st.busy ? '<i class="p-spin"></i>' : '이체했어요', 'data-act="order"', st.busy)}`,
     osuccess: () => `${center('orderSuccess.webp', '<h1 class="p-h24">주문이 접수되었어요!</h1>', '입금 확인 후 조리를 진행할게요.<br>조금만 기다려 주세요.', '<button type="button" class="p-outline" data-act="go" data-to="odetails">주문내역 확인</button>')}${footer('확인', 'data-act="go" data-to="ostore"')}`,
@@ -144,7 +146,7 @@
       const rows = queue().map((e, i) => ({ e, i, r: B.active(e.m) })).filter((x) => x.r);
       const shown = rows.filter((x) => st.wf === 'ALL' || x.r.status === st.wf);
       const n = (s) => rows.filter((x) => x.r.status === s).length;
-      return `<div class="ad-bar"><p class="ad-title">대기 접수 <b>on</b></p><div>${pill('wf', 'ALL', st.wf, '전체', rows.length)}${pill('wf', 'WAITING', st.wf, '대기 중', n('WAITING'))}${pill('wf', 'CALLING', st.wf, '호출 중', n('CALLING'))}</div></div>
+      return `<div class="ad-bar"><div class="ad-onoff"><p class="ad-title">대기 접수 <b class="${B.STORE.isActive ? '' : 'is-off'}">${B.STORE.isActive ? 'on' : 'off'}</b></p><button type="button" class="ad-switch" role="switch" aria-checked="${B.STORE.isActive}" aria-label="대기 접수" data-act="toggleActive"></button></div><div>${pill('wf', 'ALL', st.wf, '전체', rows.length)}${pill('wf', 'WAITING', st.wf, '대기 중', n('WAITING'))}${pill('wf', 'CALLING', st.wf, '호출 중', n('CALLING'))}</div></div>
         <ul class="ad-cards">${shown.map(({ e, i, r }) => `<li>
           <header><b>#0${i + 1}번</b>${e.m === String(ME) ? '<em>체험 중인 손님</em>' : ''}<span>${hhmm(r.requestedAt)} · ${Math.max(0, Math.floor((Date.now() - r.requestedAt) / 60000))}분 대기 중</span><button type="button" data-act="acancel" data-m="${e.m}" aria-label="대기 취소">✕</button></header>
           <dl><div><dt>인원</dt><dd>${r.partySize}명</dd></div><div><dt>이름</dt><dd>${esc(r.name)}</dd></div><div><dt>전화번호</dt><dd>010-****-****</dd></div></dl>
@@ -241,6 +243,7 @@
   const acts = {
     tab: (t) => { st.tab = t.dataset.k; },
     banner: (t) => { st.banner = +t.dataset.i; },
+    toggleActive: () => { const on = B.toggleActive(); log('http', `← 응답 200 · 대기 접수 ${on ? 'on' : 'off'}, 손님 화면에 바로 반영`); },
     saveStore: () => { const d = st.draft; B.updateStore({ desc: d.desc, notice: { title: d.title.trim() || '공지', content: d.content } }); log('http', '← 응답 200 · 손님 화면의 주점 상세에 바로 반영'); },
     wf: (t) => { st.wf = t.dataset.k; },
     of: (t) => { st.of = t.dataset.k; },
@@ -272,6 +275,7 @@
     },
     dropSold: () => { st.cart = st.cart.filter((c) => !st.soldNames.includes(c.name)); st.modal = null; },
     pay: (t) => { st.pay = t.dataset.p; },
+    copyAcct: () => toast('계좌번호가 복사되었습니다'), // 예시 계좌라 실제 클립보드에는 쓰지 않음
     toWait: () => { const n = st.depositor.trim(); st.nameErr = !n ? '입금자명을 입력해주세요' : n.length > 10 ? '입금자명은 10자 이하로 입력해주세요' : ''; if (!st.nameErr) st.screen = 'owait'; },
     order: async () => {
       st.busy = true; draw();
