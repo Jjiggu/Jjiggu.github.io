@@ -5,7 +5,7 @@ window.DATA = {
   name: 'Jihoon Kim', // 첫 화면에서는 이름 아래 성으로 두 줄
   role: 'Backend Engineer',
   line:
-    '(주)유닛블랙 HR팀 AX 스쿼드에서 RAG 기반 사내 챗봇과 근로계약서 발송 자동화를 만들었습니다. 개인·팀 프로젝트에서는 락 경합과 쿼리 병목을 성능 테스트로 찾아 해소하고, 캐시로 DB 부하를 줄였습니다. 교수 리뷰 앱 Gasip은 MAU 1,560명 규모로 1년간 운영했습니다.',
+    '느린 쿼리와 락 경합을 감으로 넘기지 않고, 부하 테스트로 원인을 찾아 숫자로 확인합니다. (주)유닛블랙에서는 사내 챗봇의 검색 품질을 recall@5 0.92까지 올리고, 약 30분 걸리던 근로계약서 작업을 2분 이내로 줄였습니다. 교수 리뷰 앱 Gasip은 MAU 1,560명 규모로 1년간 운영했습니다.',
   contact: [ // icon: main.js 의 ICONS
     { label: 'GitHub', icon: 'github', href: 'https://github.com/Jjiggu' },
     { label: 'LinkedIn', icon: 'linkedin', href: '' }, // ponytail: 주소를 받으면 채움. 비어 있으면 화면에 안 나옴
@@ -368,8 +368,8 @@ window.DATA = {
         { title: 'Discord 에러 알림으로 오류 대응 시간 5분 이내', metric: '평균 30분 → 5분 이내', text: '오류마다 EC2에 접속해 Docker 로그를 보느라 평균 30분 걸리던 대응을 전역 예외 처리에서 OpenFeign으로 API, 요청 정보, 스택 트레이스를 Discord 에러 알림 채널에 보내 오류 대응 시간 5분 이내로 단축' },
         { title: '송금 화면 진입 4단계 → 1단계', text: '와이어프레임 테스트에서 30명 중 23명이 불편하다고 답한 테이블오더 송금 과정을 주점별 토스, 카카오페이, 네이버페이 송금 링크 저장으로 바꿔 송금 화면 진입 4단계 → 1단계 단축으로 사용자 경험 개선',
           compare: [ // 프론트엔드 레포(GTable/NoWait_FE)의 송금 화면. pay: 그 시점에 쓰는 송금 수단
-            { tag: 'AS-IS', pay: 'direct', title: '계좌번호를 복사해 직접 이체', text: '안내된 계좌번호를 복사한 뒤 은행 앱을 따로 열어 이체해야 했습니다.' },
-            { tag: 'TO-BE', pay: '토스', title: '저장된 송금 링크로 바로 이동', text: '이체하기를 누르면 주점이 저장해 둔 토스, 카카오페이, 네이버페이 송금 링크가 바로 열립니다.' },
+            { tag: 'AS-IS', steps: '4단계', pay: 'direct', title: '계좌번호를 복사해 직접 이체', text: '안내된 계좌번호를 복사한 뒤 은행 앱을 따로 열어 이체해야 했습니다.' },
+            { tag: 'TO-BE', steps: '1단계', pay: '토스', title: '저장된 송금 링크로 바로 이동', text: '이체하기를 누르면 주점이 저장해 둔 토스, 카카오페이, 네이버페이 송금 링크가 바로 열립니다.' },
           ] },
       ],
     },
@@ -508,20 +508,20 @@ window.DATA = {
     },
     {
       type: 'flow', case: 0, label: '동작 흐름',
-      title: '메뉴가 바뀌면 그 주점의 키 하나만 지우는 캐시 무효화',
-      desc: '조회는 각 User API 의 Caffeine 캐시에서 바로 응답하고, Redis 는 무효화 메시지만 나릅니다. 점이 요청과 메시지입니다.',
+      title: '메뉴가 변경되면 해당 주점 키만 무효화하는 로컬 캐시',
+      desc: '메뉴 조회는 각 User API 인스턴스의 로컬 캐시(Caffeine)에서 응답하고, Redis Pub/Sub 은 캐시 무효화 메시지만 전파합니다. 점이 요청과 메시지입니다.',
       steps: [
-        '손님의 메뉴 조회는 User API 의 Caffeine 캐시에서 바로 응답합니다.',
-        '운영자가 메뉴를 품절로 바꾸면 Admin API 가 DB 업데이트를 커밋합니다.',
-        '커밋이 끝난 뒤 Redis Pub/Sub 으로 무효화 메시지를 발행합니다.',
-        '메시지를 받은 모든 User API 가 해당 주점 키만 로컬 캐시에서 지웁니다.',
-        '다음 조회에서 한 번만 DB 를 읽어 다시 캐시에 담습니다.',
+        '메뉴 조회는 User API 인스턴스의 로컬 캐시에서 바로 응답합니다.',
+        '운영자가 메뉴를 품절 처리하면 Admin API 가 DB 변경을 커밋합니다.',
+        '커밋 후 Redis Pub/Sub 으로 캐시 무효화 메시지를 발행합니다.',
+        '메시지를 구독한 모든 User API 인스턴스가 해당 주점 키만 로컬 캐시에서 삭제합니다.',
+        '다음 조회 때 DB 에서 한 번 읽어 로컬 캐시에 다시 적재합니다.',
       ],
     },
     {
       type: 'line', case: 0,
       title: '캐시 전후의 rps별 MySQL CPU 사용량',
-      desc: 'EC2, 2026-10-26, 부하 단계마다 60초씩 1회. MySQL 컨테이너는 1 CPU 로 제한해서 1.0 코어가 한계입니다. 캐시 전에는 JOIN + 인덱스로 조회했고 2,000 rps 에서 0.99 코어로 포화됐습니다. 캐시 후에는 같은 rps 에서 0.31 코어였습니다. 동그라미는 p95 200ms 안에서 처리한 최대 부하입니다. 측정 당시 캐시 TTL 은 1일이었습니다.',
+      desc: 'MySQL 을 1 CPU 로 제한한 EC2 에서 부하 단계마다 60초씩 측정했습니다. 캐시 전에는 2,000 rps 에서 CPU 가 포화됐고, 캐시 후에는 같은 rps 에서 0.31 코어였습니다. 동그라미는 p95 200ms 이내로 처리한 최대 rps 입니다.',
       src: { label: 'performance/menu-cache/03-cache.md', url: NW + '/blob/HEAD/performance/menu-cache/03-cache.md' },
       xLabel: '목표 rps', xUnit: 'rps', yUnit: '코어', xRange: [0, 6200], yMax: 1,
       xTicks: [200, 1000, 2000, 3000, 4000, 6000], yTicks: [0, 0.25, 0.5, 0.75, 1],

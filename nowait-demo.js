@@ -6,7 +6,7 @@
    자체 점검: `node nowait-demo.js` */
 (() => {
   const STORE = {
-    id: 7, code: 'nowait-pocha', name: '노웨잇 포차', dept: '예시 데이터',
+    id: 7, code: 'nowait-pocha', name: '노웨잇 포차', dept: '예시 데이터', isActive: true, // isActive: 대기 접수 on/off
     location: '예시대학교 중앙광장', hours: '18:00 - 24:00',
     desc: '안녕하세요! 축제 기간에만 여는 노웨잇 포차입니다.\n\n줄 서지 말고 원격으로 대기하세요.\n자리에 앉으면 QR 로 바로 주문할 수 있어요.',
     notice: { title: '입장 시 신분증 검사 필수', content: '주류를 판매하는 부스라 입장할 때 신분증을 확인합니다.\n호출 후 10분 안에 오지 않으면 대기가 취소될 수 있어요.' },
@@ -95,6 +95,7 @@
     const myRank = (userId) => redis.zrank(queueKey, String(userId));
 
     /* ── admin-api: 주점 소개글 · 공지 수정 ── */
+    function toggleActive() { emit('http', `PATCH /admin/stores/toggle-active/${STORE.id}`); STORE.isActive = !STORE.isActive; return STORE.isActive; }
     function updateStore(patch) {
       emit('http', 'PATCH (admin) 주점 정보 수정');
       Object.assign(STORE, patch);
@@ -201,7 +202,7 @@
     // 예시 대기 팀
     [[101, 2], [102, 4], [103, 3]].forEach(([u, p], i) => { db.reservations.push({ waitingNumber: `${STORE.id}-${String(++db.seq).padStart(4, '0')}`, userId: u, partySize: p, status: 'WAITING', name: '손님 ' + 'ABC'[i], requestedAt: now() - (3 - i) * 4 * 60_000 }); (zsets.get(queueKey) || zsets.set(queueKey, []).get(queueKey)).push({ m: String(u), score: now() - (3 - i) * 60_000 }); });
 
-    return { STORE, OTHER, redis, db, stats, queueKey, registerWaiting, cancelWaiting, myRank, enter, call, adminCancel, updateStore, active, createOrder, updateOrderStatus, popularKey, getMenus, toggleSoldOut, setSubscribed, isSubscribed: () => subscribed, HttpError };
+    return { STORE, OTHER, redis, db, stats, queueKey, registerWaiting, cancelWaiting, myRank, enter, call, adminCancel, updateStore, toggleActive, active, createOrder, updateOrderStatus, popularKey, getMenus, toggleSoldOut, setSubscribed, isSubscribed: () => subscribed, HttpError };
   }
 
   if (typeof document === 'undefined') {

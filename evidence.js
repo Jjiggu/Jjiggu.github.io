@@ -179,20 +179,17 @@
       .call(lit('u1')).call(lit('u2')).call(fill(null, false)).set([a, b], { opacity: 0 })
       .call(say(4), null, '+=0.6').add(go(b, 'p2', 0.7)).call(lit('u2')).add(go(b, 'p8', 0.8)).call(lit('db')).add(go(b, 'p8', 0.6, true)).call(fill('u2', true))
       .add(go(b, 'p2', 0.5, true)).call(lit('u2')).set(b, { opacity: 0 });
-    let drawn = false;
-    if (window.ScrollTrigger) ScrollTrigger.create({
-      trigger: wrap, start: 'top 85%', end: 'bottom 15%',
-      onToggle: (s) => {
-        if (!s.isActive) return tl.pause();
-        if (drawn) return tl.play();
-        drawn = true; // 처음 볼 때 선이 그려지고 상자가 들어온 뒤 재생
-        gsap.timeline({ onComplete: () => tl.play() })
-          .from(wrap.querySelectorAll('.fl-node, .fl-cell'), { opacity: 0, scale: 0.9, transformOrigin: '50% 50%', duration: 0.5, stagger: 0.05, ease: 'back.out(1.6)' })
-          .from(wrap.querySelectorAll('.fl-paths path'), { drawSVG: 0, duration: 0.9, stagger: 0.08, ease: 'power2.inOut' }, 0.2)
-          .from(wrap.querySelectorAll('.fl-l'), { opacity: 0, duration: 0.4, stagger: 0.05 }, '-=0.4');
-      },
-    });
-    else tl.play();
+    let drawn = false, vis = false;
+    new IntersectionObserver(([e]) => {
+      vis = e.isIntersecting;
+      if (!vis) return tl.pause();
+      if (drawn) return tl.play();
+      drawn = true; // 처음 볼 때 선이 그려지고 상자가 들어온 뒤 재생
+      gsap.timeline({ onComplete: () => vis && tl.play() })
+        .from(wrap.querySelectorAll('.fl-node, .fl-cell'), { opacity: 0, scale: 0.9, transformOrigin: '50% 50%', duration: 0.5, stagger: 0.05, ease: 'back.out(1.6)' })
+        .from(wrap.querySelectorAll('.fl-paths path'), { drawSVG: 0, duration: 0.9, stagger: 0.08, ease: 'power2.inOut' }, 0.2)
+        .from(wrap.querySelectorAll('.fl-l'), { opacity: 0, duration: 0.4, stagger: 0.05 }, '-=0.4');
+    }, { threshold: 0.15 }).observe(wrap);
     return [wrap, steps];
   }
 

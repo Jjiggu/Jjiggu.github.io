@@ -51,21 +51,22 @@
     linkedin: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 0 1-2.063-2.065 2.064 2.064 0 1 1 2.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>',
     mail: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>',
   };
-  const links = D.contact.filter((c) => c.href)
+  const linkList = (cs) => cs.filter((c) => c.href)
     .map((c) => `<li><a href="${c.href}" aria-label="${c.label}" title="${c.label}"${c.href.startsWith('http') ? ' target="_blank" rel="noopener"' : ''}>${ICONS[c.icon]}</a></li>`).join('');
+  const links = linkList(D.contact);
   const mail = D.contact.find((c) => c.icon === 'mail');
 
   $('#role').textContent = D.role;
   $('#name').innerHTML = D.name.split(' ').map(esc).join('<br>'); // 이름 아래 성
   $('#line').textContent = D.line;
   $('#hero-links').innerHTML = links;
-  $('#foot-links').innerHTML = links;
+  $('#foot-links').innerHTML = linkList(D.contact.filter((c) => c.icon !== 'mail')); // 메일은 바로 옆에 주소로 적혀 있음
   Object.assign($('#foot-mail'), { href: mail.href, textContent: mail.text });
 
   // 한눈에 보기: 본문과 같은 순서, 카드마다 대표 수치 하나
   const heads = D.projects.flatMap((p) => [].concat(p.headline || []).map((h) => ({ p, h })));
   $('#overview-track').innerHTML = heads
-    .map(({ p, h }, i) => `<a class="panel" href="#${p.id}">
+    .map(({ p, h }, i) => `<a class="panel${p.accent ? ' has-accent' : ''}" href="#${p.id}"${p.accent ? ` style="--acc-d:${p.accent[0]};--acc-l:${p.accent[1]}"` : ''}>
         <p class="panel__top"><span>${esc(p.kind)} · <span class="num">${p.period}</span></span><span class="num">${i + 1} / ${heads.length}</span></p>
         <h3 class="panel__name">${esc(p.name)}</h3>
         <div class="panel__fig num">${h.a ? `<s>${h.a}</s>` : '<s style="visibility:hidden" aria-hidden="true">0</s>' /* 이전 값이 없어도 큰 숫자 높이를 옆 카드와 맞춤 */}<div><b data-count data-from="${h.a || ''}">${h.b}</b><span>${h.unit}</span></div></div>
@@ -94,7 +95,7 @@
     const direct = c.pay === 'direct';
     const radio = (label, on, img = '') => `<button type="button" role="radio" aria-checked="${on}"><i></i>${img}${label}</button>`;
     // AS-IS: 2025-06 의 RemittanceRequestPage (계좌 안내 한 장, 송금 수단 선택 없음) / TO-BE: 현재 RemittancePage
-    return `<figure><div class="phone" inert aria-hidden="true"><div class="phone__screen">${direct ? `
+    return `<figure><header><em>${c.tag}</em><strong>${c.steps}</strong><span>송금 화면 진입</span></header><div class="phone" inert aria-hidden="true"><div class="phone__screen">${direct ? `
         <div class="p-old"><h2>주문을 위해 이체해 주세요</h2><p>아래 계좌로 결제를 완료해주세요.<br>입금 확인 후 주문이 확정됩니다.</p>
           <div class="p-old__box"><span>노웨잇대디자인과학생회</span><u class="is-hot">기업은행 000-000000-00-000 <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V6a2 2 0 0 1 2-2h9"/></svg></u><b>24,000원</b></div></div>
         <div class="p-foot"><button type="button" class="p-big">다음</button></div>` : `
@@ -104,9 +105,9 @@
           <div class="p-paybox">${radio('계좌로 직접 이체하기', false)}</div>
           <div class="p-total"><span>결제 금액</span><b>24,000원</b></div></section>
         <div class="p-foot"><button type="button" class="p-big is-hot">24,000원 이체하기</button></div>`}
-      </div></div><figcaption><b><em>${c.tag}</em>${esc(c.title)}</b>${esc(c.text)}</figcaption></figure>`;
+      </div></div><figcaption><b>${esc(c.title)}</b>${esc(c.text)}</figcaption></figure>`;
   };
-  const compareHtml = (cs) => `<div class="ab">${cs.map(remitPhone).join('')}</div>
+  const compareHtml = (cs) => `<div class="ab">${cs.map(remitPhone).join('<span class="ab__arrow" aria-hidden="true">→</span>')}</div>
       <p class="ab__src">화면은 NoWait 프론트엔드 레포(<a href="https://github.com/GTable/NoWait_FE" target="_blank" rel="noopener">GTable/NoWait_FE</a>)의 2025년 6월과 현재 송금 화면 코드를 본떠 다시 그렸습니다. 계좌번호와 금액은 예시입니다.</p>`;
 
   const moreHtml = (items) => `<section class="more">
@@ -300,13 +301,7 @@
     const name = SplitText.create('#name', { type: 'chars', mask: 'chars' });
     gsap.timeline()
       .from(name.chars, { yPercent: 110, duration: 1.1, stagger: 0.08, ease: 'power4.out' })
-      .from('.hero__role, .hero__intro, #hero-links li, .hero__cue, .nav', { opacity: 0, y: 24, duration: 0.8, stagger: 0.08, ease: 'power3.out' }, '-=0.8');
-
-    // 내려갈 때 메뉴를 숨기고 올라갈 때 다시 보여 줌 (본문과 겹치지 않게)
-    const nav = $('.nav');
-    let navDir = 0; // 방향이 바뀔 때만 트윈을 만듦 (스크롤 프레임마다 만들지 않게)
-    const navShow = (dir) => { if (dir === navDir) return; navDir = dir; gsap.to(nav, { yPercent: dir === 1 ? -130 : 0, duration: 0.4, overwrite: true }); };
-    ScrollTrigger.create({ start: 80, end: 'max', onUpdate: (s) => navShow(s.direction), onLeaveBack: () => navShow(-1) });
+      .from('.hero__role, .hero__intro, #hero-links li, .hero__cue', { opacity: 0, y: 24, duration: 0.8, stagger: 0.08, ease: 'power3.out' }, '-=0.8');
 
     // 상단 진행 막대
     gsap.to('.progress', { scaleX: 1, ease: 'none', scrollTrigger: { start: 0, end: 'max', scrub: 0.3 } });
