@@ -56,20 +56,22 @@ else {
   // h1 글자를 같은 글꼴로 캔버스에 그려 픽셀 좌표를 뽑음
   function build() {
     W = hero.clientWidth; H = hero.clientHeight;
-    const dpr = Math.min(devicePixelRatio || 1, 2);
+    const lite = document.documentElement.classList.contains('lite'); // 가벼운 모드: 해상도 1배, 점은 듬성하게
+    const dpr = lite ? 1 : Math.min(devicePixelRatio || 1, 2);
     renderer.setPixelRatio(dpr); renderer.setSize(W, H, false);
     Object.assign(camera, { right: W, bottom: H }); camera.updateProjectionMatrix();
     uniforms.uDpr.value = dpr;
 
     const r = h1.getBoundingClientRect(), hr = hero.getBoundingClientRect(), cs = getComputedStyle(h1);
-    const fs = parseFloat(cs.fontSize), step = Math.max(2, Math.round(fs / 75));
+    const fs = parseFloat(cs.fontSize), step = Math.max(2, Math.round(fs / 75)) + (lite ? 1 : 0);
     const off = document.createElement('canvas');
     off.width = Math.ceil(r.width + fs * 0.2); off.height = Math.ceil(r.height);
     const c = off.getContext('2d', { willReadFrequently: true });
     c.font = `${cs.fontWeight} ${cs.fontSize} ${cs.fontFamily}`;
     if ('letterSpacing' in c) c.letterSpacing = cs.letterSpacing;
     c.textBaseline = 'middle'; c.fillStyle = '#000';
-    c.fillText(h1.textContent, 0, r.height * 0.5);
+    const lines = h1.innerText.split('\n'), lh = r.height / lines.length; // <br> 로 나뉜 줄마다 한 줄씩
+    lines.forEach((t, i) => c.fillText(t, 0, lh * (i + 0.5)));
     const px = c.getImageData(0, 0, off.width, off.height).data;
     const ox = r.left - hr.left, oy = r.top - hr.top, cx = W * 0.5, cy = H * 0.5, R = Math.hypot(W, H) * 0.75;
     const pos = [], start = [], meta = [];
@@ -80,7 +82,7 @@ else {
       meta.push((free ? 0 : 0.15) + Math.random() * 1.1 + (x - ox) / (r.width || 1) * 0.5, Math.random(), Math.random() < 0.06 ? 1 : 0, free ? 1 : 0);
     };
     for (let y = 0; y < off.height; y += step) for (let x = 0; x < off.width; x += step) if (px[(y * off.width + x) * 4 + 3] > 128) add(ox + x, oy + y, false);
-    for (let i = 0; i < 500; i++) add(Math.random() * W, Math.random() * H, true); // 주변을 떠도는 요청
+    for (let i = 0; i < (lite ? 200 : 500); i++) add(Math.random() * W, Math.random() * H, true); // 주변을 떠도는 요청
     const g = new THREE.BufferGeometry();
     g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
     g.setAttribute('aStart', new THREE.Float32BufferAttribute(start, 3));
@@ -102,6 +104,7 @@ else {
   hero.addEventListener('pointerleave', () => uniforms.uMouse.value.set(-9999, -9999));
   addEventListener('themechange', () => { uniforms.uInk.value = css('--ink'); uniforms.uSun.value = css('--sun'); });
   let t;
+  addEventListener('litechange', () => points && build());
   addEventListener('resize', () => { clearTimeout(t); t = setTimeout(build, 200); }); // ponytail: 크기가 바뀌면 다시 뽑음(이미 지난 출발 시각이라 바로 제자리)
   new IntersectionObserver(([e]) => { const was = running; running = e.isIntersecting; if (running && !was) requestAnimationFrame(frame); }).observe(hero);
 

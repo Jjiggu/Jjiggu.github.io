@@ -21,7 +21,7 @@
       <header class="ev__head">
         <p class="eyebrow">직접 해 보기</p>
         <h4 class="ev__title">직접 눌러 보는 Gasip</h4>
-        <p class="ev__desc">왼쪽 휴대폰에서 리뷰 목록을 내려 보고 리뷰를 눌러 상세로 들어가거나 새 리뷰를 써 보세요. 목록을 10건 가져올 때마다 DB 가 몇 행을 읽는지 오른쪽에 나옵니다. 조회 방식 세 개는 위 사례의 해결 과정 세 단계와 같습니다.</p>
+        <p class="ev__desc">왼쪽 휴대폰에서 리뷰 목록을 내려 보고 리뷰를 눌러 상세로 들어가거나 새 리뷰를 써 보세요. 목록 10건을 조회할 때마다 DB 가 스캔한 행 수가 오른쪽에 표시됩니다. 조회 방식 세 개는 위 사례의 해결 과정 세 단계와 같습니다.</p>
       </header>
       <figure class="nw__mock gs__video"><video src="assets/gasip/demo.mp4#t=1" controls muted playsinline preload="metadata"></video><figcaption>실제 앱 화면 영상. 출처: Gasip 백엔드 README</figcaption></figure>
     </div>
@@ -38,22 +38,22 @@
       <div class="nw__col bk">
         <p class="nw__label">목록 조회 방식</p>
         <div class="bk__actions gs-modes">${Object.entries(MODES).map(([k, m]) => `<button type="button" data-act="mode" data-k="${k}" aria-pressed="false">${m.name}</button>`).join('')}</div>
-        <p class="nw__label">해 보기</p>
+        <p class="nw__label">시나리오</p>
         <div class="bk__actions">
           <button type="button" data-act="other">다른 학생이 새 리뷰 등록</button>
           <button type="button" data-act="deep">100,000번째 글부터 이어 보기</button>
           <button type="button" data-act="reset">처음부터</button>
         </div>
         <dl class="gs-stats">
-          <div><dt>이번 목록 조회에서 읽은 행</dt><dd class="num" id="gs-ex">0</dd><div class="gs-bar" aria-hidden="true"><i id="gs-bar"></i></div><small>막대는 로그 눈금 (10 ~ 100만 행)</small></div>
+          <div><dt>이번 조회에서 스캔한 행</dt><dd class="num" id="gs-ex">0</dd><div class="gs-bar" aria-hidden="true"><i id="gs-bar"></i></div><small>막대는 로그 스케일 (10 ~ 100만 행)</small></div>
           <div><dt>화면에 가져온 리뷰</dt><dd class="num" id="gs-got">0</dd></div>
-          <div><dt>이미 본 리뷰가 다시 나옴</dt><dd class="num" id="gs-dup">0</dd></div>
+          <div><dt>중복 노출된 리뷰</dt><dd class="num" id="gs-dup">0</dd></div>
         </dl>
         <p class="dock__fact"><b>실측</b> <span id="gs-fact"></span></p>
         <ol class="bk__log gs-log" id="gs-log" data-lenis-prevent aria-live="polite"></ol>
       </div>
     </div>
-    <details class="nw__credit"><summary>화면 출처와 안내</summary><p>화면 디자인과 앱은 Gasip 팀의 디자이너와 프론트엔드 개발자들이 만들었습니다(<a href="https://github.com/GASIP-PROJECT/gasip-frontend" target="_blank" rel="noopener">GASIP-PROJECT/gasip-frontend</a>). 여기서는 그 화면을 본떠 다시 그렸고 실제 서버에는 연결되지 않습니다. 리뷰·댓글 내용과 강의·교수·닉네임은 예시 데이터입니다. 읽은 행 수는 브라우저 안의 모델이 센 값입니다. 조회 방식을 화면에서 고르는 기능은 이 체험에만 있고 글쓰기의 교수 검색과 답글·신고는 생략했습니다.</p></details>`;
+    <details class="nw__credit"><summary>화면 출처와 안내</summary><p>화면 디자인과 앱은 Gasip 팀의 디자이너와 프론트엔드 개발자들이 만들었습니다(<a href="https://github.com/GASIP-PROJECT/gasip-frontend" target="_blank" rel="noopener">GASIP-PROJECT/gasip-frontend</a>). 여기서는 그 화면을 본떠 다시 그렸고 실제 서버에는 연결되지 않습니다. 리뷰·댓글 내용과 강의·교수·닉네임은 예시 데이터입니다. 스캔한 행 수는 브라우저에서 시뮬레이션으로 계산한 값입니다. 조회 방식을 화면에서 고르는 기능은 이 체험에만 있고 글쓰기의 교수 검색과 답글·신고는 생략했습니다.</p></details>`;
   host.append(root);
 
   const $ = (s) => root.querySelector(s);
@@ -93,8 +93,8 @@
     r.rows.forEach((p) => { const isDup = seen.has(p.id); if (isDup) d++; seen.add(p.id); list.append(card(p, isDup)); });
     got += r.rows.length; dup += d; hasNext = r.hasNext;
     const where = mode === 'cursor' ? `lastPostId=${cur.lastPostId ? fmt(cur.lastPostId) : '없음'}` : `page=${fmt(cur.page)}`;
-    log(`목록 ${where} → ${fmt(r.examined)}행을 읽어 ${r.rows.length}건 반환`);
-    if (d) log(`새 글이 끼어들어 목록이 한 칸 밀림 → 이미 본 리뷰 ${d}건이 다시 나옴`, 'dup');
+    log(`목록 ${where} → ${fmt(r.examined)}행 스캔, ${r.rows.length}건 반환`);
+    if (d) log(`새 글이 추가돼 목록이 한 칸 밀림 → 이미 본 리뷰 ${d}건 중복 노출`, 'dup');
     cur = mode === 'cursor' ? { lastPostId: r.rows.at(-1)?.id } : { page: cur.page + 1 };
     $('#gs-ex').textContent = fmt(r.examined);
     $('#gs-bar').style.width = Math.max(4, (Math.log10(r.examined) - 1) / 5 * 100) + '%';
@@ -169,7 +169,7 @@
     if (act === 'mode') { mode = t.dataset.k; logEl.replaceChildren(); log(`목록 조회 방식: ${MODES[mode].name}`); start(); }
     else if (act === 'reset') { logEl.replaceChildren(); start(); }
     else if (act === 'deep') { log('100,000번째 글 위치로 이동'); start({ keepBoard: true, deep: true }); }
-    else if (act === 'other') { const p = board.addPost(); log(`INSERT INTO board … (새 리뷰 #${fmt(p.id)}) · 학생 화면은 아직 모름`); }
+    else if (act === 'other') { const p = board.addPost(); log(`INSERT INTO board … (새 리뷰 #${fmt(p.id)}) · 학생 화면에는 아직 미반영`); }
     else if (act === 'open') {
       ui.post = board.post(+t.dataset.id); ui.view = 'detail';
       stateOf(ui.post).views++;

@@ -15,7 +15,16 @@
     dispatchEvent(new Event('themechange')); // 캔버스·차트가 색을 다시 읽음
   };
   setTheme(document.documentElement.dataset.theme);
-  themeBtn.addEventListener('click', () => setTheme(document.documentElement.dataset.theme === 'light' ? 'dark' : 'light', true));
+  themeBtn.addEventListener('click', () => {
+    const next = () => setTheme(document.documentElement.dataset.theme === 'light' ? 'dark' : 'light', true);
+    if (reduce || !document.startViewTransition) return next();
+    // View Transitions API: 누른 버튼 자리에서 원이 퍼지며 새 테마가 덮음 (style.css 의 ::view-transition-new)
+    const r = themeBtn.getBoundingClientRect(), x = r.left + r.width / 2, y = r.top + r.height / 2;
+    const root = document.documentElement.style;
+    root.setProperty('--vt-x', x + 'px'); root.setProperty('--vt-y', y + 'px');
+    root.setProperty('--vt-r', Math.hypot(Math.max(x, innerWidth - x), Math.max(y, innerHeight - y)) + 'px');
+    document.startViewTransition(next);
+  });
 
   /* ───────── 1. 데이터 → 화면 ───────── */
   const PICK = { x: '제외', ok: '선택' };
@@ -47,22 +56,21 @@
   const mail = D.contact.find((c) => c.icon === 'mail');
 
   $('#role').textContent = D.role;
-  $('#name').textContent = D.name;
+  $('#name').innerHTML = D.name.split(' ').map(esc).join('<br>'); // 이름 아래 성
   $('#line').textContent = D.line;
-  $('#intro').textContent = D.intro;
   $('#hero-links').innerHTML = links;
   $('#foot-links').innerHTML = links;
   Object.assign($('#foot-mail'), { href: mail.href, textContent: mail.text });
 
   // 한눈에 보기: 본문과 같은 순서, 카드마다 대표 수치 하나
-  const heads = D.projects.filter((p) => p.headline);
+  const heads = D.projects.flatMap((p) => [].concat(p.headline || []).map((h) => ({ p, h })));
   $('#overview-track').innerHTML = heads
-    .map((p, i) => `<a class="panel" href="#${p.id}">
+    .map(({ p, h }, i) => `<a class="panel" href="#${p.id}">
         <p class="panel__top"><span>${esc(p.kind)} · <span class="num">${p.period}</span></span><span class="num">${i + 1} / ${heads.length}</span></p>
         <h3 class="panel__name">${esc(p.name)}</h3>
-        <div class="panel__fig num">${p.headline.a ? `<s>${p.headline.a}</s>` : ''}<div><b data-count data-from="${p.headline.a}">${p.headline.b}</b><span>${p.headline.unit}</span></div></div>
-        <p class="panel__label">${esc(p.headline.label)}</p>
-        <p class="panel__note">${esc(p.headline.note)}</p>
+        <div class="panel__fig num">${h.a ? `<s>${h.a}</s>` : '<s style="visibility:hidden" aria-hidden="true">0</s>' /* 이전 값이 없어도 큰 숫자 높이를 옆 카드와 맞춤 */}<div><b data-count data-from="${h.a || ''}">${h.b}</b><span>${h.unit}</span></div></div>
+        <p class="panel__label">${esc(h.label)}</p>
+        <p class="panel__note">${esc(h.note)}</p>
         <span class="panel__more">자세히 보기 →</span>
       </a>`)
     .join('');
@@ -80,11 +88,32 @@
       </div>
     </article></div>`;
 
+  // 송금 화면 전후 비교: nowait-ui.js 의 주문하기 화면과 같은 마크업(보기 전용)
+  const NW = 'assets/nowait/fe/';
+  const remitPhone = (c) => {
+    const direct = c.pay === 'direct';
+    const radio = (label, on, img = '') => `<button type="button" role="radio" aria-checked="${on}"><i></i>${img}${label}</button>`;
+    // AS-IS: 2025-06 의 RemittanceRequestPage (계좌 안내 한 장, 송금 수단 선택 없음) / TO-BE: 현재 RemittancePage
+    return `<figure><div class="phone" inert aria-hidden="true"><div class="phone__screen">${direct ? `
+        <div class="p-old"><h2>주문을 위해 이체해 주세요</h2><p>아래 계좌로 결제를 완료해주세요.<br>입금 확인 후 주문이 확정됩니다.</p>
+          <div class="p-old__box"><span>노웨잇대디자인과학생회</span><u class="is-hot">기업은행 000-000000-00-000 <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V6a2 2 0 0 1 2-2h9"/></svg></u><b>24,000원</b></div></div>
+        <div class="p-foot"><button type="button" class="p-big">다음</button></div>` : `
+        <p class="p-navtitle">주문하기</p>
+        <section class="p-pad p-remit"><h2 class="p-t18">송금 수단</h2>
+          <div class="p-paybox"><p>간편 송금</p>${[['카카오페이', 'kakaoPay.png', 42, 18], ['토스', 'tossPay.png', 46, 16], ['네이버페이', 'naverPay.png', 43, 15]].map(([p, f, w, h]) => radio(p, c.pay === p, `<img src="${NW}${f}" width="${w}" height="${h}" alt="">`)).join('')}</div>
+          <div class="p-paybox">${radio('계좌로 직접 이체하기', false)}</div>
+          <div class="p-total"><span>결제 금액</span><b>24,000원</b></div></section>
+        <div class="p-foot"><button type="button" class="p-big is-hot">24,000원 이체하기</button></div>`}
+      </div></div><figcaption><b><em>${c.tag}</em>${esc(c.title)}</b>${esc(c.text)}</figcaption></figure>`;
+  };
+  const compareHtml = (cs) => `<div class="ab">${cs.map(remitPhone).join('')}</div>
+      <p class="ab__src">화면은 NoWait 프론트엔드 레포(<a href="https://github.com/GTable/NoWait_FE" target="_blank" rel="noopener">GTable/NoWait_FE</a>)의 2025년 6월과 현재 송금 화면 코드를 본떠 다시 그렸습니다. 계좌번호와 금액은 예시입니다.</p>`;
+
   const moreHtml = (items) => `<section class="more">
       <h4 class="more__head">그 밖의 작업</h4>
       <ul>${items.map((m) => `<li class="more__item split">
         <div><p class="more__title">${esc(m.title)}</p>${m.metric ? `<p class="more__metric">${esc(m.metric)}</p>` : ''}</div>
-        <div class="more__body">${m.text ? `<p>${esc(m.text)}</p>`
+        <div class="more__body">${m.text ? `<p>${esc(m.text)}</p>${m.compare ? compareHtml(m.compare) : ''}`
           : `${list(m.result)}<details class="more__detail"><summary>문제와 해결 과정 보기</summary>${phase('문제', m.problem)}${phase('해결 과정', m.solution)}</details>`}</div>
       </li>`).join('')}</ul>
     </section>`;
@@ -110,10 +139,10 @@
       <header class="project__head">
         <p class="project__kind"><span>${esc(p.kind)}</span><span class="num">${p.period}</span></p>
         <h3 class="project__name">${esc(p.name)}</h3>
-        <div class="split project__meta">
-          <div><p class="project__sub">${esc(p.sub)}</p>${p.repo ? `<a class="project__repo" href="${p.repo}" target="_blank" rel="noopener">GitHub 레포 보기 ↗</a>` : ''}</div>
+        ${p.sub || p.repo || p.facts || p.stack ? `<div class="split project__meta">
+          <div>${p.sub ? `<p class="project__sub">${esc(p.sub)}</p>` : ''}${p.repo ? `<a class="project__repo" href="${p.repo}" target="_blank" rel="noopener">GitHub 레포 보기 ↗</a>` : ''}</div>
           ${p.facts || p.stack ? `<dl class="facts">${(p.facts || []).map(([k, v]) => `<div><dt>${k}</dt><dd>${esc(v)}</dd></div>`).join('')}${p.stack ? `<div><dt>기술 스택</dt><dd>${chips(p.stack)}</dd></div>` : ''}</dl>` : ''}
-        </div>
+        </div>` : ''}
         <div class="project__rule"></div>
       </header>
       <div class="project__lead"></div>
@@ -126,11 +155,6 @@
   $('#career-list').innerHTML = D.projects.filter((p) => p.group === 'career').map(projectHtml).join('');
   $('#project-list').innerHTML = D.projects.filter((p) => p.group === 'project').map(projectHtml).join('');
   $('#coupon .demo-slot').append($('#tpl-coupon-demo').content.cloneNode(true)); // sim.js 가 이 다음에 그림
-
-  $('#edu-list').innerHTML = D.edu
-    .map((g) => `<div class="row split"><h3 class="row__h">${g.h}</h3><ul class="edu__items">${g.items
-      .map((it) => `<li><p class="edu__t"><b>${esc(it.t)}</b><span class="num">${it.p}</span></p>${it.d.map((x) => `<p>${esc(x)}</p>`).join('')}</li>`).join('')}</ul></div>`)
-    .join('');
 
   // 쿠폰 표지의 이벤트 화면: 버튼을 누르면 바로 아래 시뮬레이션에서 내 요청을 Redis Streams 로 흘려 보냄
   const gate = $('#coupon .cover__gate'), G = D.projects.find((p) => p.id === 'coupon').cover.gate;
@@ -151,6 +175,7 @@
 
   /* ───────── 2. 부드러운 스크롤 (Lenis ↔ ScrollTrigger) ───────── */
   const lenis = new Lenis({ anchors: { offset: -64 } }); // 고정 메뉴 높이만큼 덜 내려감
+  window.lenis = lenis; // fx.js 가 같은 스크롤을 씀
   lenis.on('scroll', ScrollTrigger.update);
   gsap.ticker.add((t) => lenis.raf(t * 1000));
   gsap.ticker.lagSmoothing(0);
@@ -185,8 +210,9 @@
     const readColor = () => { const cs = getComputedStyle(cv); st.color = cs.getPropertyValue('--dot').trim() || st.color; st.sun = cs.getPropertyValue('--sun').trim() || st.sun; };
     readColor(); addEventListener('themechange', readColor);
     let W = 0, H = 0;
-    const fit = () => { const d = Math.min(devicePixelRatio || 1, 2); W = cv.clientWidth; H = cv.clientHeight; cv.width = W * d; cv.height = H * d; ctx.setTransform(d, 0, 0, d, 0, 0); };
-    fit(); new ResizeObserver(fit).observe(cv);
+    const lite = () => document.documentElement.classList.contains('lite');
+    const fit = () => { const d = lite() ? 1 : Math.min(devicePixelRatio || 1, 2); W = cv.clientWidth; H = cv.clientHeight; cv.width = W * d; cv.height = H * d; ctx.setTransform(d, 0, 0, d, 0, 0); };
+    fit(); new ResizeObserver(fit).observe(cv); addEventListener('litechange', fit);
     cv.parentElement.addEventListener('pointermove', (e) => { const r = cv.getBoundingClientRect(); st.mx = e.clientX - r.left; st.my = e.clientY - r.top; });
     cv.parentElement.addEventListener('pointerleave', () => { st.mx = st.my = -999; });
     function loop(now) {
@@ -196,7 +222,10 @@
       ctx.clearRect(0, 0, W, H);
       ctx.fillStyle = st.color;
       ctx.globalAlpha = st.suck ? 0.9 : P.alpha;
-      for (const p of ps) {
+      ctx.beginPath(); // 점 전체를 한 경로로 모아 한 번만 칠함 (점마다 fill 하면 1,000번 그리기 호출)
+      const n = lite() ? Math.round(N * 0.45) : N;
+      for (let i = 0; i < n; i++) {
+        const p = ps[i];
         if (el < p.born) continue;
         if (!p.on) { p.on = true; p.x = P.cx + Math.cos(p.a) * R; p.y = P.cy + Math.sin(p.a) * R; }
         p.a += p.sp * 0.006 * (1 + 4 * st.squeeze); // 모일수록 빨리 돎
@@ -205,8 +234,9 @@
         const dx = p.x - st.mx, dy = p.y - st.my;
         if (dx * dx + dy * dy < 9000) { tx += dx * 0.6; ty += dy * 0.6; }
         p.x += (tx - p.x) * lerp; p.y += (ty - p.y) * lerp;
-        ctx.beginPath(); ctx.arc(p.x, p.y, p.s, 0, 6.283); ctx.fill();
+        ctx.moveTo(p.x + p.s, p.y); ctx.arc(p.x, p.y, p.s, 0, 6.283);
       }
+      ctx.fill();
       if (st.me && st.focus) { // 내가 누른 요청: 시뮬레이션의 '내 요청' 표시와 같은 모양
         const { x, y } = st.focus, rr = 16 + 4 * Math.sin(now / 160);
         ctx.globalAlpha = 1; ctx.strokeStyle = ctx.fillStyle = st.sun; ctx.lineWidth = 2;
@@ -270,10 +300,13 @@
     const name = SplitText.create('#name', { type: 'chars', mask: 'chars' });
     gsap.timeline()
       .from(name.chars, { yPercent: 110, duration: 1.1, stagger: 0.08, ease: 'power4.out' })
-      .from('.hero__role, .hero__line, .hero__intro, #hero-links li, .nav', { opacity: 0, y: 24, duration: 0.8, stagger: 0.08, ease: 'power3.out' }, '-=0.8');
+      .from('.hero__role, .hero__intro, #hero-links li, .hero__cue, .nav', { opacity: 0, y: 24, duration: 0.8, stagger: 0.08, ease: 'power3.out' }, '-=0.8');
 
     // 내려갈 때 메뉴를 숨기고 올라갈 때 다시 보여 줌 (본문과 겹치지 않게)
-    ScrollTrigger.create({ start: 80, end: 'max', onUpdate: (s) => gsap.to('.nav', { yPercent: s.direction === 1 ? -130 : 0, duration: 0.4, overwrite: true }), onLeaveBack: () => gsap.to('.nav', { yPercent: 0, duration: 0.4, overwrite: true }) });
+    const nav = $('.nav');
+    let navDir = 0; // 방향이 바뀔 때만 트윈을 만듦 (스크롤 프레임마다 만들지 않게)
+    const navShow = (dir) => { if (dir === navDir) return; navDir = dir; gsap.to(nav, { yPercent: dir === 1 ? -130 : 0, duration: 0.4, overwrite: true }); };
+    ScrollTrigger.create({ start: 80, end: 'max', onUpdate: (s) => navShow(s.direction), onLeaveBack: () => navShow(-1) });
 
     // 상단 진행 막대
     gsap.to('.progress', { scaleX: 1, ease: 'none', scrollTrigger: { start: 0, end: 'max', scrub: 0.3 } });
@@ -362,22 +395,7 @@
     // 쿠폰 시뮬레이션: 화면에 처음 들어올 때 자동 재생 시작
     ScrollTrigger.create({ trigger: '.cp .sim', start: 'top 85%', once: true, onEnter: () => window.Sim?.start() });
 
-    // 커서 · 자석 버튼 (마우스가 있는 기기만)
-    if (matchMedia('(hover: hover) and (pointer: fine)').matches) {
-      const cur = $('.cursor');
-      const cx = gsap.quickTo(cur, 'x', { duration: 0.35, ease: 'power3' });
-      const cy = gsap.quickTo(cur, 'y', { duration: 0.35, ease: 'power3' });
-      addEventListener('pointermove', (e) => { cx(e.clientX); cy(e.clientY); cur.classList.add('on'); });
-      document.addEventListener('pointerover', (e) => cur.classList.toggle('big', !!e.target.closest('a, button')));
-      $$('.totop, .links a').forEach((btn) => {
-        btn.addEventListener('pointermove', (e) => {
-          const r = btn.getBoundingClientRect();
-          gsap.to(btn, { x: (e.clientX - r.left - r.width / 2) * 0.25, y: (e.clientY - r.top - r.height / 2) * 0.35, duration: 0.4 });
-        });
-        btn.addEventListener('pointerleave', () => gsap.to(btn, { x: 0, y: 0, duration: 0.8, ease: 'elastic.out(1, 0.4)' }));
-      });
-    }
-
     ScrollTrigger.refresh();
+    window.motionReady = true; dispatchEvent(new Event('motionready')); // fx.js 는 이 뒤에 붙음 (고정 구간 계산 순서)
   });
 })();

@@ -10,7 +10,15 @@
     location: '예시대학교 중앙광장', hours: '18:00 - 24:00',
     desc: '안녕하세요! 축제 기간에만 여는 노웨잇 포차입니다.\n\n줄 서지 말고 원격으로 대기하세요.\n자리에 앉으면 QR 로 바로 주문할 수 있어요.',
     notice: { title: '입장 시 신분증 검사 필수', content: '주류를 판매하는 부스라 입장할 때 신분증을 확인합니다.\n호출 후 10분 안에 오지 않으면 대기가 취소될 수 있어요.' },
-    banners: ['assets/nowait/menu/eomuk.jpg', 'assets/nowait/menu/tteok.jpg', 'assets/nowait/menu/corn.jpg'],
+    banners: ['assets/nowait/banner/open.svg', 'assets/nowait/banner/menu.svg', 'assets/nowait/banner/queue.svg'], // 직접 그린 주점 홍보 배너
+  };
+  // ponytail: 두 번째 주점은 목록·상세만 보이는 예시(대기 접수 마감). 서버 모델은 STORE 하나만 다룸. 여러 주점을 실제로 돌리려면 queueKey·캐시 키를 주점별로.
+  const OTHER = {
+    id: 12, code: 'moonlight', name: '달빛 주막', dept: '예시 데이터', teams: 12,
+    location: '예시대학교 공학관 앞마당', hours: '18:00 - 23:00',
+    desc: '공과대학 학생회가 여는 달빛 주막입니다.\n\n오늘은 대기 접수가 마감됐어요.',
+    banners: ['assets/nowait/banner/moon.svg'],
+    menus: [{ id: 1, name: '해물파전', price: 12000 }, { id: 2, name: '두부김치', price: 10000 }, { id: 3, name: '계란말이', price: 8000 }],
   };
   const CACHE_TTL = 5 * 60_000, IN_PROGRESS_TTL = 60_000, COMPLETED_TTL = 180_000;
 
@@ -55,7 +63,7 @@
         const [f, body] = saved.split('::');
         if (f !== fp) throw new HttpError(422, '같은 키, 다른 요청 본문');
         if (body === 'IN-PROGRESS') throw new HttpError(409, '처리 중인 요청');
-        emit('user-api', '저장된 응답을 그대로 돌려줌 (다시 실행하지 않음)');
+        emit('user-api', '저장된 응답 그대로 반환 (로직 재실행 없음)');
         return JSON.parse(body);
       }
       let res;
@@ -140,12 +148,12 @@
       emit('mysql', 'UPDATE menus SET is_sold_out = ? · COMMIT');
       emit('redis', `PUBLISH cache:menus invalidate:${STORE.id} → 구독자 ${subscribed ? 1 : 0}`);
       if (subscribed) { cache.delete(String(STORE.id)); emit('user-api', '무효화 메시지 수신 → 로컬 캐시에서 해당 주점 키 삭제'); }
-      else emit('user-api', '연결이 끊겨 있어 메시지를 받지 못함 (Pub/Sub 은 다시 보내지 않음)');
+      else emit('user-api', '구독 연결이 끊겨 무효화 메시지 유실 (Pub/Sub 은 Fire-and-Forget, 재전송 없음)');
       return m.soldOut;
     }
     function setSubscribed(on) {
       subscribed = on;
-      if (on) { cache.clear(); emit('user-api', '재구독 성공 → 로컬 캐시 전체 비움 (놓친 무효화 수습)'); }
+      if (on) { cache.clear(); emit('user-api', '재구독 성공 → 로컬 캐시 전체 비움 (방어적 캐시 클리어)'); }
       else emit('user-api', 'Redis Pub/Sub 연결 끊김');
     }
 
@@ -161,15 +169,15 @@
       if (!items.length) throw new HttpError(400, 'order002 주문 항목이 비어 있음');
       if (!depositorName.trim()) throw new HttpError(400, 'order001 입금자명 없음');
       const signature = signatureOf(tableId, items);
-      emit('user-api', `장바구니 서명 ${signature} = 해시(주점-테이블-메뉴:수량)`);
+      emit('user-api', `장바구니 signature ${signature} = 해시(주점-테이블-메뉴:수량)`);
       emit('mysql', 'SELECT EXISTS(… WHERE signature = ? AND created_at > 2초 전)');
-      if (db.orders.some((o) => o.signature === signature && now() - o.createdAt < 2000)) throw new HttpError(400, 'order003 2초 안에 같은 장바구니 주문');
+      if (db.orders.some((o) => o.signature === signature && now() - o.createdAt < 2000)) throw new HttpError(400, 'order003 2초 내 같은 장바구니 중복 주문');
       emit('mysql', 'BEGIN · INSERT INTO user_order (status=WAITING_FOR_PAYMENT)');
       await wait(txMs);
-      emit('mysql', 'SELECT … FROM menus WHERE id IN (…)  ← 캐시가 아니라 DB 값으로 품절 재확인');
+      emit('mysql', 'SELECT … FROM menus WHERE id IN (…)  ← 캐시를 거치지 않고 DB 에서 품절 재확인');
       const lines = items.map((i) => ({ ...i, ...db.menus.find((m) => m.id === i.menuId) }));
       const sold = lines.find((l) => l.soldOut);
-      if (sold) { emit('mysql', 'ROLLBACK (앞서 저장한 주문도 함께 취소)'); throw new HttpError(409, `menu012 ${sold.name} 품절`); }
+      if (sold) { emit('mysql', 'ROLLBACK (앞서 INSERT 한 주문 포함)'); throw new HttpError(409, `menu012 ${sold.name} 품절`); }
       const order = { id: ++db.orderSeq, tableId, depositorName, totalPrice, signature, status: 'WAITING_FOR_PAYMENT', createdAt: now(), items: lines.map((l) => ({ menuId: l.menuId, name: l.name, quantity: l.quantity, price: l.price })) };
       db.orders.push(order);
       emit('mysql', 'INSERT INTO order_item … · COMMIT');
@@ -185,7 +193,7 @@
       o.status = status;
       emit('mysql', `UPDATE user_order SET status = ${status} · COMMIT`);
       if (status === 'COOKED') { // 커밋 뒤 CookingCompleteEvent → 인기 메뉴 집계
-        emit('admin-api', '커밋 뒤 조리 완료 이벤트 → 인기 메뉴 집계');
+        emit('admin-api', '커밋 후 조리 완료 이벤트 → 인기 메뉴 집계');
         o.items.forEach((i) => redis.zincrby(popularKey(), i.quantity, i.name));
       }
     }
@@ -193,7 +201,7 @@
     // 예시 대기 팀
     [[101, 2], [102, 4], [103, 3]].forEach(([u, p], i) => { db.reservations.push({ waitingNumber: `${STORE.id}-${String(++db.seq).padStart(4, '0')}`, userId: u, partySize: p, status: 'WAITING', name: '손님 ' + 'ABC'[i], requestedAt: now() - (3 - i) * 4 * 60_000 }); (zsets.get(queueKey) || zsets.set(queueKey, []).get(queueKey)).push({ m: String(u), score: now() - (3 - i) * 60_000 }); });
 
-    return { STORE, redis, db, stats, queueKey, registerWaiting, cancelWaiting, myRank, enter, call, adminCancel, updateStore, active, createOrder, updateOrderStatus, popularKey, getMenus, toggleSoldOut, setSubscribed, isSubscribed: () => subscribed, HttpError };
+    return { STORE, OTHER, redis, db, stats, queueKey, registerWaiting, cancelWaiting, myRank, enter, call, adminCancel, updateStore, active, createOrder, updateOrderStatus, popularKey, getMenus, toggleSoldOut, setSubscribed, isSubscribed: () => subscribed, HttpError };
   }
 
   if (typeof document === 'undefined') {

@@ -5,8 +5,9 @@
   const NS = 'http://www.w3.org/2000/svg';
   const C = {};
   const redraws = []; // 테마가 바뀌면 차트를 다시 그림
-  const readTheme = () => { const v = getComputedStyle(document.documentElement), g = (n) => v.getPropertyValue(n).trim(); Object.assign(C, { ink: g('--ink'), mute: g('--mute'), sun: g('--chart-b'), coral: g('--coral'), blue: '#7d93ff', navy: g('--navy') }); C.grid = C.ink + '1f'; };
+  const readTheme = () => { const v = getComputedStyle(document.documentElement), g = (n) => v.getPropertyValue(n).trim(); Object.assign(C, { ink: g('--ink'), mute: g('--mute'), navy: g('--navy') }); C.grid = C.ink + '1f'; };
   readTheme();
+  const accent = (el) => getComputedStyle(el).getPropertyValue('--sun').trim(); // 차트가 놓인 프로젝트의 대표색
   addEventListener('themechange', () => { readTheme(); redraws.forEach((f) => f()); });
   const h = (tag, props = {}, ...kids) => {
     const e = Object.assign(document.createElement(tag), props);
@@ -51,7 +52,7 @@
   function lineChart(c) {
     const host = h('div', { className: 'chart' });
     responsive(host, (W) => {
-      const colors = [C.coral, C.sun];
+      const colors = [C.mute, accent(host)]; // 기준(이전) 계열은 회색, 결과 계열은 대표색
       const wide = W >= 560, H = Math.round(Math.max(250, Math.min(400, W * 0.5)));
       const m = { l: (c.yUnit || '').length > 1 ? 62 : 46, r: wide ? 24 : 12, t: 34, b: 44 };
       const xs = [...new Set(c.series.flatMap((se) => se.pts.map((p) => p[0])))].sort((a, b) => a - b);
@@ -88,7 +89,7 @@
       });
       hit.addEventListener('pointerleave', () => { cross.setAttribute('opacity', 0); hideTip(); });
     });
-    const legend = h('ul', { className: 'chart__legend' }, c.series.map((se, i) => h('li', {}, h('i', { style: `background:var(${i ? '--chart-b' : '--coral'})` }), se.name)));
+    const legend = h('ul', { className: 'chart__legend' }, c.series.map((se, i) => h('li', {}, h('i', { style: `background:var(${i ? '--sun' : '--mute'})` }), se.name)));
     const xsAll = [...new Set(c.series.flatMap((se) => se.pts.map((p) => p[0])))].sort((a, b) => a - b);
     const table = tableView([c.xLabel, ...c.series.map((se) => se.name)],
       xsAll.map((x) => [fmt(x), ...c.series.map((se) => { const p = se.pts.find((q) => q[0] === x); return p ? p[1] + (c.yUnit || '') : ''; })]));
@@ -108,12 +109,12 @@
         s('line', { x1: m.l, x2: W - m.r, y1: H - m.b, y2: H - m.b, stroke: C.grid }, svg);
         me.values.forEach((v, i) => {
           const bh = Math.max((v / max) * (H - m.t - m.b), 2), x = m.l + i * bw + 1, y = H - m.b - bh;
-          const bar = s('path', { d: `M${x} ${y + bh}V${y + 4}q0-4 4-4h${bw - 10}q4 0 4 4V${y + bh}z`, fill: C.blue }, svg);
+          const bar = s('path', { d: `M${x} ${y + bh}V${y + 4}q0-4 4-4h${bw - 10}q4 0 4 4V${y + bh}z`, fill: accent(host) }, svg);
           if (v === max) s('text', { x: x + bw / 2 - 1, y: y - 8, 'text-anchor': 'middle', class: 'chart__label' }, svg).textContent = fmt(v) + me.unit;
           if (i % 2 === 0 || bw > 34) s('text', { x: x + bw / 2 - 1, y: H - 8, 'text-anchor': 'middle', class: 'chart__tick' }, svg).textContent = c.labels[i];
           const hit = s('rect', { x: m.l + i * bw, y: m.t, width: bw, height: H - m.t - m.b, fill: 'transparent' }, svg);
           hit.addEventListener('pointermove', (e) => { bar.setAttribute('fill', C.ink); showTip(e, `${c.labels[i]}${c.xUnit} · ${c.context[i]}`, [[null, me.name, fmt(v) + me.unit]]); });
-          hit.addEventListener('pointerleave', () => { bar.setAttribute('fill', C.blue); hideTip(); });
+          hit.addEventListener('pointerleave', () => { bar.setAttribute('fill', accent(host)); hideTip(); });
         });
       });
       wrap.append(h('figure', {}, h('figcaption', { textContent: me.name }), host));
@@ -123,9 +124,9 @@
     return [wrap, table];
   }
 
-  // 작은 화면에서 글자를 읽을 수 있게 누르면 원본을 새 탭으로 엶
+  // 누르면 그 자리에서 화면 가득 커짐(fx.js 의 Flip). 스크립트가 없으면 원본이 새 탭으로 열림
   const image = (c) => [h('a', { href: c.img, target: '_blank', rel: 'noopener', className: 'ev__zoom' },
-    h('img', { src: c.img, alt: c.alt, loading: 'lazy', width: c.w, height: c.h }), h('span', { textContent: '원본 크기로 보기 ↗' }))];
+    h('img', { src: c.img, alt: c.alt, loading: 'lazy', decoding: 'async', width: c.w, height: c.h }), h('span', { textContent: '크게 보기 ⤢' }))];
 
   /* ── 동작 흐름: 캐시 무효화가 어떻게 오가는지 움직이는 도식 ──
      선은 GSAP DrawSVG 로 그려지고, 요청·메시지(점)는 MotionPath 로 선을 따라 이동. 화면에 보일 때만 반복 재생.
