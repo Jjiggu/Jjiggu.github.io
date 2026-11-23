@@ -76,6 +76,7 @@
     async function registerWaiting(userId, partySize, idemKey, { failCommit = false } = {}) {
       emit('http', `POST /v2/waiting/${STORE.code}  Idempotency-Key: ${idemKey.slice(0, 8)}`);
       return idempotent(`waiting:register:${userId}:${STORE.code}`, idemKey, { partySize }, async () => {
+        if (active(userId)) throw new HttpError(409, '이미 대기 중'); // 멱등 키가 만료된 뒤의 재시도가 두 번째 예약을 만들지 않게
         emit('mysql', 'BEGIN · INSERT INTO reservation (status=WAITING)');
         await wait(txMs);
         if (failCommit) { emit('mysql', 'ROLLBACK (커밋 실패)'); throw new HttpError(500, '커밋 실패'); }

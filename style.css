@@ -72,7 +72,7 @@ a { color: inherit; text-decoration: none; }
   position: fixed; inset: 0 0 auto 0; z-index: 50; height: var(--nav-h);
   display: flex; align-items: center; gap: 1rem;
   padding: 0 var(--pad);
-  background: color-mix(in srgb, var(--navy) 84%, transparent);
+  background: color-mix(in srgb, var(--navy) 92%, transparent);
   -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px);
   border-bottom: 1px solid var(--line);
 }
@@ -89,6 +89,10 @@ a { color: inherit; text-decoration: none; }
   .nav nav { overflow-x: auto; scrollbar-width: none; gap: 1rem; font-size: 0.85rem; -webkit-mask-image: linear-gradient(to right, #000 82%, transparent); mask-image: linear-gradient(to right, #000 82%, transparent); padding-right: 1.5rem; }
   .nav nav::-webkit-scrollbar { display: none; }
 }
+@media (max-width: 420px) { .nav nav { gap: 0.7rem; font-size: 0.8rem; } .theme { margin-left: 0.5rem; } }
+.skip { position: fixed; left: 0.5rem; top: -4rem; z-index: 60; padding: 0.6rem 1rem; border-radius: 8px; background: var(--ink); color: var(--navy); font-weight: 700; }
+.skip:focus { top: 0.5rem; }
+.cp { scroll-margin-top: var(--nav-h); }
 
 /* ───── hero: 이름 · 한 줄 · 소개 · 연락처 ───── */
 .hero {
@@ -123,7 +127,7 @@ a { color: inherit; text-decoration: none; }
 .sec-head p { grid-column: 2; font-size: 0.95rem; color: var(--mute); }
 
 /* ───── 한눈에 보기: 넓은 화면에서는 카드 두 장씩 가로로 ───── */
-.overview { border-block: 1px solid var(--line); color: var(--ink); overflow: hidden; padding: 0 var(--pad) clamp(3rem, 8vh, 5rem); }
+.overview { border-block: 1px solid var(--line); color: var(--ink); overflow: clip; padding: 0 var(--pad) clamp(3rem, 8vh, 5rem); }
 .overview .sec-head { padding-top: clamp(4.5rem, 11vh, 7rem); }
 .overview .sec-head p { color: color-mix(in srgb, var(--ink) 80%, transparent); }
 .overview__track { display: flex; flex-direction: column; }
@@ -270,7 +274,7 @@ a { color: inherit; text-decoration: none; }
 @media (max-width: 900px) { .case-wrap .ev__body { padding-left: 0; } }
 .ev__title { font-size: clamp(1.1rem, 1.4vw, 1.3rem); font-weight: 800; line-height: 1.4; letter-spacing: -0.015em; }
 .ev__desc { margin-top: 0.6rem; font-size: 0.92rem; color: color-mix(in srgb, var(--ink) 82%, transparent); }
-.ev__src { display: inline-block; margin-top: 0.7rem; font-size: 0.85rem; color: var(--mute); text-decoration: underline; text-underline-offset: 3px; }
+.ev__src { display: inline-block; margin-top: 0.5rem; padding: 0.2rem 0; font-size: 0.85rem; color: var(--mute); text-decoration: underline; text-underline-offset: 3px; }
 .ev__src:hover { color: var(--ink); }
 
 
@@ -286,7 +290,7 @@ a { color: inherit; text-decoration: none; }
 .multiples figcaption { font-weight: 700; margin-bottom: 0.25rem; }
 
 .ev__table { margin-top: 1rem; font-size: 0.85rem; color: var(--mute); }
-.ev__table summary { cursor: pointer; width: fit-content; }
+.ev__table summary { cursor: pointer; width: fit-content; padding: 0.2rem 0; }
 .ev__table table { margin-top: 0.75rem; border-collapse: collapse; font-variant-numeric: tabular-nums; display: block; overflow-x: auto; }
 .ev__table th, .ev__table td { padding: 0.35rem 0.9rem 0.35rem 0; text-align: right; white-space: nowrap; border-bottom: 1px solid var(--line); }
 .ev__table th:first-child, .ev__table td:first-child { text-align: left; }
@@ -340,7 +344,7 @@ a { color: inherit; text-decoration: none; }
 .dock__fact { min-height: 3em; color: color-mix(in srgb, var(--ink) 84%, transparent); }
 .dock__fact b { color: var(--sun); margin-right: 0.4em; }
 .dock__note { margin-top: 0.5rem; font-size: 0.78rem; color: var(--mute); }
-.dock__note button { font: inherit; color: var(--ink); background: none; border: 0; padding: 0; margin-left: 0.5em; text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
+.dock__note button { font: inherit; color: var(--ink); background: none; border: 0; padding: 0.3rem 0; margin-left: 0.5em; text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
 @media (max-width: 900px) { .dock__stats { grid-auto-flow: row; grid-template-columns: repeat(2, 1fr); } }
 
 /* ───── NoWait 체험: 휴대폰 · 서버 · 운영자 (색과 크기는 NoWait_FE 디자인 토큰) ───── */
@@ -469,7 +473,7 @@ a { color: inherit; text-decoration: none; }
 .bk__log [data-src='http'] span { color: var(--sun); }
 
 @media (max-width: 760px) {
-  .nw__grid { grid-template-columns: 1fr; }
+  .nw__grid { grid-template-columns: minmax(0, 1fr); }
   .phone { margin: 0 auto; }
   .bk__state { grid-template-columns: 1fr; }
 }
@@ -508,7 +512,7 @@ a { color: inherit; text-decoration: none; }
 .gs-log { height: 220px; }
 .gs .dock__fact { min-height: 0; font-size: 0.9rem; }
 @media (max-width: 760px) {
-  .gs__grid { grid-template-columns: 1fr; }
+  .gs__grid { grid-template-columns: minmax(0, 1fr); }
   .gs-stats { grid-template-columns: 1fr 1fr; }
   .gs-stats > :first-child { grid-column: 1 / -1; }
 }
@@ -651,7 +655,7 @@ button.gs-card { display: block; width: 100%; border: 0; text-align: left; font:
 .ad-cards header b { font-size: 20px; font-weight: 700; color: #444; }
 .ad-cards header em { font-style: normal; font-size: 11px; font-weight: 700; color: #ff5e07; background: #ffeedf; border-radius: 6px; padding: 3px 6px; }
 .ad-cards header span { margin-left: auto; font-size: 13px; font-weight: 500; color: #aaa; }
-.ad-cards header button { all: unset; cursor: pointer; padding: 2px 4px; color: #999; font-size: 13px; }
+.ad-cards header button { all: unset; cursor: pointer; padding: 5px 7px; color: #999; font-size: 13px; }
 .ad-cards dl { display: grid; grid-template-columns: repeat(3, 1fr); margin: 16px 0; }
 .ad-cards dl div { padding: 0 10px; border-left: 1px solid #f1f1f1; }
 .ad-cards dl div:first-child { padding-left: 0; border-left: 0; }
@@ -791,18 +795,19 @@ html[data-theme='light'] {
   --ink: #10163a;
   --mute: #5a6294;
   --sun: #2f4bff;
-  --coral: #d8412f;
+  --coral: #c0321f;
   --dot: #4c63d9;
   --panel: color-mix(in srgb, var(--ink) 5%, transparent);
   color-scheme: light;
 }
 /* 파란 띠(로더 · 결과 요약 · 푸터)는 두 모드에서 같은 색을 씁니다 */
 html[data-theme='light'] .sim__trace li.is-bad { color: var(--coral); }
+html[data-theme='light'] .bk__log [data-src='mysql'] b { color: #3f55d6; }
 html[data-theme='light'] .bk__log [data-src='http'] span, html[data-theme='light'] .bk__log [data-src='http'] b { color: #1b33d6; }
 html[data-theme='light'] .phone, html[data-theme='light'] .ipad { box-shadow: 0 0 0 2px #c9cfe8, 0 24px 48px rgba(16, 22, 58, 0.18); }
 .theme {
   display: inline-grid; place-items: center; width: 34px; height: 34px; margin-left: clamp(0.9rem, 2vw, 2rem); padding: 0;
-  border: 1.5px solid currentColor; border-radius: 50%; background: none; color: inherit; cursor: pointer;
+  border: 1.5px solid currentColor; border-radius: 50%; background: none; color: inherit; cursor: pointer; flex: none;
 }
 .theme svg { width: 16px; height: 16px; }
 .theme .sun, html[data-theme='light'] .theme .moon { display: none; }
@@ -835,7 +840,7 @@ body { transition: background-color 0.3s, color 0.3s; }
 html[data-theme='light'] .project.has-accent, html[data-theme='light'] .panel.has-accent { --sun: var(--acc-l); }
 
 /* 동작 흐름 도식 (GSAP DrawSVG + MotionPath) */
-.flow { overflow-x: auto; scrollbar-width: none; }
+.flow { overflow-x: auto; scrollbar-width: thin; } /* 좁은 화면에서 옆으로 밀 수 있음을 스크롤바로 알림 */
 .flow svg { display: block; width: 100%; min-width: 560px; height: auto; overflow: visible; }
 .fl-paths path { fill: none; stroke: color-mix(in srgb, var(--ink) 38%, transparent); stroke-width: 1.5; stroke-dasharray: none; }
 .fl-l { font-size: 12px; font-weight: 600; fill: var(--mute); }
@@ -877,11 +882,11 @@ html[data-theme='light'] .project.has-accent, html[data-theme='light'] .panel.ha
 @keyframes gate-pulse { 0% { box-shadow: 0 0 0 0 rgba(255, 216, 74, 0.6); } 100% { box-shadow: 0 0 0 26px rgba(255, 216, 74, 0); } }
 .gate__hint { margin-top: 1rem; max-width: 30rem; font-size: 0.92rem; color: color-mix(in srgb, var(--ink) 78%, transparent); text-wrap: balance; text-shadow: 0 0 20px var(--navy); }
 .cover__gate :focus-visible { outline: 3px solid #fff; outline-offset: 4px; }
-@media (max-width: 899px) { /* 고정 없이 시나리오 문구와 이벤트 화면을 위아래로 */
+@media (max-width: 899px), (prefers-reduced-motion: reduce) { /* 고정 없이(모션 줄이기 포함) 시나리오 문구와 이벤트 화면을 위아래로 */
   .cover--crowd .cover__frame { height: auto; display: grid; gap: 14vh; padding: 16vh 0; }
   .cover--crowd .cover__say, .cover--crowd .cover__gate { position: relative; inset: auto; }
 }
-@media (prefers-reduced-motion: reduce) { .gate__count i, .cover__gate.is-open .gate__btn { animation: none; } }
+@media (prefers-reduced-motion: reduce) { .gate__count i, .cover__gate.is-open .gate__btn, .gs-over { animation: none; } }
 
 
 /* ═════════ 길잡이 · 읽기 흐름 (fx.js) ═════════

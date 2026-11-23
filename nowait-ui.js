@@ -47,7 +47,6 @@
   const B = window.NoWaitBackend({ emit: log });
   const st = { flow: 'wait', screen: 'home', party: 1, waiting: null, busy: false, last: null, modal: null, menus: [], cart: [], pick: null, qty: 1, depositor: '', nameErr: '', pay: '카카오페이', toast: '', tab: 'wait', wf: 'ALL', of: 'ING', banner: 0, draft: null };
   const queue = () => B.redis.zrange(B.queueKey);
-  const partyOf = (m) => B.db.reservations.find((r) => String(r.userId) === m && r.status === 'WAITING')?.partySize ?? '-';
   const total = () => st.cart.reduce((n, c) => n + c.price * c.quantity, 0);
   const count = () => st.cart.reduce((n, c) => n + c.quantity, 0);
   const myOrders = () => B.db.orders.filter((o) => o.tableId === TABLE);
@@ -56,7 +55,7 @@
   const footer = (label, attrs, disabled) => `<div class="p-foot"><button type="button" class="p-big" ${attrs} ${disabled ? 'disabled' : ''}>${label}</button></div>`;
   const back = (to, onImage) => `<button type="button" class="p-back${onImage ? ' is-on-image' : ''}" data-act="go" data-to="${to}" aria-label="뒤로"><img src="${A}back.svg" alt=""></button>`;
   const qty = (n, dec, inc, min = 1, max = 99) => `<div class="p-qty"><button type="button" data-act="${dec}" ${n <= min ? 'disabled' : ''} aria-label="줄이기"><img src="${A}minus.svg" alt=""></button><b>${n}</b><button type="button" data-act="${inc}" ${n >= max ? 'disabled' : ''} aria-label="늘리기"><img src="${A}plus.svg" alt=""></button></div>`;
-  const menuList = (clickable, menus = st.menus) => `<h2 class="p-t20s">메뉴</h2><ul class="p-menus">${menus.map((m) => {
+  const menuList = (clickable, menus = st.menus) => `<h2 role="presentation" class="p-t20s">메뉴</h2><ul class="p-menus">${menus.map((m) => {
     const inner = `<div><span class="p-menu-name">${esc(m.name)}</span>${m.soldOut ? '<span class="p-sold">품절</span>' : ''}<p class="p-menu-price">${won(m.price)}</p></div><img src="${m.img || A + 'default-menu-image-sm.png'}" alt="">`;
     return `<li class="${m.soldOut ? 'is-sold' : ''}">${clickable ? `<button type="button" data-act="menu" data-id="${m.id}" ${m.soldOut ? 'disabled' : ''}>${inner}</button>` : inner}</li>`;
   }).join('')}</ul>`;
@@ -68,16 +67,16 @@
     home() {
       const rank = B.myRank(ME);
       return `<header class="p-top"><img src="${A}logo.svg" alt="NoWait" width="58" height="24"></header>
-        <section class="p-pad"><h2 class="p-t20b">나의 대기카드</h2>
+        <section class="p-pad"><h2 role="presentation" class="p-t20b">나의 대기카드</h2>
         ${rank != null ? `<div class="p-card"><p class="p-card-store">${B.STORE.name}</p>
             <p class="p-card-ahead">내 앞 대기 <b>${rank}팀</b><button type="button" data-act="refresh" aria-label="새로고침"><img src="${A}refresh.svg" alt=""></button></p>
             <p class="p-card-meta">#${rank + 1} · 인원 ${st.waiting.partySize}명 · 대기번호 ${st.waiting.waitingNumber}</p></div>
           ${B.active(ME)?.status === 'CALLING' ? `<p class="p-calling">10분 안에 입장해주세요!<b data-cd="${B.active(ME).calledAt + 600000}"></b></p>` : ''}
           <button type="button" class="p-cancel" data-act="askCancel"><img src="${A}close.svg" alt="">대기 취소</button>`
           : '<div class="p-empty">대기 중인 주점이 없어요</div>'}
-        <h2 class="p-t20b">대기가 가장 적어요</h2>
+        <h2 role="presentation" class="p-t20b">대기가 가장 적어요</h2>
         <button type="button" class="p-pick" data-act="go" data-to="store"><img src="${B.STORE.banners[0]}" alt=""><em>${B.STORE.isActive ? `대기 ${queue().length}팀` : '접수 마감'}</em><span>${B.STORE.name}<small>${B.STORE.dept}</small></span></button>
-        <h2 class="p-t20b">모든 주점</h2>
+        <h2 role="presentation" class="p-t20b">모든 주점</h2>
         <button type="button" class="p-store-row" data-act="go" data-to="store"><img src="${A}default-department.png" alt=""><span><small>${B.STORE.dept}</small>${B.STORE.name}</span>${B.STORE.isActive ? `<em>대기 ${queue().length}팀</em>` : '<em class="is-closed">접수 마감</em>'}</button>
         <button type="button" class="p-store-row" data-act="go" data-to="store2"><img src="${A}default-department.png" alt=""><span><small>${B.OTHER.dept}</small>${B.OTHER.name}</span><em class="is-closed">접수 마감</em></button></section>`;
     },
@@ -86,55 +85,55 @@
       const mine = S === B.STORE, waiting = mine && B.myRank(ME) != null, n = mine ? queue().length : S.teams;
       return `${back('home', true)}<div class="p-swiper"><div class="p-swiper__track" id="nw-swiper">${S.banners.map((b, i) => `<img src="${b}" alt="주점 배너 ${i + 1}">`).join('')}</div>
           <div class="p-swiper__dots">${S.banners.map((_, i) => `<button type="button" data-act="banner" data-i="${i}" aria-label="배너 ${i + 1}" aria-pressed="${i === st.banner}"></button>`).join('')}</div></div>
-        <section class="p-pad"><div class="p-store-head"><div><p class="p-dept">${S.dept}</p><h1 class="p-h22">${S.name}</h1></div><img src="${A}default-department.png" alt=""></div>
+        <section class="p-pad"><div class="p-store-head"><div><p class="p-dept">${S.dept}</p><h1 role="presentation" class="p-h22">${S.name}</h1></div><img src="${A}default-department.png" alt=""></div>
         ${n ? `<p class="p-badge">대기 ${n}팀</p>` : ''}
         <div class="p-info"><p><img src="${A}subtract.svg" alt="위치">${esc(S.location)}</p><p><img src="${A}clock.svg" alt="운영 시간">${esc(S.hours)}</p>
           <p class="p-desc">${esc(S.desc)}</p>
           ${S.notice ? `<button type="button" class="p-notice" data-act="go" data-to="notice"><span>${esc(S.notice.title)}</span><img src="${A}arrow-right.svg" alt=""></button>` : ''}</div></section><div class="p-divider"></div>
         <section class="p-pad p-menu-sec">${menuList(false, S.menus)}</section>${mine && (waiting || S.isActive) ? footer(waiting ? '대기 중이에요' : '대기하기', 'data-act="toParty"', waiting) : footer('대기 접수가 마감됐어요', '', true)}`;
     },
-    notice: () => `${back('store')}<p class="p-navtitle">공지사항</p><section class="p-pad p-notice-body"><h1>${esc(B.STORE.notice.title)}</h1><p>${esc(B.STORE.notice.content)}</p></section>`,
-    party: () => `${back('store')}<section class="p-pad p-form"><h1 class="p-h24">대기 등록을 위해<br>인원 수를 입력해주세요</h1>
+    notice: () => `${back('store')}<p class="p-navtitle">공지사항</p><section class="p-pad p-notice-body"><h1 role="presentation">${esc(B.STORE.notice.title)}</h1><p>${esc(B.STORE.notice.content)}</p></section>`,
+    party: () => `${back('store')}<section class="p-pad p-form"><h1 role="presentation" class="p-h24">대기 등록을 위해<br>인원 수를 입력해주세요</h1>
         <div class="p-row"><span class="p-t20s">입장 인원</span>${qty(st.party, 'dec', 'inc', 1, 10)}</div></section>${footer('다음', 'data-act="go" data-to="summary"')}`,
-    summary: () => `${back('party')}<section class="p-pad p-form"><h1 class="p-h24">현재 <b>${queue().length}</b>팀이<br>대기하고 있어요</h1>
+    summary: () => `${back('party')}<section class="p-pad p-form"><h1 role="presentation" class="p-h24">현재 <b>${queue().length}</b>팀이<br>대기하고 있어요</h1>
         <dl class="p-box"><div><dt>부스</dt><dd>${B.STORE.name} / ${B.STORE.dept}</dd></div><div><dt>입장 인원</dt><dd>${st.party}명</dd></div></dl></section>
-        <section class="p-guide"><h3>대기 등록 전 꼭 확인해주세요</h3><ul><li>원활한 운영을 위해 호출 시 10분 이내로 입장해주세요. 10분 이내 미입장 시 부스 이용이 어려울 수 있습니다.</li><li>부스와 부스를 이용하는 다른 고객에게 피해를 줄 수 있어 꼭 방문하실 분만 신중하게 웨이팅을 등록해주세요.</li><li>부득이하게 방문이 힘드신 경우, 나의 대기카드에서 웨이팅을 취소해주세요.</li></ul></section>
+        <section class="p-guide"><h3 role="presentation">대기 등록 전 꼭 확인해주세요</h3><ul><li>원활한 운영을 위해 호출 시 10분 이내로 입장해주세요. 10분 이내 미입장 시 부스 이용이 어려울 수 있습니다.</li><li>부스와 부스를 이용하는 다른 고객에게 피해를 줄 수 있어 꼭 방문하실 분만 신중하게 웨이팅을 등록해주세요.</li><li>부득이하게 방문이 힘드신 경우, 나의 대기카드에서 웨이팅을 취소해주세요.</li></ul></section>
         ${footer(st.busy ? '<i class="p-spin"></i>' : '등록하기', 'data-act="register"', st.busy)}`,
-    success: () => `<section class="p-center"><img src="${A}waitingSuccess.svg" width="227" height="150" alt=""><h1 class="p-h24">대기 등록 완료</h1><p>원활한 운영을 위해 호출시<br>10분 이내로 입장해주세요!</p></section>${footer('확인', 'data-act="go" data-to="home"')}`,
+    success: () => `<section class="p-center"><img src="${A}waitingSuccess.svg" width="227" height="150" alt=""><h1 role="presentation" class="p-h24">대기 등록 완료</h1><p>원활한 운영을 위해 호출시<br>10분 이내로 입장해주세요!</p></section>${footer('확인', 'data-act="go" data-to="home"')}`,
 
     /* 테이블 주문 */
-    ostore: () => `<section class="p-pad p-ohead"><div><h1 class="p-h24">${B.STORE.name}</h1><p>${TABLE}번 테이블</p></div><button type="button" class="p-chip" data-act="go" data-to="odetails">주문내역</button></section>
+    ostore: () => `<section class="p-pad p-ohead"><div><h1 role="presentation" class="p-h24">${B.STORE.name}</h1><p>${TABLE}번 테이블</p></div><button type="button" class="p-chip" data-act="go" data-to="odetails">주문내역</button></section>
         <div class="p-divider"></div><section class="p-pad p-menu-sec">${menuList(true)}</section>
         ${st.cart.length ? footer(`<i class="p-count">${count()}</i>${won(total())} 주문하기`, 'data-act="go" data-to="ocart"') : ''}`,
     omenu: () => `${back('ostore')}<img class="p-banner p-banner--menu" src="${st.pick.img || A + 'default-image-lg.png'}" alt="">
-        <section class="p-pad"><h1 class="p-h22 p-menu-title">${esc(st.pick.name)}</h1></section>
+        <section class="p-pad"><h1 role="presentation" class="p-h22 p-menu-title">${esc(st.pick.name)}</h1></section>
         <div class="p-buy"><b>${won(st.pick.price * st.qty)}</b>${qty(st.qty, 'qdec', 'qinc')}</div>${footer('추가하기', 'data-act="addCart"')}`,
     ocart: () => st.cart.length
-      ? `${back('ostore')}<p class="p-navtitle">장바구니</p><section class="p-pad p-cart-head"><h1 class="p-h22">주문 <b>총 ${st.cart.length}건</b></h1></section>
+      ? `${back('ostore')}<p class="p-navtitle">장바구니</p><section class="p-pad p-cart-head"><h1 role="presentation" class="p-h22">주문 <b>총 ${st.cart.length}건</b></h1></section>
         <ul class="p-cart">${st.cart.map((c) => `<li><div><p class="p-cart-name">${esc(c.name)}</p><button type="button" data-act="rm" data-id="${c.menuId}" aria-label="${esc(c.name)} 삭제"><img src="${A}close.svg" alt=""></button></div>
           <div><b>${won(c.price)}</b>${qty(c.quantity, `cdec" data-id="${c.menuId}`, `cinc" data-id="${c.menuId}`)}</div></li>`).join('')}</ul>
         <button type="button" class="p-more" data-act="go" data-to="ostore">+ 메뉴 추가하기</button>${footer(`${won(total())} 주문하기`, 'data-act="checkout"')}`
       : `${back('ostore')}<section class="p-center"><p>아직 담긴 메뉴가 없어요.<br>마음에 드는 메뉴를 담아주세요!</p></section>${footer('추가하기', 'data-act="go" data-to="ostore"')}`,
     oremit: () => `${back('ocart')}<p class="p-navtitle">주문하기</p><section class="p-pad p-remit"><p class="p-remit-sum">주문 ${st.cart.length}건 <span>${won(total())} · ${count()}개</span></p></section><div class="p-divider"></div>
-        <section class="p-pad p-remit"><h2 class="p-t18">입금자명</h2><p class="p-hint">이후 주문은 동일한 입금자명으로 들어가요</p>
+        <section class="p-pad p-remit"><h2 role="presentation" class="p-t18">입금자명</h2><p class="p-hint">이후 주문은 동일한 입금자명으로 들어가요</p>
           <input type="text" id="nw-name" placeholder="입금자명 입력" maxlength="20" value="${esc(st.depositor)}" autocomplete="off">${st.nameErr ? `<p class="p-err">${st.nameErr}</p>` : ''}
-          <h2 class="p-t18 p-gap">송금 수단</h2><div class="p-paybox"><p>간편 송금</p>${[['카카오페이', 'kakaoPay.png', 42, 18], ['토스', 'tossPay.png', 46, 16], ['네이버페이', 'naverPay.png', 43, 15]].map(([p, f, w, h]) => `<button type="button" role="radio" aria-checked="${st.pay === p}" aria-label="${p}" data-act="pay" data-p="${p}"><i></i><img src="${A}${f}" width="${w}" height="${h}" alt="">${p}</button>`).join('')}</div>
+          <h2 role="presentation" class="p-t18 p-gap">송금 수단</h2><div class="p-paybox"><p>간편 송금</p>${[['카카오페이', 'kakaoPay.png', 42, 18], ['토스', 'tossPay.png', 46, 16], ['네이버페이', 'naverPay.png', 43, 15]].map(([p, f, w, h]) => `<button type="button" role="radio" aria-checked="${st.pay === p}" aria-label="${p}" data-act="pay" data-p="${p}"><i></i><img src="${A}${f}" width="${w}" height="${h}" alt="">${p}</button>`).join('')}</div>
           <div class="p-paybox"><button type="button" role="radio" aria-checked="${st.pay === 'direct'}" data-act="pay" data-p="direct"><i></i>계좌로 직접 이체하기</button>${st.pay === 'direct' ? `<p class="p-acct-hint">아래의 계좌로 직접 이체해주셔야 돼요</p>
             <div class="p-acct"><img src="${A}bankImage.png" alt=""><div><b>노웨잇대학생회</b><span>카카오뱅크 0000-00-0000000</span></div><button type="button" class="p-copy" data-act="copyAcct">복사</button></div>` : ''}</div>
           <div class="p-total"><span>결제 금액</span><b>${won(total())}</b></div></section>${footer(`${won(total())} 이체하기`, 'data-act="toWait"')}`,
-    owait: () => `${back('oremit')}${center('remittanceWait.webp', '<h1 class="p-h24">이체가 진행되고 있어요</h1>', '아직 주문이 완료되지 않았어요<br>이체를 완료하셨다면 버튼을 눌러주세요')}${footer(st.busy ? '<i class="p-spin"></i>' : '이체했어요', 'data-act="order"', st.busy)}`,
-    osuccess: () => `${center('orderSuccess.webp', '<h1 class="p-h24">주문이 접수되었어요!</h1>', '입금 확인 후 조리를 진행할게요.<br>조금만 기다려 주세요.', '<button type="button" class="p-outline" data-act="go" data-to="odetails">주문내역 확인</button>')}${footer('확인', 'data-act="go" data-to="ostore"')}`,
+    owait: () => `${back('oremit')}${center('remittanceWait.webp', '<h1 role="presentation" class="p-h24">이체가 진행되고 있어요</h1>', '아직 주문이 완료되지 않았어요<br>이체를 완료하셨다면 버튼을 눌러주세요')}${footer(st.busy ? '<i class="p-spin"></i>' : '이체했어요', 'data-act="order"', st.busy)}`,
+    osuccess: () => `${center('orderSuccess.webp', '<h1 role="presentation" class="p-h24">주문이 접수되었어요!</h1>', '입금 확인 후 조리를 진행할게요.<br>조금만 기다려 주세요.', '<button type="button" class="p-outline" data-act="go" data-to="odetails">주문내역 확인</button>')}${footer('확인', 'data-act="go" data-to="ostore"')}`,
     odetails() {
       const os = myOrders().slice().reverse();
       return os.length
-        ? `${back('ostore')}<section class="p-orders"><h1 class="p-t20b">주문내역 ${os.length}건</h1>${os.map((o) => `<article><h2 class="${o.status === 'COOKED' ? 'is-done' : ''}">${STATUS[o.status]}</h2><time>${hhmm(o.createdAt)}</time>
+        ? `${back('ostore')}<section class="p-orders"><h1 role="presentation" class="p-t20b">주문내역 ${os.length}건</h1>${os.map((o) => `<article><h2 role="presentation" class="${o.status === 'COOKED' ? 'is-done' : ''}">${STATUS[o.status]}</h2><time>${hhmm(o.createdAt)}</time>
           <ul>${o.items.map((i) => `<li><span>${esc(i.name)}</span><span>${i.quantity}</span></li>`).join('')}</ul><p><span>결제금액</span><b>${won(o.totalPrice)}</b></p></article>`).join('')}</section>`
         : `${back('ostore')}<section class="p-center"><p>주문 내역이 없습니다.<br>첫 주문을 시작해 보세요.</p></section>${footer('주문하기', 'data-act="go" data-to="ostore"')}`;
     },
   };
   const modals = {
-    cancel: () => `<h2>대기를 취소할까요?</h2><p>삭제 후에는 대기 정보가 복구되지 않아요.</p><div><button type="button" data-act="closeModal">취소</button><button type="button" class="is-primary" data-act="cancel">확인</button></div>`,
-    sold: () => `<h2>현재 ${esc(st.soldNames.join(', '))}는(은) 품절 상태입니다.</h2><p></p><div class="is-one"><button type="button" data-act="dropSold">주문 계속하기</button></div>`,
+    cancel: () => `<h2 role="presentation">대기를 취소할까요?</h2><p>삭제 후에는 대기 정보가 복구되지 않아요.</p><div><button type="button" data-act="closeModal">취소</button><button type="button" class="is-primary" data-act="cancel">확인</button></div>`,
+    sold: () => `<h2 role="presentation">현재 ${esc(st.soldNames.join(', '))}는(은) 품절 상태입니다.</h2><p></p><div class="is-one"><button type="button" data-act="dropSold">주문 계속하기</button></div>`,
   };
 
   /* ── 운영자 화면 (태블릿) ── */
@@ -205,9 +204,34 @@
     }
   }
 
-  function draw() {
+  // 다시 그려도 키보드 포커스 유지: 같은 id, 없으면 같은 data-act 의 같은 순번 요소로 되돌림
+  let lost = null; // 처리 중 비활성화돼 못 돌려준 포커스. 다음에 그릴 때 다시 시도
+  function keepFocus(paint) {
+    const a = document.activeElement;
+    let k = lost;
+    if (a && a !== document.body) {
+      const sel = !root.contains(a) ? '' : a.id ? '#' + a.id : a.dataset.act ? `[data-act="${a.dataset.act}"]` : '';
+      k = sel ? { sel, i: [...root.querySelectorAll(sel)].indexOf(a), pos: a.selectionStart } : null;
+    }
+    paint();
+    lost = null;
+    const b = k && root.querySelectorAll(k.sel)[k.i];
+    if (!b) return;
+    if (b.disabled) { lost = k; return; }
+    b.focus({ preventScroll: true });
+    if (k.pos != null) try { b.setSelectionRange(k.pos, k.pos); } catch {}
+  }
+  // 확인 창: 열리면 첫 버튼으로, 닫히면 연 버튼(없으면 화면의 첫 버튼)으로 포커스
+  let modalWas = null;
+  const draw = () => {
+    keepFocus(paint);
+    if (st.modal && !modalWas) phone.querySelector('.p-modal button')?.focus({ preventScroll: true });
+    else if (!st.modal && modalWas) (phone.querySelector(modalWas === 'cancel' ? '[data-act="askCancel"]' : '[data-act="checkout"]') || phone.querySelector('button'))?.focus({ preventScroll: true });
+    modalWas = st.modal;
+  };
+  function paint() {
     const y = phone.scrollTop;
-    phone.innerHTML = screens[st.screen]() + (st.modal ? `<div class="p-modal"><div>${modals[st.modal]()}</div></div>` : '') + (st.toast ? `<p class="p-toast">${st.toast}</p>` : '');
+    phone.innerHTML = screens[st.screen]() + (st.modal ? `<div class="p-modal"><div role="dialog" aria-modal="true" aria-label="확인">${modals[st.modal]()}</div></div>` : '') + (st.toast ? `<p class="p-toast">${st.toast}</p>` : '');
     phone.scrollTop = phone.dataset.screen === st.screen ? y : 0;
     phone.dataset.screen = st.screen;
     const sw = phone.querySelector('#nw-swiper');
@@ -217,7 +241,8 @@
     drawState();
   }
   const loadMenus = (why) => { log('http', `GET /v1/stores/${B.STORE.code}/menus${why ? '  (' + why + ')' : ''}`); st.menus = B.getMenus(); };
-  const toast = (t) => { st.toast = t; setTimeout(() => { st.toast = ''; draw(); }, 2200); };
+  let toastTimer = 0;
+  const toast = (t) => { st.toast = t; clearTimeout(toastTimer); toastTimer = setTimeout(() => { st.toast = ''; draw(); }, 2200); };
 
   /* ── 요청 보내기 ── */
   async function send(n, key, party) {
@@ -305,11 +330,12 @@
     await acts[t.dataset.act](t);
     draw();
   });
-  root.addEventListener('input', (e) => { if (e.target.id === 'nw-name') st.depositor = e.target.value; else if (e.target.dataset.draft) st.draft[e.target.dataset.draft] = e.target.value; }); // 입력 중에는 다시 그리지 않음
+  root.addEventListener('keydown', (e) => { if (e.key === 'Escape' && st.modal) { st.modal = null; draw(); } });
+  root.addEventListener('input', (e) => { if (e.target.id === 'nw-name') { st.depositor = e.target.value; if (st.nameErr) { st.nameErr = ''; phone.querySelector('.p-err')?.remove(); } } else if (e.target.dataset.draft) st.draft[e.target.dataset.draft] = e.target.value; }); // 입력 중에는 다시 그리지 않음
 
   loadMenus();
   logEl.replaceChildren();
   log('user-api', '휴대폰이나 운영자 화면을 조작하면 여기에 서버 처리 로그가 나옵니다');
   draw();
-  setInterval(() => { tick(); if (st.flow === 'wait' && !root.querySelector('#nw-actions:hover')) drawState(); }, 1000); // 멱등 키 TTL 초 표시
+  setInterval(() => { tick(); if (st.flow === 'wait' && !root.querySelector('#nw-actions:hover')) keepFocus(drawState); }, 1000); // 멱등 키 TTL 초 표시
 })();

@@ -4,7 +4,7 @@
    - 동시성 제어(data.js 첫 번째 사례의 목록 그대로): READ COMMITTED·REPEATABLE READ / SERIALIZABLE / 낙관적 락 / 비관적 락 / SCARD+SADD / MULTI·EXEC / WATCH / Lua
    - write-behind: Pub/Sub / Redis Streams (도중에 Consumer 를 강제 종료)
    ponytail: 지연 시간은 손으로 맞춘 모델 값. 락을 쥐는 6.5ms 만 레포 EC2 실측(docs/learning/08).
-   Pub/Sub 강제 종료 시점은 레포 실측 유실 범위(952~967건)에 들어오도록 잡은 구간에서 무작위. 실측 수치는 fact 문구에만 있음.
+   Pub/Sub 강제 종료 시점은 레포 실측 유실 범위(952~967건) 안에 들어오도록 잡은 구간에서 무작위(모델의 유실은 953~967건). 실측 수치는 fact 문구에만 있음.
    비관적 락의 다음 차례는 InnoDB 의 CATS 를 '기다리는 10건 중 무작위'로 단순화. 응답 시간은 DB 확정 단계를 빼서 실측과 비교할 수 없어 화면에 내지 않음.
    자체 점검: `node sim.js` */
 (() => {
@@ -25,9 +25,9 @@
       fact: '충돌한 요청을 재처리하면서 선착순이 보장되지 않아 제외' },
     lua: { group: 0, set: 'Lua Script', name: 'Lua Script', store: 'Redis', gate: '스크립트 1번', rec: 'Redis Set 크기', stock: 100, n: 1000, spread: 150, slow: 16,
       fact: '테스트 3회 모두 초과/중복 지급 0건, 응답 처리량 1,667~3,125 rps' },
-    pubsub: { group: 1, set: 'write-behind', name: 'Pub/Sub', store: 'Redis', gate: 'Lua 후 PUBLISH', queue: '구독자 메모리 큐', stock: 1000, n: 1500, spread: 150, slow: 8, killAt: 220, restartAfter: 260,
+    pubsub: { group: 1, set: 'write-behind', name: 'Pub/Sub', store: 'Redis', gate: 'Lua 후 PUBLISH', queue: '구독자 메모리 큐', stock: 1000, n: 1500, spread: 150, slow: 8, restartAfter: 260,
       fact: 'subscriber 프로세스를 SIGKILL로 종료하자 지급 접수 성공 응답(202)을 받은 1,000건 중 967건이 유실' },
-    stream: { group: 1, set: 'write-behind', name: 'Redis Streams', store: 'Redis', gate: 'Lua 한 번: XADD, SADD', queue: 'Stream', stock: 1000, n: 1500, spread: 150, slow: 40, killAt: 90, restartAfter: 36,
+    stream: { group: 1, set: 'write-behind', name: 'Redis Streams', store: 'Redis', gate: 'Lua 한 번: XADD, SADD', queue: 'Stream', stock: 1000, n: 1500, spread: 150, slow: 40, killAt: 95, restartAfter: 36, // killAt: 여섯 번째 묶음의 INSERT(약 94ms)와 XACK(약 96ms) 사이 = DB 커밋 후 ACK 전
       fact: 'ACK를 받지 못한 메시지는 PEL에 보관되고, 재시작한 Consumer가 PEL부터 읽어 재처리. (쿠폰 ID, 회원 ID) UNIQUE 제약으로 쿠폰 중복 지급 방지' },
   };
   const AUTO = ['pessimistic', 'scard', 'lua', 'pubsub', 'stream'];
@@ -36,7 +36,7 @@
   // 같은 씨앗이면 같은 실행이 나오는 난수 (방문자의 요청을 미리 골라 두려고 씀)
   const seeded = (a) => () => { a |= 0; a = (a + 0x6d2b79f5) | 0; let t = Math.imul(a ^ (a >>> 15), 1 | a); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
   // 방문자의 요청 하나를 고름. 같은 씨앗으로 미리 돌려 보고 방식마다 보여 줄 장면이 생기는 요청을 고름
-  // - Streams: 강제 종료 순간 Consumer 가 들고 있던(PEL) 요청 → 다시 처리돼 DB 에 저장됨
+  // - Streams: 강제 종료 순간 Consumer 가 들고 있던(PEL) 요청 → DB 에는 커밋됐고 ACK 만 빠짐. 재처리 때 UNIQUE 로 걸러짐
   // - Pub/Sub: 202 를 받고 메모리 큐에 있다가 사라지는 요청
   // - 나머지: 재고 안쪽 순번으로 일찍 도착한 요청 (먼저 와도 받는지 보려고)
   function pickMe(key, seed) {
@@ -60,7 +60,7 @@
     };
     const lat = () => 0.3 + rand() * 0.3; // 앱 → 저장소 왕복
     const gap = () => 1.2 + rand() * 0.6; // 읽은 뒤 쓰기까지 앱에서 보내는 시간
-    const finish = (r, res) => { r.res = res; r.end = st.now; st.done++; if (res === 'ok') r.rank = st.success++; else if (res === 'soldout') r.k = st.sold++; else r.k = st.fail++; };
+    const finish = (r, res) => { r.res = res; st.done++; if (res === 'ok') r.rank = st.success++; else if (res === 'soldout') r.k = st.sold++; else r.k = st.fail++; };
 
     const lockQ = [];
     let locked = false;
@@ -108,7 +108,7 @@
     };
     const enqueue = (r) => { if (key === 'pubsub') { if (st.alive) memQ.push(r); else { r.lost = true; st.lost++; } } else stream.push(r); work(); };
     if (isAsync) {
-      const killAt = key === 'pubsub' ? 215 + rand() * 95 : S.killAt;
+      const killAt = key === 'pubsub' ? 216 + rand() * 94 : S.killAt;
       at(killAt, () => {
         st.alive = false; busy = false;
         if (key === 'pubsub') { [...(cur ? [cur] : []), ...memQ.splice(0)].forEach((r) => { r.lost = true; st.lost++; }); cur = null; tr(null, 'sys', `SIGKILL · 구독자 메모리 큐의 ${st.lost}건이 프로세스와 함께 유실됨`, true); }
@@ -215,9 +215,8 @@
     return {
       S, st, reqs, lockQ, trace, isAsync, finished, me: reqs.find((r) => r.me),
       q: { stream, pel, memQ, cur: () => cur },
-      queued: () => (key === 'pubsub' ? memQ.length : stream.length + pel.length),
+      queued: () => (key === 'pubsub' ? memQ.length + (cur ? 1 : 0) : stream.length + pel.length),
       advance(to) { while (heap.length && heap[0].t <= to) { const e = pop(); st.now = e.t; e.fn(); } },
-      p95() { const w = reqs.filter((r) => r.res).map((r) => r.end - r.start).sort((a, b) => a - b); return w.length ? w[Math.floor((w.length - 1) * 0.95)] : 0; },
     };
   }
 
@@ -266,8 +265,11 @@
   addEventListener('themechange', () => { readTheme(); if (sim) draw(0); });
   const cv = $('#sim'), ctx = cv.getContext('2d');
   const el = { tabs: $('#sim-tabs'), stats: $('#sim-stats'), verdict: $('#sim-verdict'), fact: $('#sim-fact'), scen: $('#sim-scen'), trace: $('#sim-trace') };
-  const motion = window.gsap && !matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches, motion = window.gsap && !reduce;
   if (motion && window.ScrambleTextPlugin) gsap.registerPlugin(ScrambleTextPlugin);
+  // 판정은 글자 섞기로 바뀌므로 스크린리더에는 완성 문구만 따로 알림 (보이지 않는 요소)
+  const say = Object.assign(document.createElement('p'), { style: 'position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%)' });
+  say.setAttribute('aria-live', 'polite'); el.verdict.removeAttribute('aria-live'); el.verdict.setAttribute('aria-hidden', 'true'); el.verdict.after(say);
   let W = 0, H = 0, key = AUTO[0], sim, dots = [], t0 = 0, last = 0, running = false, auto = false, visible = true, hiddenAt = 0, timer = 0, raf = 0, cardSig = '', pulse = 0, dds = [], doneAt = 0;
 
   el.tabs.innerHTML = [...new Set(Object.values(STRATS).map((s) => s.set))].map((label) => `<div class="dock__group"><span>${label}</span>${Object.entries(STRATS).filter(([, s]) => s.set === label).map(([k, s]) => `<button type="button" data-k="${k}" aria-pressed="false">${s.name}</button>`).join('')}</div>`).join('');
@@ -306,8 +308,7 @@
     running = true;
     head();
     if (motion) gsap.killTweensOf(el.verdict);
-    el.verdict.textContent = '실행 중';
-    el.verdict.removeAttribute('aria-label'); // 지난 실행의 판정이 읽히지 않게
+    el.verdict.textContent = '실행 중'; say.textContent = '';
     el.verdict.dataset.tone = '';
     if (!raf && visible) raf = requestAnimationFrame(frame);
   }
@@ -317,7 +318,7 @@
     let text, tone = 'bad';
     const me = sim.me;
     if (key === 'pubsub') { text = `강제 종료 시점에 구독자 메모리 큐의 ${fmt(st.lost)}건이 유실됐습니다. 접수 응답은 ${fmt(st.success)}건인데 DB 에는 ${fmt(st.stored)}건이 적재됐습니다.`; if (me?.lost) text = `내 요청은 접수 응답(202)을 받았지만 구독자 메모리 큐에서 유실돼 DB 에 적재되지 않았습니다. ` + text; }
-    else if (key === 'stream' && sim.me) { text = `내 요청은 ${fmt(sim.me.rank + 1)}번째로 접수됐습니다. 처리 도중 Consumer 가 강제 종료됐지만 PEL 에 남아 재처리됐고 DB 에 적재됐습니다. 접수 ${fmt(st.success)}건 = DB ${fmt(st.stored)}건, 유실 0건.`; tone = 'good'; }
+    else if (key === 'stream' && sim.me) { text = `내 요청은 ${fmt(sim.me.rank + 1)}번째로 접수됐습니다. 처리 도중 Consumer 가 강제 종료됐지만 ACK 전이라 PEL 에 남아 재처리됐고, 이미 적재된 건은 UNIQUE 로 걸러져 DB 에 한 번만 적재됐습니다. 접수 ${fmt(st.success)}건 = DB ${fmt(st.stored)}건, 유실 0건.`; tone = 'good'; }
     else if (key === 'stream') { text = `강제 종료 뒤 PEL ${fmt(st.redelivered)}건부터 재처리했습니다. 접수 ${fmt(st.success)}건 = DB ${fmt(st.stored)}건, 유실 0건.`; tone = 'good'; }
     else if (st.recorded > S.stock) text = `Redis Set 이 재고를 ${st.recorded - S.stock}건 넘겨 초과 지급이 발생했습니다. 레포 실측에서는 뒤의 DB 조건부 UPDATE 가 막아 DB 최종 지급은 ${S.stock}장이었습니다.`;
     else if (st.success > st.recorded) text = `갱신 손실이 일어났습니다. 성공 응답은 ${st.success}건인데 ${S.rec}는 ${st.recorded}입니다.`;
@@ -329,7 +330,7 @@
     else { text = `초과·중복 지급은 0건이고 Redis 가 먼저 처리한 ${S.stock}명에게만 지급됐습니다.`; tone = 'good'; }
     if (me && !sim.isAsync) text = `${fmt(me.id)}번째로 도착한 내 요청은 ${me.res === 'ok' ? '성공 응답을 받았습니다' : me.res === 'soldout' ? '매진 응답을 받았습니다' : key === 'serializable' ? '데드락으로 롤백됐습니다' : '충돌로 실패했습니다'}. ` + text;
     el.verdict.dataset.tone = tone;
-    el.verdict.setAttribute('aria-label', text);
+    say.textContent = text;
     if (motion && window.ScrambleTextPlugin) gsap.to(el.verdict, { duration: 0.9, scrambleText: { text, chars: '01', speed: 0.6 } });
     else el.verdict.textContent = text;
   }
@@ -409,7 +410,7 @@
     drawCard();
     draw(dt);
     // 끝나고 점이 자리 잡은 뒤(3초)에는 그리기를 멈춤. 다음 실행(run)·테마 변경·크기 변경이 다시 그림. '내 요청' 고리는 계속 움직여야 해서 예외
-    if (visible && (running || now - doneAt < 3000 || sim.me)) raf = requestAnimationFrame(frame);
+    if (visible && (running || now - doneAt < 3000 || (sim.me && !reduce))) raf = requestAnimationFrame(frame);
   }
 
   /* ── 캔버스: 요청 → 저장소 → 결과 칸 ── */
@@ -525,7 +526,7 @@
     const meDot = sim.me && dots[sim.me.id - 1];
     if (meDot?.born) { // 방문자가 누른 요청
       ctx.fillStyle = C.sun; ctx.beginPath(); ctx.arc(meDot.x, meDot.y, 4, 0, 6.283); ctx.fill();
-      ctx.strokeStyle = C.sun; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.arc(meDot.x, meDot.y, 10 + 3 * Math.sin(performance.now() / 160), 0, 6.283); ctx.stroke(); ctx.lineWidth = 1;
+      ctx.strokeStyle = C.sun; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.arc(meDot.x, meDot.y, 10 + (reduce ? 0 : 3 * Math.sin(performance.now() / 160)), 0, 6.283); ctx.stroke(); ctx.lineWidth = 1;
       ctx.font = `700 ${W < 640 ? 11 : 13}px Pretendard, sans-serif`;
       const tw = ctx.measureText('내 요청').width; // 점이 빽빽한 칸 위에서도 읽히게 바탕을 깖
       ctx.fillStyle = C.bg; ctx.beginPath(); ctx.roundRect(meDot.x + 14, meDot.y - 24, tw + 14, 22, 6); ctx.fill();
@@ -556,7 +557,7 @@
   // 처음에는 멈춘 상태로 그려 두고, main.js 가 로딩이 끝나면 start() 를 부름
   sim = createSim(key);
   head();
-  el.verdict.textContent = '방식을 누르면 실행됩니다.';
+  el.verdict.textContent = say.textContent = '방식을 누르면 실행됩니다.';
   draw(0);
   // start: 화면에 들어오면 자동으로 방식을 돌려 봄 / play: 방문자가 직접 누른 실행(자동 재생이 덮어쓰지 않게)
   let touched = false;

@@ -15,6 +15,7 @@ if (!reduce && hero && canvas) {
 
 if (!renderer) document.documentElement.classList.remove('gl-hero'); // 원래 글자를 다시 보이게
 else {
+  clearTimeout(window.glHeroTimer); document.documentElement.classList.add('gl-hero'); // 늦게 준비돼도 점이 글자를 대신 그림
   const scene = new THREE.Scene();
   const camera = new THREE.OrthographicCamera(0, 1, 0, 1, -10, 10); // 화면 픽셀 좌표 (y 아래로)
   const css = (n) => new THREE.Color(getComputedStyle(document.documentElement).getPropertyValue(n).trim() || '#ffffff');
@@ -51,7 +52,8 @@ else {
         gl_FragColor = vec4(mix(uInk, uSun, vAccent), smoothstep(0.5, 0.15, d) * vAlpha);
       }`,
   });
-  let points = null, W = 0, H = 0, started = 0, running = true;
+  let points = null, W = 0, H = 0, started = 0, running = true, raf = 0;
+  const kick = () => { if (!raf) raf = requestAnimationFrame(frame); }; // 루프는 항상 하나만
 
   // h1 글자를 같은 글꼴로 캔버스에 그려 픽셀 좌표를 뽑음
   function build() {
@@ -94,10 +96,11 @@ else {
   }
 
   function frame(now) {
+    raf = 0;
     if (!running) return;
     uniforms.uTime.value = (now - started) / 1000;
     renderer.render(scene, camera);
-    requestAnimationFrame(frame);
+    kick();
   }
 
   hero.addEventListener('pointermove', (e) => { const hr = hero.getBoundingClientRect(); uniforms.uMouse.value.set(e.clientX - hr.left, e.clientY - hr.top); });
@@ -105,14 +108,17 @@ else {
   addEventListener('themechange', () => { uniforms.uInk.value = css('--ink'); uniforms.uSun.value = css('--sun'); });
   let t;
   addEventListener('litechange', () => points && build());
-  addEventListener('resize', () => { clearTimeout(t); t = setTimeout(build, 200); }); // ponytail: 크기가 바뀌면 다시 뽑음(이미 지난 출발 시각이라 바로 제자리)
-  new IntersectionObserver(([e]) => { const was = running; running = e.isIntersecting; if (running && !was) requestAnimationFrame(frame); }).observe(hero);
+  addEventListener('resize', () => { clearTimeout(t); t = setTimeout(() => (hero.clientWidth !== W || hero.clientHeight !== H) && build(), 200); }); // ponytail: 크기가 바뀌면 다시 뽑음(이미 지난 출발 시각이라 바로 제자리)
+  new IntersectionObserver(([e]) => { running = e.isIntersecting; if (running) kick(); }).observe(hero);
+  // 컨텍스트를 잃은 동안에는 원래 글자를 보여 줌 (복구는 Three.js 가 함)
+  canvas.addEventListener('webglcontextlost', () => document.documentElement.classList.remove('gl-hero'));
+  canvas.addEventListener('webglcontextrestored', () => document.documentElement.classList.add('gl-hero'));
 
   // 글꼴이 준비된 뒤에 뽑아야 글자 모양이 맞음
   Promise.race([document.fonts.ready, new Promise((r) => setTimeout(r, 2500))]).then(() => {
     build();
     started = performance.now();
-    requestAnimationFrame(frame);
+    kick();
     if (window.ScrollTrigger) ScrollTrigger.create({ trigger: hero, start: 'top top', end: 'bottom top', scrub: true, onUpdate: (s) => (uniforms.uScatter.value = s.progress) });
   });
 }

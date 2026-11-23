@@ -28,16 +28,13 @@
       if (mode === 'cursor') {
         const last = cur.lastPostId ?? maxId + 1, got = range(last - 1, size + 1); // 한 건 더 읽어 hasNext 판별
         return {
-          rows: got.slice(0, size), hasNext: got.length > size, examined: got.length, sorted: 0,
-          sql: `SELECT … FROM board\nWHERE post_id < ${cur.lastPostId ?? '(처음)'} AND deleted = 0\nORDER BY post_id DESC\nLIMIT ${size + 1}`,
+          rows: got.slice(0, size), hasNext: got.length > size, examined: got.length,
         };
       }
       const offset = (cur.page || 0) * size, rows = range(maxId - offset, size);
       return {
         rows, hasNext: maxId - offset - size > 0,
         examined: mode === 'scan' ? maxId : offset + rows.length, // 인덱스가 없으면 전부, 있으면 건너뛰는 만큼
-        sorted: mode === 'scan' ? maxId : 0,
-        sql: `SELECT … FROM board\nWHERE deleted = 0\nORDER BY ${mode === 'scan' ? 'reg_date' : 'post_id'} DESC\nLIMIT ${size} OFFSET ${offset.toLocaleString('en-US')}`,
       };
     }
     return { size, query, post, addPost: (data) => { maxId++; if (data) custom.set(maxId, data); return post(maxId); }, maxId: () => maxId };

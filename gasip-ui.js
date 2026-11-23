@@ -23,14 +23,14 @@
         <h4 class="ev__title">직접 눌러 보는 Gasip</h4>
         <p class="ev__desc">왼쪽 휴대폰에서 리뷰 목록을 내려 보고 리뷰를 눌러 상세로 들어가거나 새 리뷰를 써 보세요. 목록 10건을 조회할 때마다 DB 가 스캔한 행 수가 오른쪽에 표시됩니다. 조회 방식 세 개는 위 사례의 해결 과정 세 단계와 같습니다.</p>
       </header>
-      <figure class="nw__mock gs__video"><video src="assets/gasip/demo.mp4#t=1" controls muted playsinline preload="metadata"></video><figcaption>실제 앱 화면 영상. 출처: Gasip 백엔드 README</figcaption></figure>
+      <figure class="nw__mock gs__video"><video src="assets/gasip/demo.mp4#t=1" aria-label="Gasip 실제 앱 화면 영상" controls muted playsinline preload="metadata"></video><figcaption>실제 앱 화면 영상. 출처: Gasip 백엔드 README</figcaption></figure>
     </div>
     <div class="gs__grid">
       <div class="nw__col"><p class="nw__label">학생 화면</p><div class="phone">
         <button type="button" class="gs-write" data-act="write">교수님 리뷰 작성하기</button>
         <div class="phone__screen gs-screen" id="gs-phone" data-lenis-prevent>
           <div class="gs-head"><button type="button" data-act="home" aria-label="홈으로"><img src="${A}icon_goback.png" width="28" height="28" alt=""></button></div>
-          <div class="gs-title"><h2><img src="${A}icon_papers.png" width="28" height="28" alt="">전체 리뷰</h2><p>모든 리뷰가 모여있는 게시판이에요.</p></div>
+          <div class="gs-title"><h2 role="presentation"><img src="${A}icon_papers.png" width="28" height="28" alt="">전체 리뷰</h2><p>모든 리뷰가 모여있는 게시판이에요.</p></div>
           <div class="gs-feed"><ul id="gs-list"></ul><p class="gs-more" id="gs-more"></p></div>
         </div>
         <div class="gs-over" id="gs-over" data-lenis-prevent hidden></div>
@@ -75,6 +75,7 @@
     if (kind) li.dataset.src = kind === 'dup' ? 'redis' : 'http';
     li.append(Object.assign(document.createElement('b'), { textContent: kind === 'dup' ? '중복' : kind === 'http' ? 'http' : 'mysql' }), Object.assign(document.createElement('span'), { textContent: text }));
     logEl.append(li);
+    while (logEl.children.length > 80) logEl.firstChild.remove();
     logEl.scrollTop = logEl.scrollHeight;
   };
 
@@ -99,7 +100,7 @@
     $('#gs-ex').textContent = fmt(r.examined);
     $('#gs-bar').style.width = Math.max(4, (Math.log10(r.examined) - 1) / 5 * 100) + '%';
     $('#gs-bar').dataset.heavy = r.examined > 1000;
-    // ponytail: SQL 문은 화면에 안 냄(채용 담당자 피드백). r.sql 은 모델에 남겨 둠
+    // ponytail: SQL 문은 화면에 안 냄(채용 담당자 피드백)
     $('#gs-got').textContent = fmt(got);
     $('#gs-dup').textContent = fmt(dup);
     $('#gs-more').textContent = hasNext ? '아래로 내리면 다음 10건을 가져옵니다' : '마지막 글입니다';
@@ -123,7 +124,7 @@
     home() {
       const top = board.maxId(), recent = Array.from({ length: 30 }, (_, i) => board.post(top - i));
       const row = (p) => `<li><button type="button" data-act="open" data-id="${p.id}"><span>${esc(p.content)}</span><i><img src="${A}icon_thumbsup.png" alt="좋아요">${likes(p)}</i><i><img src="${A}icon_comment.png" alt="댓글">${commentsN(p)}</i></button></li>`;
-      const sec = (icon, title, rows, more) => `<section class="gh-sec"><header><h3><img src="${A}${icon}" width="20" height="20" alt="">${title}</h3>${more ? '<button type="button" data-act="list">더보기 ›</button>' : ''}</header><ul>${rows.map(row).join('')}</ul></section>`;
+      const sec = (icon, title, rows, more) => `<section class="gh-sec"><header><h3 role="presentation"><img src="${A}${icon}" width="20" height="20" alt="">${title}</h3>${more ? '<button type="button" data-act="list">더보기 ›</button>' : ''}</header><ul>${rows.map(row).join('')}</ul></section>`;
       return `<div class="gh-top"><b>Gasip</b><span>${SVG('<path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/>')}${SVG('<circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/>')}</span></div>
         <p class="gh-search">교수님 or 학과를 입력해주세요${SVG('<circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/>')}</p>
         <ul class="gh-short">${['공지사항', '학사일정', '홈페이지', '사이버캠퍼스', '포털'].map((t) => `<li><i></i>${t}</li>`).join('')}</ul>
@@ -133,7 +134,7 @@
     },
     detail() {
       const p = ui.post, s = stateOf(p);
-      return `<div class="gd-head"><button type="button" data-act="close" aria-label="뒤로"><img src="${A}icon_goback.png" width="28" height="28" alt=""></button><h2>${esc(nick(p))} 님의 게시글</h2><i></i></div>
+      return `<div class="gd-head"><button type="button" data-act="close" aria-label="뒤로"><img src="${A}icon_goback.png" width="28" height="28" alt=""></button><h2 role="presentation">${esc(nick(p))} 님의 게시글</h2><i></i></div>
         <div class="gd-prof"><span>${esc(p.prof)}님</span></div>
         <article class="gd-body"><header><b>${esc(nick(p))}</b><time>${ago(p.minutesAgo)}</time><img src="${A}icon_dots_vertical.png" width="20" height="20" alt=""></header>
           <p>${esc(p.content)}</p>
@@ -141,7 +142,7 @@
         <ul class="gd-comments">${s.comments.map((c) => `<li><header><b>${esc(c.nick)}</b><time>${c.ago}</time></header><p>${esc(c.text)}</p></li>`).join('')}</ul>
         <form class="gd-input" data-form="comment"><input type="text" name="c" placeholder="댓글을 입력해주세요." maxlength="200" autocomplete="off"><button type="submit" aria-label="댓글 등록"><img src="${A}icon_plane_right.png" width="24" height="24" alt=""></button></form>`;
     },
-    write: () => `<div class="gw-head"><button type="button" data-act="close" aria-label="닫기">✕</button><h2>리뷰 작성</h2><button type="button" class="gw-done" data-act="submit">완료</button></div>
+    write: () => `<div class="gw-head"><button type="button" data-act="close" aria-label="닫기">✕</button><h2 role="presentation">리뷰 작성</h2><button type="button" class="gw-done" data-act="submit">완료</button></div>
         <div class="gw-body"><p class="gw-tag"><img src="${A}icon_x_circle.png" width="18" height="18" alt="">A 교수님</p><p class="gw-count" id="gw-count">${ui.draft.length}/500</p>
         <textarea id="gw-text" maxlength="500" placeholder="여러분의 자유로운 의견을 들려주세요.&#10;&#10;부적절하거나 불쾌감을 줄 수 있는 컨텐츠는 제재를 받을 수 있습니다.">${esc(ui.draft)}</textarea></div>
         ${ui.toast ? `<p class="gw-toast">${ui.toast}</p>` : ''}`,
@@ -201,7 +202,7 @@
       const p = board.addPost({ content: text, prof: 'A 교수', nick: '나', likes: 0, comments: 0, minutesAgo: 0 });
       log('POST /boards/{profId}  { content }', 'http');
       log(`INSERT INTO board … (새 리뷰 #${fmt(p.id)}) → 목록을 처음부터 다시 조회`);
-      ui.view = null; ui.from = null; drawOver();
+      ui.view = null; ui.from = null; drawOver(true);
       start({ keepBoard: true });
     }
   });
