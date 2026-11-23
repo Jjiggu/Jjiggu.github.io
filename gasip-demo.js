@@ -20,7 +20,7 @@
   function createBoard(total = 1_000_000, size = 10) {
     let maxId = total;
     const custom = new Map(); // 체험 중에 새로 쓴 글
-    const post = (id) => ({ id, lecture: LECT[h(id, LECT.length)], prof: '교수 ' + 'ABCDEFGH'[h(id + 7, 8)], content: TEXT[h(id + 3, TEXT.length)], likes: h(id + 11, 40), comments: h(id + 5, 12), minutesAgo: (maxId - id) * 4 + 1, ...custom.get(id) });
+    const post = (id) => ({ id, lecture: LECT[h(id, LECT.length)], prof: 'ABCDEFGH'[h(id + 7, 8)] + ' 교수', content: TEXT[h(id + 3, TEXT.length)], likes: h(id + 11, 40), comments: h(id + 5, 12), minutesAgo: (maxId - id) * 4 + 1, ...custom.get(id) });
     const range = (from, n) => Array.from({ length: Math.max(0, Math.min(n, from)) }, (_, i) => post(from - i));
 
     // cur: { page } (OFFSET 방식) 또는 { lastPostId } (No-Offset)

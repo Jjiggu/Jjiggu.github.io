@@ -29,7 +29,7 @@
       <div class="nw__col"><p class="nw__label">학생 화면</p><div class="phone">
         <button type="button" class="gs-write" data-act="write">교수님 리뷰 작성하기</button>
         <div class="phone__screen gs-screen" id="gs-phone" data-lenis-prevent>
-          <div class="gs-head"><img src="${A}icon_goback.png" width="28" height="28" alt=""></div>
+          <div class="gs-head"><button type="button" data-act="home" aria-label="홈으로"><img src="${A}icon_goback.png" width="28" height="28" alt=""></button></div>
           <div class="gs-title"><h2><img src="${A}icon_papers.png" width="28" height="28" alt="">전체 리뷰</h2><p>모든 리뷰가 모여있는 게시판이에요.</p></div>
           <div class="gs-feed"><ul id="gs-list"></ul><p class="gs-more" id="gs-more"></p></div>
         </div>
@@ -60,7 +60,7 @@
   const phone = $('#gs-phone'), list = $('#gs-list'), logEl = $('#gs-log'), over = $('#gs-over');
   let board, mode = 'index', cur, seen, dup, got, loading, hasNext;
   const extra = new Map(); // 글별 체험 상태: { liked, views, comments[] }
-  const ui = { view: null, post: null, draft: '', toast: '' };
+  const ui = { view: null, from: null, post: null, draft: '', toast: '' }; // view: home | detail | write | null(전체 리뷰 목록), from: 덮개를 닫으면 돌아갈 곳
 
   const ago = (m) => (m < 1 ? '방금' : m < 60 ? `${m}분 전` : m < 1440 ? `${Math.floor(m / 60)}시간 전` : `${Math.floor(m / 1440)}일 전`);
   const nick = (p) => p.nick || `가천인${(p.id % 9000) + 1000}`;
@@ -117,7 +117,20 @@
   }
 
   /* ── 상세 · 글쓰기 (휴대폰 위에 덮이는 화면) ── */
+  const SVG = (d) => `<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${d}</svg>`;
   const views = {
+    // 앱의 첫 화면. 실시간 인기글·전체 리뷰 미리보기에서 글을 열거나 더보기로 목록에 들어감
+    home() {
+      const top = board.maxId(), recent = Array.from({ length: 30 }, (_, i) => board.post(top - i));
+      const row = (p) => `<li><button type="button" data-act="open" data-id="${p.id}"><span>${esc(p.content)}</span><i><img src="${A}icon_thumbsup.png" alt="좋아요">${likes(p)}</i><i><img src="${A}icon_comment.png" alt="댓글">${commentsN(p)}</i></button></li>`;
+      const sec = (icon, title, rows, more) => `<section class="gh-sec"><header><h3><img src="${A}${icon}" width="20" height="20" alt="">${title}</h3>${more ? '<button type="button" data-act="list">더보기 ›</button>' : ''}</header><ul>${rows.map(row).join('')}</ul></section>`;
+      return `<div class="gh-top"><b>Gasip</b><span>${SVG('<path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/>')}${SVG('<circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/>')}</span></div>
+        <p class="gh-search">교수님 or 학과를 입력해주세요${SVG('<circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/>')}</p>
+        <ul class="gh-short">${['공지사항', '학사일정', '홈페이지', '사이버캠퍼스', '포털'].map((t) => `<li><i></i>${t}</li>`).join('')}</ul>
+        <button type="button" class="gh-write" data-act="write">교수님 리뷰 작성하기</button>
+        ${sec('icon_thumbsup.png', '실시간 인기글', recent.slice().sort((a, b) => likes(b) - likes(a)).slice(0, 4))}
+        ${sec('icon_papers.png', '전체 리뷰', recent.slice(0, 4), true)}`;
+    },
     detail() {
       const p = ui.post, s = stateOf(p);
       return `<div class="gd-head"><button type="button" data-act="close" aria-label="뒤로"><img src="${A}icon_goback.png" width="28" height="28" alt=""></button><h2>${esc(nick(p))} 님의 게시글</h2><i></i></div>
@@ -129,7 +142,7 @@
         <form class="gd-input" data-form="comment"><input type="text" name="c" placeholder="댓글을 입력해주세요." maxlength="200" autocomplete="off"><button type="submit" aria-label="댓글 등록"><img src="${A}icon_plane_right.png" width="24" height="24" alt=""></button></form>`;
     },
     write: () => `<div class="gw-head"><button type="button" data-act="close" aria-label="닫기">✕</button><h2>리뷰 작성</h2><button type="button" class="gw-done" data-act="submit">완료</button></div>
-        <div class="gw-body"><p class="gw-tag"><img src="${A}icon_x_circle.png" width="18" height="18" alt="">교수 A 교수님</p><p class="gw-count" id="gw-count">${ui.draft.length}/500</p>
+        <div class="gw-body"><p class="gw-tag"><img src="${A}icon_x_circle.png" width="18" height="18" alt="">A 교수님</p><p class="gw-count" id="gw-count">${ui.draft.length}/500</p>
         <textarea id="gw-text" maxlength="500" placeholder="여러분의 자유로운 의견을 들려주세요.&#10;&#10;부적절하거나 불쾌감을 줄 수 있는 컨텐츠는 제재를 받을 수 있습니다.">${esc(ui.draft)}</textarea></div>
         ${ui.toast ? `<p class="gw-toast">${ui.toast}</p>` : ''}`,
   };
@@ -170,26 +183,28 @@
     else if (act === 'reset') { logEl.replaceChildren(); start(); }
     else if (act === 'deep') { log('100,000번째 글 위치로 이동'); start({ keepBoard: true, deep: true }); }
     else if (act === 'other') { const p = board.addPost(); log(`INSERT INTO board … (새 리뷰 #${fmt(p.id)}) · 학생 화면에는 아직 미반영`); }
+    else if (act === 'home') { ui.view = 'home'; drawOver(true); }
+    else if (act === 'list') { ui.view = null; drawOver(true); }
     else if (act === 'open') {
-      ui.post = board.post(+t.dataset.id); ui.view = 'detail';
+      ui.from = ui.view; ui.post = board.post(+t.dataset.id); ui.view = 'detail';
       stateOf(ui.post).views++;
       log(`GET /boards/details/${ui.post.id}`, 'http');
       log('SELECT … FROM board WHERE post_id = ? → PK 로 1행 · 조회수 +1');
       opener = t; syncCard(ui.post); drawOver(true);
     }
     else if (act === 'like') { const s = stateOf(ui.post); s.liked = !s.liked; const keep = over.querySelector('.gd-input input')?.value; log(`${s.liked ? '좋아요' : '좋아요 취소'} (글 #${fmt(ui.post.id)})`, 'http'); log(`${s.liked ? 'INSERT INTO' : 'DELETE FROM'} likes … · 1행`); syncCard(ui.post); drawOver(); if (keep) over.querySelector('.gd-input input').value = keep; over.querySelector('[data-act="like"]').focus(); }
-    else if (act === 'write') { opener = t; ui.view = 'write'; ui.draft = ''; ui.toast = ''; drawOver(); $('#gw-text').focus(); }
-    else if (act === 'close') { ui.view = null; drawOver(true); }
+    else if (act === 'write') { opener = t; ui.from = ui.view; ui.view = 'write'; ui.draft = ''; ui.toast = ''; drawOver(); $('#gw-text').focus(); }
+    else if (act === 'close') { ui.view = ui.from; ui.from = null; drawOver(true); }
     else if (act === 'submit') {
       const text = ui.draft.trim();
       if (!text) { ui.toast = '내용을 입력해주세요.'; drawOver(); $('#gw-text').focus(); return; }
-      const p = board.addPost({ content: text, prof: '교수 A', nick: '나', likes: 0, comments: 0, minutesAgo: 0 });
+      const p = board.addPost({ content: text, prof: 'A 교수', nick: '나', likes: 0, comments: 0, minutesAgo: 0 });
       log('POST /boards/{profId}  { content }', 'http');
       log(`INSERT INTO board … (새 리뷰 #${fmt(p.id)}) → 목록을 처음부터 다시 조회`);
-      ui.view = null; drawOver();
+      ui.view = null; ui.from = null; drawOver();
       start({ keepBoard: true });
     }
   });
 
-  start();
+  start(); // 첫 화면은 전체 리뷰 목록. 홈은 뒤로 가기로 들어감
 })();
