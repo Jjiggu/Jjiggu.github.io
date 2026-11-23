@@ -27,7 +27,7 @@
       fact: '테스트 3회 모두 초과/중복 지급 0건, 응답 처리량 1,667~3,125 rps' },
     pubsub: { group: 1, set: 'write-behind', name: 'Pub/Sub', store: 'Redis', gate: 'Lua 후 PUBLISH', queue: '구독자 메모리 큐', stock: 1000, n: 1500, spread: 150, slow: 8, restartAfter: 260,
       fact: 'subscriber 프로세스를 SIGKILL로 종료하자 지급 접수 성공 응답(202)을 받은 1,000건 중 967건이 유실' },
-    stream: { group: 1, set: 'write-behind', name: 'Redis Streams', store: 'Redis', gate: 'Lua 한 번: XADD, SADD', queue: 'Stream', stock: 1000, n: 1500, spread: 150, slow: 40, killAt: 95, restartAfter: 36, // killAt: 여섯 번째 묶음의 INSERT(약 94ms)와 XACK(약 96ms) 사이 = DB 커밋 후 ACK 전
+    stream: { group: 1, set: 'write-behind', name: 'Redis Streams', store: 'Redis', gate: 'Lua 한 번: XADD, SADD', queue: 'Stream', stock: 1000, n: 1500, spread: 150, slow: 40, killAt: 95, restartAfter: 36, // killAt: 여섯 번째 묶음의 INSERT·COMMIT(약 94ms)과 XACK(약 96ms) 사이 = 사례의 'DB 커밋 후 ACK 전 다운'
       fact: 'ACK를 받지 못한 메시지는 PEL에 보관되고, 재시작한 Consumer가 PEL부터 읽어 재처리. (쿠폰 ID, 회원 ID) UNIQUE 제약으로 쿠폰 중복 지급 방지' },
   };
   const AUTO = ['pessimistic', 'scard', 'lua', 'pubsub', 'stream'];
@@ -36,7 +36,7 @@
   // 같은 씨앗이면 같은 실행이 나오는 난수 (방문자의 요청을 미리 골라 두려고 씀)
   const seeded = (a) => () => { a |= 0; a = (a + 0x6d2b79f5) | 0; let t = Math.imul(a ^ (a >>> 15), 1 | a); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
   // 방문자의 요청 하나를 고름. 같은 씨앗으로 미리 돌려 보고 방식마다 보여 줄 장면이 생기는 요청을 고름
-  // - Streams: 강제 종료 순간 Consumer 가 들고 있던(PEL) 요청 → DB 에는 커밋됐고 ACK 만 빠짐. 재처리 때 UNIQUE 로 걸러짐
+  // - Streams: 강제 종료 순간 Consumer 가 들고 있던(PEL) 요청 → DB 에는 커밋됐고 ACK 만 빠짐. 재처리 때 UNIQUE 로 걸러진 뒤 ACK
   // - Pub/Sub: 202 를 받고 메모리 큐에 있다가 사라지는 요청
   // - 나머지: 재고 안쪽 순번으로 일찍 도착한 요청 (먼저 와도 받는지 보려고)
   function pickMe(key, seed) {
@@ -102,7 +102,7 @@
           batch.forEach((r) => { if (!r.stored) { r.stored = true; st.stored++; fresh++; } }); // 이미 들어간 건 UNIQUE 로 걸러짐
           if (fromPel) st.redelivered += batch.length;
           tr(null, 'write', `INSERT ${fresh}행${batch.length - fresh ? ` (중복 ${batch.length - fresh}행은 UNIQUE 로 무시)` : ''} · COMMIT`);
-          at(st.now + 2, () => { if (!st.alive) return; pel.splice(0, pel.length); tr(null, 'eval', `XACK ${batch.length}건`); busy = false; work(); });
+          at(st.now + 2, () => { if (!st.alive) return; pel.splice(0, pel.length); batch.forEach((r) => (r.acked = true)); tr(null, 'eval', `XACK ${batch.length}건`); busy = false; work(); });
         });
       }
     };
@@ -112,7 +112,7 @@
       at(killAt, () => {
         st.alive = false; busy = false;
         if (key === 'pubsub') { [...(cur ? [cur] : []), ...memQ.splice(0)].forEach((r) => { r.lost = true; st.lost++; }); cur = null; tr(null, 'sys', `SIGKILL · 구독자 메모리 큐의 ${st.lost}건이 프로세스와 함께 유실됨`, true); }
-        else { st.meInPel = pel.some((r) => r.me); tr(null, 'sys', `SIGKILL · 처리 중이던 ${pel.length}건은 ACK 전이라 PEL 에 남음`, true); }
+        else { st.meInPel = pel.some((r) => r.me); tr(null, 'sys', pel[0]?.stored ? `SIGKILL · ${pel.length}건은 DB 커밋까지 끝났지만 ACK 전이라 PEL 에 남음` : `SIGKILL · 처리 중이던 ${pel.length}건은 ACK 전이라 PEL 에 남음`, true); }
       });
       at(killAt + S.restartAfter, () => {
         st.alive = true; st.restarted = true;
@@ -238,6 +238,7 @@
         if (k === 'optimistic') assert.ok(st.success < S.stock && st.success === st.recorded && st.fail === S.n - st.success, 'optimistic: 일부만 지급');
         if (k === 'pubsub') assert.ok(st.success === 1000 && st.sold === 500 && st.lost > 900 && st.stored + st.lost === 1000, 'pubsub: 강제 종료로 대부분 유실');
         if (k === 'stream') assert.ok(st.success === 1000 && st.sold === 500 && st.stored === 1000 && st.lost === 0 && st.redelivered > 0, 'stream: 유실 0, PEL 재처리');
+        if (k === 'stream') assert.ok(s.trace.some((e) => e.kind === 'sys' && e.text.includes('DB 커밋')) && s.reqs.every((r) => r.res !== 'ok' || r.acked), 'stream: 커밋 후 ACK 전에 종료, 끝에는 모두 ACK');
         if (k !== 'lua') assert.ok(st.firstBad != null, k + ': 문제 순간이 기록됨');
         (out[k] ||= []).push(s.isAsync ? `접수 ${st.success}/적재 ${st.stored}/유실 ${st.lost}` : `${st.success}/${st.recorded}`);
       }
@@ -318,7 +319,7 @@
     let text, tone = 'bad';
     const me = sim.me;
     if (key === 'pubsub') { text = `강제 종료 시점에 구독자 메모리 큐의 ${fmt(st.lost)}건이 유실됐습니다. 접수 응답은 ${fmt(st.success)}건인데 DB 에는 ${fmt(st.stored)}건이 적재됐습니다.`; if (me?.lost) text = `내 요청은 접수 응답(202)을 받았지만 구독자 메모리 큐에서 유실돼 DB 에 적재되지 않았습니다. ` + text; }
-    else if (key === 'stream' && sim.me) { text = `내 요청은 ${fmt(sim.me.rank + 1)}번째로 접수됐습니다. 처리 도중 Consumer 가 강제 종료됐지만 ACK 전이라 PEL 에 남아 재처리됐고, 이미 적재된 건은 UNIQUE 로 걸러져 DB 에 한 번만 적재됐습니다. 접수 ${fmt(st.success)}건 = DB ${fmt(st.stored)}건, 유실 0건.`; tone = 'good'; }
+    else if (key === 'stream' && sim.me) { text = `내 요청은 ${fmt(sim.me.rank + 1)}번째로 접수됐습니다. 처리 도중 Consumer 가 강제 종료됐지만 DB 커밋 뒤 ACK 전이라 PEL 에 남아 재처리됐고, 이미 적재된 행은 UNIQUE 로 걸러져 DB 에는 한 번만 적재됐습니다. 접수 ${fmt(st.success)}건 = DB ${fmt(st.stored)}건, 유실 0건.`; tone = 'good'; }
     else if (key === 'stream') { text = `강제 종료 뒤 PEL ${fmt(st.redelivered)}건부터 재처리했습니다. 접수 ${fmt(st.success)}건 = DB ${fmt(st.stored)}건, 유실 0건.`; tone = 'good'; }
     else if (st.recorded > S.stock) text = `Redis Set 이 재고를 ${st.recorded - S.stock}건 넘겨 초과 지급이 발생했습니다. 레포 실측에서는 뒤의 DB 조건부 UPDATE 가 막아 DB 최종 지급은 ${S.stock}장이었습니다.`;
     else if (st.success > st.recorded) text = `갱신 손실이 일어났습니다. 성공 응답은 ${st.success}건인데 ${S.rec}는 ${st.recorded}입니다.`;
@@ -492,10 +493,10 @@
       } else if (A && r.res === 'ok' && r.lost) { // 프로세스와 함께 사라진 메시지
         tx = A.cx - A.cw / 2 + 8 + (r.rank % A.cCols) * 4; ty = A.lostY + (Math.floor(r.rank / A.cCols) % Math.max(1, Math.floor((H - A.lostY - 6) / 4))) * 4;
         col = C.coral; rad = 1.4; ta = 0.8;
-      } else if (A && r.res === 'ok' && !r.stored) { // Stream 에 쌓여 있거나 Consumer 가 들고 있는 메시지
+      } else if (A && r.res === 'ok' && (key === 'stream' ? !r.acked : !r.stored)) { // Stream 에 쌓여 있거나 Consumer 가 들고 있는 메시지. Streams 는 ACK 전까지 Consumer 칸에 남김
         const inS = r.loc === 's', cols2 = inS ? A.sCols : A.cCols, x1 = inS ? A.sx - A.bw / 2 + 8 : A.cx - A.cw / 2 + 9, y1 = inS ? gateY + 32 : A.cTop + 30, maxRows = Math.max(1, Math.floor(((inS ? gateH : A.ch) - 40) / 4));
         tx = x1 + (r.li % cols2) * 4; ty = y1 + (Math.floor(r.li / cols2) % maxRows) * 4;
-        col = inS ? C.blue : C.ink; rad = 1.4;
+        col = inS ? C.blue : r.stored ? C.sun : C.ink; rad = 1.4; // 노란 점: DB 에는 커밋됐고 ACK 만 남음
       } else if (r.res === 'ok') {
         const inStock = r.rank < S.stock, colI = inStock ? r.rank % cols : cols + 0.6 + Math.floor((r.rank - S.stock) / rows), rowI = inStock ? Math.floor(r.rank / cols) : (r.rank - S.stock) % rows;
         tx = gX + (colI + 0.5) * cell; ty = gY + (rowI + 0.5) * cell;

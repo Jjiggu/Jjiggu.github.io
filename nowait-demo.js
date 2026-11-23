@@ -44,10 +44,10 @@
     const db = {
       reservations: [],
       menus: [
-        { id: 1, name: '치즈김치전', price: 9000, soldOut: false, img: 'assets/nowait/menu/kimchijeon.jpg' },
-        { id: 2, name: '어묵탕', price: 12000, soldOut: false, img: 'assets/nowait/menu/eomuk.jpg' },
-        { id: 3, name: '떡볶이', price: 8000, soldOut: false, img: 'assets/nowait/menu/tteok.jpg' },
-        { id: 4, name: '콘치즈', price: 7000, soldOut: false, img: 'assets/nowait/menu/corn.jpg' },
+        { id: 1, name: '치즈김치전', price: 9000, soldOut: false, img: 'assets/nowait/menu/kimchijeon.webp' },
+        { id: 2, name: '어묵탕', price: 12000, soldOut: false, img: 'assets/nowait/menu/eomuk.webp' },
+        { id: 3, name: '떡볶이', price: 8000, soldOut: false, img: 'assets/nowait/menu/tteok.webp' },
+        { id: 4, name: '콘치즈', price: 7000, soldOut: false, img: 'assets/nowait/menu/corn.webp' },
       ],
       menuQueries: 0, seq: 0, orders: [], orderSeq: 0,
     };
