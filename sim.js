@@ -102,7 +102,7 @@
           batch.forEach((r) => { if (!r.stored) { r.stored = true; st.stored++; fresh++; } }); // 이미 들어간 건 UNIQUE 로 걸러짐
           if (fromPel) st.redelivered += batch.length;
           tr(null, 'write', `INSERT ${fresh}행${batch.length - fresh ? ` (중복 ${batch.length - fresh}행은 UNIQUE 로 무시)` : ''} · COMMIT`);
-          at(st.now + 2, () => { if (!st.alive) return; pel.splice(0, pel.length); batch.forEach((r) => (r.acked = true)); tr(null, 'eval', `XACK ${batch.length}건`); busy = false; work(); });
+          at(st.now + 2, () => { if (!st.alive) return; pel.splice(0, pel.length); batch.forEach((r) => (r.acked = true)); if (fromPel) st.reacked = true; tr(null, 'eval', `XACK ${batch.length}건`); busy = false; work(); });
         });
       }
     };
@@ -376,7 +376,7 @@
     return { title: '동시성 이슈 재현', lanes: [`요청 #${X}`, Y ? `요청 #${Y}` : ''], rows, note };
   }
   function drawCard() {
-    const sig = `${key}|${sim.st.firstBad}|${sim.st.sys}|${sim.st.sold > 0}|${sim.finished()}|${sim.st.redelivered}|${!!sim.st.restarted && !sim.q.pel.length}`; // 뒤의 둘: 재시작 뒤 INSERT·XACK 줄이 생기는 시점
+    const sig = `${key}|${sim.st.firstBad}|${sim.st.sys}|${sim.st.sold > 0}|${sim.finished()}|${sim.st.redelivered}|${!!sim.st.reacked}`; // 뒤의 둘: 재시작 뒤 INSERT·XACK 줄이 생기는 시점
     if (sig === cardSig) return;
     cardSig = sig;
     const c = card();
