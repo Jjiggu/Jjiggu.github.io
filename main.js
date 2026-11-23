@@ -175,7 +175,7 @@
   if (window.ScrambleTextPlugin) gsap.registerPlugin(ScrambleTextPlugin);
 
   /* ───────── 2. 부드러운 스크롤 (Lenis ↔ ScrollTrigger) ───────── */
-  const lenis = new Lenis({ anchors: { offset: -64 } }); // 고정 메뉴 높이만큼 덜 내려감
+  const lenis = new Lenis({ anchors: true }); // 고정 메뉴 높이는 style.css 의 scroll-margin-top 이 뺌 (브라우저 해시 이동과 같은 위치)
   window.lenis = lenis; // fx.js 가 같은 스크롤을 씀
   lenis.on('scroll', ScrollTrigger.update);
   gsap.ticker.add((t) => lenis.raf(t * 1000));
@@ -191,12 +191,13 @@
     const from = el.dataset.from;
     const dec = (txt.split('.')[1] || '').length;
     const o = { v: isNum(from) ? toNum(from) : 0 };
+    let fin = false; // 끝난 뒤 matchMedia 구간이 바뀌며 트윈이 되감겨도 시작값을 다시 쓰지 않음
     gsap.to(o, {
       v: toNum(txt),
       duration: 1.6,
       ease: 'power3.out',
-      onUpdate: () => (el.textContent = o.v.toLocaleString('en-US', { minimumFractionDigits: dec, maximumFractionDigits: dec })),
-      onComplete: () => (el.textContent = txt),
+      onUpdate: () => fin || (el.textContent = o.v.toLocaleString('en-US', { minimumFractionDigits: dec, maximumFractionDigits: dec })),
+      onComplete: () => { fin = true; el.textContent = txt; },
     });
   }
 
@@ -312,7 +313,9 @@
     // 한눈에 보기: 넓은 화면에서는 가로로 넘어감 (카드 폭 50vw → 한 화면 분량만 가로 이동)
     const mm = gsap.matchMedia();
     const sec = $('.overview'), track = $('#overview-track'), panels = $$('.panel');
+    const settle = () => $$('[data-count]', sec).forEach((el) => { if (el.dataset.to) el.textContent = el.dataset.to; }); // 구간이 바뀔 때: 이미 센 수치는 최종값으로
     mm.add('(min-width: 900px)', () => {
+      settle();
       sec.classList.add('is-h');
       const dist = () => Math.max(track.scrollWidth - track.clientWidth, 0);
       const tw = gsap.to(track, {
@@ -339,6 +342,7 @@
       return () => { sec.classList.remove('is-h'); track.removeEventListener('focusin', onFocus); tops.forEach((a) => a.removeEventListener('click', toStart)); };
     });
     mm.add('(max-width: 899px)', () => {
+      settle();
       panels.forEach((p) => ScrollTrigger.create({ trigger: p, start: 'top 80%', once: true, onEnter: () => countUp($('[data-count]', p)) }));
     });
 

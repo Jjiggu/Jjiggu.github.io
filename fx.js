@@ -109,7 +109,7 @@
     ScrollTrigger.refresh();
     // 해시 주소(#gasip 등)로 들어온 경우: 고정 구간이 생겨 길이가 늘어난 뒤에 다시 그 위치로
     const to = location.hash.length > 1 && document.getElementById(decodeURIComponent(location.hash.slice(1)));
-    if (to) window.lenis?.scrollTo(to, { immediate: true, offset: -64 });
+    if (to) window.lenis?.scrollTo(to, { immediate: true });
 
     // 느린 기기 감지: 프레임 간격의 중앙값이 25ms(약 40fps)를 넘으면 가벼운 모드로 바꿈. 처음 한 번, 첫 스크롤 때 한 번
     const goLite = () => { if (isLite()) return; html.classList.add('lite'); dispatchEvent(new Event('litechange')); };

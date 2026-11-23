@@ -210,7 +210,8 @@
     const a = document.activeElement;
     let k = lost;
     if (a && a !== document.body) {
-      const sel = !root.contains(a) ? '' : a.id ? '#' + a.id : a.dataset.act ? `[data-act="${a.dataset.act}"]` : '';
+      // data-* 전부로 찾음: 같은 종류의 다른 대상(다음 팀의 '호출' 등)으로 포커스가 넘어가지 않게
+      const sel = !root.contains(a) ? '' : a.id ? '#' + a.id : a.dataset.act ? Object.entries(a.dataset).map(([n, v]) => `[data-${n.replace(/[A-Z]/g, (m) => '-' + m.toLowerCase())}="${CSS.escape(v)}"]`).join('') : '';
       k = sel ? { sel, i: [...root.querySelectorAll(sel)].indexOf(a), pos: a.selectionStart } : null;
     }
     paint();
