@@ -15,7 +15,16 @@
     dispatchEvent(new Event('themechange')); // 캔버스·차트가 색을 다시 읽음
   };
   setTheme(document.documentElement.dataset.theme);
-  themeBtn.addEventListener('click', () => setTheme(document.documentElement.dataset.theme === 'light' ? 'dark' : 'light', true));
+  themeBtn.addEventListener('click', () => {
+    const next = () => setTheme(document.documentElement.dataset.theme === 'light' ? 'dark' : 'light', true);
+    if (reduce || !document.startViewTransition) return next();
+    // View Transitions API: 누른 버튼 자리에서 원이 퍼지며 새 테마가 덮음 (style.css 의 ::view-transition-new)
+    const r = themeBtn.getBoundingClientRect(), x = r.left + r.width / 2, y = r.top + r.height / 2;
+    const root = document.documentElement.style;
+    root.setProperty('--vt-x', x + 'px'); root.setProperty('--vt-y', y + 'px');
+    root.setProperty('--vt-r', Math.hypot(Math.max(x, innerWidth - x), Math.max(y, innerHeight - y)) + 'px');
+    document.startViewTransition(next);
+  });
 
   /* ───────── 1. 데이터 → 화면 ───────── */
   const PICK = { x: '제외', ok: '선택' };
@@ -151,6 +160,7 @@
 
   /* ───────── 2. 부드러운 스크롤 (Lenis ↔ ScrollTrigger) ───────── */
   const lenis = new Lenis({ anchors: { offset: -64 } }); // 고정 메뉴 높이만큼 덜 내려감
+  window.lenis = lenis; // fx.js 가 같은 스크롤을 씀
   lenis.on('scroll', ScrollTrigger.update);
   gsap.ticker.add((t) => lenis.raf(t * 1000));
   gsap.ticker.lagSmoothing(0);
@@ -185,8 +195,9 @@
     const readColor = () => { const cs = getComputedStyle(cv); st.color = cs.getPropertyValue('--dot').trim() || st.color; st.sun = cs.getPropertyValue('--sun').trim() || st.sun; };
     readColor(); addEventListener('themechange', readColor);
     let W = 0, H = 0;
-    const fit = () => { const d = Math.min(devicePixelRatio || 1, 2); W = cv.clientWidth; H = cv.clientHeight; cv.width = W * d; cv.height = H * d; ctx.setTransform(d, 0, 0, d, 0, 0); };
-    fit(); new ResizeObserver(fit).observe(cv);
+    const lite = () => document.documentElement.classList.contains('lite');
+    const fit = () => { const d = lite() ? 1 : Math.min(devicePixelRatio || 1, 2); W = cv.clientWidth; H = cv.clientHeight; cv.width = W * d; cv.height = H * d; ctx.setTransform(d, 0, 0, d, 0, 0); };
+    fit(); new ResizeObserver(fit).observe(cv); addEventListener('litechange', fit);
     cv.parentElement.addEventListener('pointermove', (e) => { const r = cv.getBoundingClientRect(); st.mx = e.clientX - r.left; st.my = e.clientY - r.top; });
     cv.parentElement.addEventListener('pointerleave', () => { st.mx = st.my = -999; });
     function loop(now) {
@@ -196,7 +207,10 @@
       ctx.clearRect(0, 0, W, H);
       ctx.fillStyle = st.color;
       ctx.globalAlpha = st.suck ? 0.9 : P.alpha;
-      for (const p of ps) {
+      ctx.beginPath(); // 점 전체를 한 경로로 모아 한 번만 칠함 (점마다 fill 하면 1,000번 그리기 호출)
+      const n = lite() ? Math.round(N * 0.45) : N;
+      for (let i = 0; i < n; i++) {
+        const p = ps[i];
         if (el < p.born) continue;
         if (!p.on) { p.on = true; p.x = P.cx + Math.cos(p.a) * R; p.y = P.cy + Math.sin(p.a) * R; }
         p.a += p.sp * 0.006 * (1 + 4 * st.squeeze); // 모일수록 빨리 돎
@@ -205,8 +219,9 @@
         const dx = p.x - st.mx, dy = p.y - st.my;
         if (dx * dx + dy * dy < 9000) { tx += dx * 0.6; ty += dy * 0.6; }
         p.x += (tx - p.x) * lerp; p.y += (ty - p.y) * lerp;
-        ctx.beginPath(); ctx.arc(p.x, p.y, p.s, 0, 6.283); ctx.fill();
+        ctx.moveTo(p.x + p.s, p.y); ctx.arc(p.x, p.y, p.s, 0, 6.283);
       }
+      ctx.fill();
       if (st.me && st.focus) { // 내가 누른 요청: 시뮬레이션의 '내 요청' 표시와 같은 모양
         const { x, y } = st.focus, rr = 16 + 4 * Math.sin(now / 160);
         ctx.globalAlpha = 1; ctx.strokeStyle = ctx.fillStyle = st.sun; ctx.lineWidth = 2;
@@ -266,14 +281,17 @@
   /* ───────── 5. 나머지 모션은 폰트와 근거·데모가 모두 붙은 뒤 ───────── */
   const fonts = Promise.race([document.fonts.ready, new Promise((r) => setTimeout(r, 2500))]);
   const domReady = new Promise((r) => (document.readyState === 'loading' ? addEventListener('DOMContentLoaded', r) : r()));
-  Promise.all([fonts, domReady]).then(() => {
+  Promise.all([fonts, domReady, window.introDone]).then(() => {
     const name = SplitText.create('#name', { type: 'chars', mask: 'chars' });
     gsap.timeline()
       .from(name.chars, { yPercent: 110, duration: 1.1, stagger: 0.08, ease: 'power4.out' })
-      .from('.hero__role, .hero__line, .hero__intro, #hero-links li, .nav', { opacity: 0, y: 24, duration: 0.8, stagger: 0.08, ease: 'power3.out' }, '-=0.8');
+      .from('.hero__role, .hero__line, #hero-links li, .hero__cue, .nav', { opacity: 0, y: 24, duration: 0.8, stagger: 0.08, ease: 'power3.out' }, '-=0.8');
 
     // 내려갈 때 메뉴를 숨기고 올라갈 때 다시 보여 줌 (본문과 겹치지 않게)
-    ScrollTrigger.create({ start: 80, end: 'max', onUpdate: (s) => gsap.to('.nav', { yPercent: s.direction === 1 ? -130 : 0, duration: 0.4, overwrite: true }), onLeaveBack: () => gsap.to('.nav', { yPercent: 0, duration: 0.4, overwrite: true }) });
+    const nav = $('.nav');
+    let navDir = 0; // 방향이 바뀔 때만 트윈을 만듦 (스크롤 프레임마다 만들지 않게)
+    const navShow = (dir) => { if (dir === navDir) return; navDir = dir; gsap.to(nav, { yPercent: dir === 1 ? -130 : 0, duration: 0.4, overwrite: true }); };
+    ScrollTrigger.create({ start: 80, end: 'max', onUpdate: (s) => navShow(s.direction), onLeaveBack: () => navShow(-1) });
 
     // 상단 진행 막대
     gsap.to('.progress', { scaleX: 1, ease: 'none', scrollTrigger: { start: 0, end: 'max', scrub: 0.3 } });
@@ -379,5 +397,6 @@
     }
 
     ScrollTrigger.refresh();
+    window.motionReady = true; dispatchEvent(new Event('motionready')); // fx.js 는 이 뒤에 붙음 (고정 구간 계산 순서)
   });
 })();

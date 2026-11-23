@@ -217,7 +217,7 @@
   const el = { tabs: $('#sim-tabs'), stats: $('#sim-stats'), verdict: $('#sim-verdict'), fact: $('#sim-fact'), scen: $('#sim-scen'), trace: $('#sim-trace') };
   const motion = window.gsap && !matchMedia('(prefers-reduced-motion: reduce)').matches;
   if (motion && window.ScrambleTextPlugin) gsap.registerPlugin(ScrambleTextPlugin);
-  let W = 0, H = 0, key = AUTO[0], sim, dots = [], t0 = 0, last = 0, running = false, auto = false, visible = true, hiddenAt = 0, timer = 0, raf = 0, cardSig = '', pulse = 0;
+  let W = 0, H = 0, key = AUTO[0], sim, dots = [], t0 = 0, last = 0, running = false, auto = false, visible = true, hiddenAt = 0, timer = 0, raf = 0, cardSig = '', pulse = 0, dds = [], doneAt = 0;
 
   const group = (g, label) => `<div class="dock__group"><span>${label}</span>${Object.entries(STRATS).filter(([, s]) => s.group === g).map(([k, s]) => `<button type="button" data-k="${k}" aria-pressed="false">${s.name}</button>`).join('')}</div>`;
   el.tabs.innerHTML = group(0, '재고 지키기') + group(1, 'DB 에 옮겨 적기');
@@ -225,7 +225,7 @@
   $('#sim-again').addEventListener('click', () => { auto = false; run(key, true); });
 
   function resize() {
-    const dpr = Math.min(devicePixelRatio || 1, 2);
+    const dpr = document.documentElement.classList.contains('lite') ? 1 : Math.min(devicePixelRatio || 1, 2);
     W = cv.clientWidth; H = cv.clientHeight;
     cv.width = W * dpr; cv.height = H * dpr;
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
@@ -241,6 +241,7 @@
     el.scen.textContent = sim.isAsync ? `요청 ${fmt(S.n)}건 · 도중에 Consumer 강제 종료` : `재고 ${S.stock}장 · 요청 ${fmt(S.n)}건`;
     el.fact.textContent = S.fact;
     el.stats.innerHTML = statDefs().map(([l]) => `<div><dt>${l}</dt><dd class="num">0</dd></div>`).join('');
+    dds = [...el.stats.querySelectorAll('dd')];
     el.trace.hidden = true; cardSig = '';
   }
 
@@ -337,16 +338,17 @@
     if (running) {
       sim.advance((now - t0) / sim.S.slow);
       if (sim.finished()) {
-        running = false;
+        running = false; doneAt = now;
         verdict();
         if (auto) timer = setTimeout(() => auto && visible && run(AUTO[(AUTO.indexOf(key) + 1) % AUTO.length]), 4200);
       }
     }
     const defs = statDefs();
-    [...el.stats.querySelectorAll('dd')].forEach((dd, i) => { dd.textContent = defs[i][1](); });
+    dds.forEach((dd, i) => { const v = defs[i][1](); if (dd.textContent !== v) dd.textContent = v; }); // 바뀐 숫자만 다시 씀
     drawCard();
     draw(dt);
-    if (visible) raf = requestAnimationFrame(frame);
+    // 끝나고 점이 자리 잡은 뒤(3초)에는 그리기를 멈춤. 다음 실행(run)·테마 변경·크기 변경이 다시 그림. '내 요청' 고리는 계속 움직여야 해서 예외
+    if (visible && (running || now - doneAt < 3000 || sim.me)) raf = requestAnimationFrame(frame);
   }
 
   /* ── 캔버스: 요청 → 저장소 → 결과 칸 ── */
@@ -373,7 +375,7 @@
     if (!small) label(S.gate, gx, gateY + gateH + 8, C.mute, 'center');
     label(sim.isAsync ? `DB · coupon_issues  ${fmt(st.stored)} / ${fmt(S.stock)}행` : `쿠폰 ${S.stock}장`, gX, gY - 24, sim.isAsync && st.stored ? C.sun : C.mute);
     ctx.strokeStyle = C.faint;
-    if (cell >= 5) for (let i = 0; i < S.stock; i++) ctx.strokeRect(gX + (i % cols) * cell + 1, gY + Math.floor(i / cols) * cell + 1, cell - 2, cell - 2);
+    if (cell >= 5) { ctx.beginPath(); for (let i = 0; i < S.stock; i++) ctx.rect(gX + (i % cols) * cell + 1, gY + Math.floor(i / cols) * cell + 1, cell - 2, cell - 2); ctx.stroke(); } // 칸 전체를 한 번에
 
     if (trays) { // 버려진 요청이 어디로 가는지: 매진 응답 칸 · 충돌 실패 칸
       [['매진 응답', st.sold, C.mute, 0], ['충돌 실패', st.fail, C.coral, 1]].forEach(([name, n, col, i]) => {
@@ -415,11 +417,12 @@
     sim.lockQ.forEach((r, i) => (r.qi = i));
     if (key === 'pessimistic' && sim.lockQ.length) label(`락 대기 ${fmt(sim.lockQ.length)}건`, small ? x0 : x0 + 40, small ? 24 : H / 2 - 70, C.coral);
     let over = 0;
+    const buckets = new Map(); // 색·투명도가 같은 점끼리 모아 한 번에 칠함 (점마다 fill 하면 요청 수만큼 그리기 호출)
     for (const d of dots) {
       const r = d.r;
       if (r.start == null) continue;
       if (!d.born) { d.born = true; d.x = x0; d.y = 30 + (H - 50) * d.lane; }
-      let tx, ty, col = C.blue, rad = small ? 1.6 : 2.2, ta = 0.9, hollow = false;
+      let tx, ty, col = C.blue, rad = small ? 1.6 : 2.2, ta = 0.9;
       if (!r.res) {
         if (r.qi >= 0) { const row = Math.floor(r.qi / perRow); tx = gx - gateW / 2 - 10 - (r.qi % perRow) * step; ty = H / 2 + 10 + (row % 2 ? 1 : -1) * Math.ceil(row / 2) * (small ? 5 : 7); }
         else if (r.qi === -1) { tx = gx; ty = H / 2 + 10; col = C.ink; rad *= 1.7; }
@@ -445,9 +448,17 @@
       } else { tx = gx + 30 + d.jit * 30; ty = H + 30; col = r.res === 'fail' ? C.coral : C.mute; ta = 0; }
       d.x += (tx - d.x) * k; d.y += (ty - d.y) * k; d.a += (ta - d.a) * k;
       if (d.a < 0.02) continue;
-      ctx.globalAlpha = d.a;
-      ctx.beginPath(); ctx.arc(d.x, d.y, rad, 0, 6.283);
-      if (hollow) { ctx.strokeStyle = col; ctx.lineWidth = 1; ctx.stroke(); } else { ctx.fillStyle = col; ctx.fill(); }
+      const bk = col + '|' + Math.round(d.a * 10);
+      let b = buckets.get(bk);
+      if (!b) buckets.set(bk, (b = []));
+      b.push(d.x, d.y, rad);
+    }
+    for (const [bk, b] of buckets) {
+      const [col, a] = bk.split('|');
+      ctx.globalAlpha = a / 10; ctx.fillStyle = col;
+      ctx.beginPath();
+      for (let i = 0; i < b.length; i += 3) { ctx.moveTo(b[i] + b[i + 2], b[i + 1]); ctx.arc(b[i], b[i + 1], b[i + 2], 0, 6.283); }
+      ctx.fill();
     }
     ctx.globalAlpha = 1; ctx.lineWidth = 1;
     const meDot = sim.me && dots[sim.me.id - 1];
@@ -470,6 +481,7 @@
 
   const wideMq = matchMedia('(min-width: 1000px)');
   resize();
+  addEventListener('litechange', resize);
   new ResizeObserver(resize).observe(cv); // dock 높이가 바뀌어도 캔버스 버퍼를 다시 맞춤
   new IntersectionObserver(([e]) => {
     visible = e.isIntersecting;
