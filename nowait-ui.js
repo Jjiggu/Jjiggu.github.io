@@ -16,20 +16,20 @@
       <header class="ev__head">
         <p class="eyebrow">직접 해 보기</p>
         <h4 class="ev__title">직접 눌러 보는 NoWait</h4>
-        <p class="ev__desc">휴대폰에서 줄을 서거나 테이블에서 주문하면 바로 오른쪽에 그때 서버 안에서 일어나는 일이 나옵니다. 아래 운영자 화면에서 입장 호출과 주문 처리를 해 보세요. 위 두 사례(캐시 무효화, 멱등 키)가 여기서 그대로 돌아갑니다.</p>
+        <p class="ev__desc">휴대폰에서 줄을 서거나 테이블에서 주문하면 오른쪽에 서버 상태와 처리 로그가 바로 나옵니다. 아래 운영자 화면에서 입장 호출과 주문 처리를 해 보세요. 위 두 사례(캐시 무효화, 멱등성 처리)가 여기서 그대로 동작합니다.</p>
         <div class="bk__actions nw__flow"><button type="button" data-act="flow" data-f="wait">원격 줄서기</button><button type="button" data-act="flow" data-f="order">테이블 주문 (QR)</button></div>
       </header>
     </div>
     <div class="nw__grid">
       <div class="nw__col"><p class="nw__label">손님 화면</p><div class="phone"><div class="phone__screen" id="nw-phone" data-lenis-prevent></div></div></div>
       <div class="nw__col bk nw__server">
-        <p class="nw__label">서버 안에서 일어나는 일</p>
+        <p class="nw__label">서버 상태와 로그</p>
         <div class="bk__actions" id="nw-actions"></div>
         <div class="bk__split"><div class="bk__state" id="nw-state"></div><ol class="bk__log" id="nw-log" data-lenis-prevent aria-live="polite"></ol></div>
       </div>
       <div class="nw__col nw__admin"><p class="nw__label">운영자 화면</p><div class="ipad"><div class="ipad__screen admin" id="nw-admin" data-lenis-prevent></div></div></div>
     </div>
-    <details class="nw__credit"><summary>화면 출처와 안내</summary><p>화면 디자인과 프론트엔드는 NoWait 팀의 디자이너와 프론트엔드 개발자들이 만들었습니다(<a href="https://github.com/GTable/NoWait_FE" target="_blank" rel="noopener">GTable/NoWait_FE</a>). 여기서는 그 화면을 본떠 다시 그렸습니다. 실제 서버에 연결되지 않으며 실제 송금도 일어나지 않습니다. 음식 사진은 위키미디어 공용의 CC0(퍼블릭 도메인) 사진입니다: <a href="https://commons.wikimedia.org/wiki/File:Garaetteok_Tteokbokki.jpg" target="_blank" rel="noopener">Garaetteok Tteokbokki</a>(Kimseoeun2023079825), <a href="https://commons.wikimedia.org/wiki/File:Mozzarella-kimchi-buchimgae.jpg" target="_blank" rel="noopener">Mozzarella-kimchi-buchimgae</a>(b00142), <a href="https://commons.wikimedia.org/wiki/File:Eomuk-tang_2.jpg" target="_blank" rel="noopener">Eomuk-tang 2</a>(bigtorica), <a href="https://commons.wikimedia.org/wiki/File:Korean_corn_with_cheese.jpg" target="_blank" rel="noopener">Korean corn with cheese</a>(Fumikas Sagisavas). 카카오페이·토스·네이버페이 로고는 각 회사의 상표입니다. 주점·메뉴·대기 팀, 주점 위치·소개글·공지, 손님 이름은 모두 예시 데이터이고 전화번호는 가렸습니다. 줄서기의 멱등 키는 이 체험 화면이 붙여 보냅니다. 운영자 화면은 위쪽 탭 구성을 단순하게 바꿨고 확인 창은 생략했습니다.</p></details>`;
+    <details class="nw__credit"><summary>화면 출처와 안내</summary><p>화면 디자인과 프론트엔드는 NoWait 팀의 디자이너와 프론트엔드 개발자들이 만들었습니다(<a href="https://github.com/GTable/NoWait_FE" target="_blank" rel="noopener">GTable/NoWait_FE</a>). 여기서는 그 화면을 본떠 다시 그렸습니다. 실제 서버에 연결되지 않으며 실제 송금도 일어나지 않습니다. 음식 사진은 위키미디어 공용의 CC0(퍼블릭 도메인) 사진입니다: <a href="https://commons.wikimedia.org/wiki/File:Garaetteok_Tteokbokki.jpg" target="_blank" rel="noopener">Garaetteok Tteokbokki</a>(Kimseoeun2023079825), <a href="https://commons.wikimedia.org/wiki/File:Mozzarella-kimchi-buchimgae.jpg" target="_blank" rel="noopener">Mozzarella-kimchi-buchimgae</a>(b00142), <a href="https://commons.wikimedia.org/wiki/File:Eomuk-tang_2.jpg" target="_blank" rel="noopener">Eomuk-tang 2</a>(bigtorica), <a href="https://commons.wikimedia.org/wiki/File:Korean_corn_with_cheese.jpg" target="_blank" rel="noopener">Korean corn with cheese</a>(Fumikas Sagisavas). 카카오페이·토스·네이버페이 로고는 각 회사의 상표입니다. 주점·메뉴·대기 팀, 주점 위치·소개글·공지, 손님 이름은 모두 예시 데이터이고 전화번호는 가렸습니다. 원격 줄서기 요청의 멱등 키(Idempotency-Key 헤더)는 이 체험 화면이 생성해 보냅니다. 운영자 화면은 위쪽 탭 구성을 단순하게 바꿨고 확인 창은 생략했습니다.</p></details>`;
   host.append(root);
 
   const $ = (s) => root.querySelector(s);
@@ -56,7 +56,7 @@
   const footer = (label, attrs, disabled) => `<div class="p-foot"><button type="button" class="p-big" ${attrs} ${disabled ? 'disabled' : ''}>${label}</button></div>`;
   const back = (to, onImage) => `<button type="button" class="p-back${onImage ? ' is-on-image' : ''}" data-act="go" data-to="${to}" aria-label="뒤로"><img src="${A}back.svg" alt=""></button>`;
   const qty = (n, dec, inc, min = 1, max = 99) => `<div class="p-qty"><button type="button" data-act="${dec}" ${n <= min ? 'disabled' : ''} aria-label="줄이기"><img src="${A}minus.svg" alt=""></button><b>${n}</b><button type="button" data-act="${inc}" ${n >= max ? 'disabled' : ''} aria-label="늘리기"><img src="${A}plus.svg" alt=""></button></div>`;
-  const menuList = (clickable) => `<h2 class="p-t20s">메뉴</h2><ul class="p-menus">${st.menus.map((m) => {
+  const menuList = (clickable, menus = st.menus) => `<h2 class="p-t20s">메뉴</h2><ul class="p-menus">${menus.map((m) => {
     const inner = `<div><span class="p-menu-name">${esc(m.name)}</span>${m.soldOut ? '<span class="p-sold">품절</span>' : ''}<p class="p-menu-price">${won(m.price)}</p></div><img src="${m.img || A + 'default-menu-image-sm.png'}" alt="">`;
     return `<li class="${m.soldOut ? 'is-sold' : ''}">${clickable ? `<button type="button" data-act="menu" data-id="${m.id}" ${m.soldOut ? 'disabled' : ''}>${inner}</button>` : inner}</li>`;
   }).join('')}</ul>`;
@@ -75,19 +75,23 @@
           ${B.active(ME)?.status === 'CALLING' ? `<p class="p-calling">10분 안에 입장해주세요!<b data-cd="${B.active(ME).calledAt + 600000}"></b></p>` : ''}
           <button type="button" class="p-cancel" data-act="askCancel"><img src="${A}close.svg" alt="">대기 취소</button>`
           : '<div class="p-empty">대기 중인 주점이 없어요</div>'}
-        <button type="button" class="p-store-row" data-act="go" data-to="store"><img src="${A}default-department.png" alt=""><span><small>${B.STORE.dept}</small>${B.STORE.name}</span><em>대기 ${queue().length}팀</em></button></section>`;
+        <h2 class="p-t20b">대기가 가장 적어요</h2>
+        <button type="button" class="p-pick" data-act="go" data-to="store"><img src="${B.STORE.banners[0]}" alt=""><em>대기 ${queue().length}팀</em><span>${B.STORE.name}<small>${B.STORE.dept}</small></span></button>
+        <h2 class="p-t20b">모든 주점</h2>
+        <button type="button" class="p-store-row" data-act="go" data-to="store"><img src="${A}default-department.png" alt=""><span><small>${B.STORE.dept}</small>${B.STORE.name}</span><em>대기 ${queue().length}팀</em></button>
+        <button type="button" class="p-store-row" data-act="go" data-to="store2"><img src="${A}default-department.png" alt=""><span><small>${B.OTHER.dept}</small>${B.OTHER.name}</span><em class="is-closed">접수 마감</em></button></section>`;
     },
-    store() {
-      const waiting = B.myRank(ME) != null, n = queue().length;
-      const S = B.STORE;
+    store2() { return this.store(B.OTHER); },
+    store(S = B.STORE) {
+      const mine = S === B.STORE, waiting = mine && B.myRank(ME) != null, n = mine ? queue().length : S.teams;
       return `${back('home', true)}<div class="p-swiper"><div class="p-swiper__track" id="nw-swiper">${S.banners.map((b, i) => `<img src="${b}" alt="주점 배너 ${i + 1}">`).join('')}</div>
           <div class="p-swiper__dots">${S.banners.map((_, i) => `<button type="button" data-act="banner" data-i="${i}" aria-label="배너 ${i + 1}" aria-pressed="${i === st.banner}"></button>`).join('')}</div></div>
         <section class="p-pad"><div class="p-store-head"><div><p class="p-dept">${S.dept}</p><h1 class="p-h22">${S.name}</h1></div><img src="${A}default-department.png" alt=""></div>
         ${n ? `<p class="p-badge">대기 ${n}팀</p>` : ''}
         <div class="p-info"><p><img src="${A}subtract.svg" alt="위치">${esc(S.location)}</p><p><img src="${A}clock.svg" alt="운영 시간">${esc(S.hours)}</p>
           <p class="p-desc">${esc(S.desc)}</p>
-          <button type="button" class="p-notice" data-act="go" data-to="notice"><span>${esc(S.notice.title)}</span><img src="${A}arrow-right.svg" alt=""></button></div></section><div class="p-divider"></div>
-        <section class="p-pad p-menu-sec">${menuList(false)}</section>${footer(waiting ? '대기 중이에요' : '대기하기', 'data-act="toParty"', waiting)}`;
+          ${S.notice ? `<button type="button" class="p-notice" data-act="go" data-to="notice"><span>${esc(S.notice.title)}</span><img src="${A}arrow-right.svg" alt=""></button>` : ''}</div></section><div class="p-divider"></div>
+        <section class="p-pad p-menu-sec">${menuList(false, S.menus)}</section>${mine ? footer(waiting ? '대기 중이에요' : '대기하기', 'data-act="toParty"', waiting) : footer('대기 접수가 마감됐어요', '', true)}`;
     },
     notice: () => `${back('store')}<p class="p-navtitle">공지사항</p><section class="p-pad p-notice-body"><h1>${esc(B.STORE.notice.title)}</h1><p>${esc(B.STORE.notice.content)}</p></section>`,
     party: () => `${back('store')}<section class="p-pad p-form"><h1 class="p-h24">대기 등록을 위해<br>인원 수를 입력해주세요</h1>
@@ -184,18 +188,18 @@
   /* ── 서버 상태판 ── */
   const none = '<li class="is-none">(없음)</li>';
   function drawState() {
-    const cacheBlock = `<div><h4>user-api 메뉴 캐시</h4><ul><li>HIT <b>${B.stats.hit}</b> · MISS <b>${B.stats.miss}</b></li><li>DB 메뉴 쿼리 <b>${B.db.menuQueries}</b>번</li><li>무효화 구독 <b class="${B.isSubscribed() ? '' : 'is-bad'}">${B.isSubscribed() ? '연결됨' : '끊김'}</b></li></ul></div>`;
-    const pubsub = `<button type="button" data-act="pubsub">${B.isSubscribed() ? 'Pub/Sub 연결 끊기' : 'Pub/Sub 다시 연결'}</button>`;
+    const cacheBlock = `<div><h4>user-api 메뉴 캐시</h4><ul><li>HIT <b>${B.stats.hit}</b> · MISS <b>${B.stats.miss}</b></li><li>메뉴 조회 쿼리 <b>${B.db.menuQueries}</b>회</li><li>Pub/Sub 구독 <b class="${B.isSubscribed() ? '' : 'is-bad'}">${B.isSubscribed() ? '연결됨' : '끊김'}</b></li></ul></div>`;
+    const pubsub = `<button type="button" data-act="pubsub">${B.isSubscribed() ? 'Pub/Sub 연결 끊기' : 'Pub/Sub 재구독'}</button>`;
     if (st.flow === 'wait') {
       const keys = B.redis.keys('idempotency:');
       $('#nw-state').innerHTML = `<div><h4>Redis Sorted Set <code>${B.queueKey}</code></h4><ol>${queue().map((e) => `<li class="${e.m === String(ME) ? 'is-me' : ''}"><code>user:${e.m}</code>${e.m === String(ME) ? ' 나' : ''}</li>`).join('') || none}</ol></div>
         <div><h4>멱등 키</h4><ul>${keys.map((k) => `<li><code>…${esc(k.k.slice(-8))}</code> ${k.v.endsWith('::IN-PROGRESS') ? '처리 중' : '완료 응답 저장'} · TTL ${Math.max(0, Math.ceil((k.exp - Date.now()) / 1000))}초</li>`).join('') || none}</ul></div>${cacheBlock}`;
-      $('#nw-actions').innerHTML = `<button type="button" data-act="burst" ${B.myRank(ME) != null || st.busy ? 'disabled' : ''}>등록하기를 10번 연타</button><button type="button" data-act="replay" ${!st.last || st.busy ? 'disabled' : ''}>같은 키로 한 번 더 보내기</button>${pubsub}`;
+      $('#nw-actions').innerHTML = `<button type="button" data-act="burst" ${B.myRank(ME) != null || st.busy ? 'disabled' : ''}>같은 키로 동시 요청 10건</button><button type="button" data-act="replay" ${!st.last || st.busy ? 'disabled' : ''}>같은 키로 재시도</button>${pubsub}`;
     } else {
       const pop = B.redis.zrange(B.popularKey()).reverse();
-      $('#nw-state').innerHTML = `<div><h4>MySQL <code>user_order</code></h4><ul>${B.db.orders.map((o) => `<li><code>#${o.id}</code> ${STATUS[o.status]}<br><small>서명 ${o.signature}</small></li>`).join('') || none}</ul></div>
+      $('#nw-state').innerHTML = `<div><h4>MySQL <code>user_order</code></h4><ul>${B.db.orders.map((o) => `<li><code>#${o.id}</code> ${STATUS[o.status]}<br><small>signature ${o.signature}</small></li>`).join('') || none}</ul></div>
         <div><h4>인기 메뉴 Sorted Set <code>${B.popularKey()}</code></h4><ol>${pop.map((e) => `<li>${esc(e.m)} <b>${e.score}</b></li>`).join('') || '<li class="is-none">(조리 완료된 주문이 생기면 집계)</li>'}</ol></div>${cacheBlock}`;
-      $('#nw-actions').innerHTML = `<button type="button" data-act="double" ${st.busy ? 'disabled' : ''}>같은 주문을 연달아 2번 보내기</button><button type="button" data-act="skip">입금 대기 주문을 바로 조리 완료로</button>${pubsub}`;
+      $('#nw-actions').innerHTML = `<button type="button" data-act="double" ${st.busy ? 'disabled' : ''}>같은 주문 2회 연속 요청</button><button type="button" data-act="skip">입금 대기 주문을 바로 조리 완료로</button>${pubsub}`;
     }
   }
 
@@ -243,13 +247,13 @@
     call: (t) => { B.call(t.dataset.m); log('http', '← 응답 200'); },
     acancel: (t) => { B.adminCancel(t.dataset.m); if (t.dataset.m === String(ME)) { st.waiting = null; st.last = null; if (st.flow === 'wait') st.screen = 'home'; } },
     flow: (t) => { st.flow = t.dataset.f; st.tab = st.flow; st.screen = st.flow === 'wait' ? 'home' : 'ostore'; st.modal = null; if (st.flow === 'order') { log('http', `QR 접속 /${B.STORE.code}/${TABLE} → ${TABLE}번 테이블`); loadMenus(); } },
-    go: (t) => { st.screen = t.dataset.to; if (st.screen === 'store' || st.screen === 'ostore') loadMenus(); },
+    go: (t) => { st.screen = t.dataset.to; st.banner = 0; if (st.screen === 'store' || st.screen === 'ostore') loadMenus(); },
     toParty: () => { st.party = 1; st.screen = 'party'; },
     inc: () => { st.party++; }, dec: () => { st.party--; },
     refresh: () => { log('http', 'GET /v1/users/me/waitings'); log('redis', `ZRANK ${B.queueKey} ${ME} → ${B.myRank(ME)}`); },
     register: async () => { if (await send(1, crypto.randomUUID(), st.party)) st.screen = 'success'; },
     burst: async () => { log('user-api', '같은 Idempotency-Key 로 등록 요청 10건이 동시에 도착'); if (await send(10, crypto.randomUUID(), st.party)) st.screen = 'success'; },
-    replay: async () => { log('user-api', '이미 끝난 요청과 같은 키로 한 번 더 도착'); await send(1, st.last.key, st.last.party); },
+    replay: async () => { log('user-api', '처리 완료된 요청과 같은 Idempotency-Key 로 재시도 요청 도착'); await send(1, st.last.key, st.last.party); },
     askCancel: () => { st.modal = 'cancel'; }, closeModal: () => { st.modal = null; },
     cancel: () => { B.cancelWaiting(ME); st.modal = null; st.waiting = null; st.last = null; },
     enter: (t) => { B.enter(t.dataset.m); if (t.dataset.m === String(ME)) { st.waiting = null; st.last = null; if (st.flow === 'wait' && st.screen !== 'store') st.screen = 'home'; } },
@@ -277,7 +281,7 @@
     },
     double: async () => {
       const items = st.cart.length ? cartItems() : [{ menuId: (B.db.menus.find((m) => !m.soldOut) || B.db.menus[0]).id, quantity: 1 }];
-      log('user-api', '같은 테이블에서 같은 장바구니 주문이 연달아 2번 도착');
+      log('user-api', '같은 테이블·같은 장바구니로 주문 요청 2건 연속 도착');
       st.busy = true; draw();
       const first = await order(items, st.depositor.trim() || '체험손님');
       await order(items, st.depositor.trim() || '체험손님');
@@ -301,7 +305,7 @@
 
   loadMenus();
   logEl.replaceChildren();
-  log('user-api', '휴대폰이나 운영자 화면을 누르면 여기에 서버가 한 일이 나옵니다');
+  log('user-api', '휴대폰이나 운영자 화면을 조작하면 여기에 서버 처리 로그가 나옵니다');
   draw();
   setInterval(() => { tick(); if (st.flow === 'wait' && !root.querySelector('#nw-actions:hover')) drawState(); }, 1000); // 멱등 키 TTL 초 표시
 })();

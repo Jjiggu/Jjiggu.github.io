@@ -70,7 +70,8 @@ else {
     c.font = `${cs.fontWeight} ${cs.fontSize} ${cs.fontFamily}`;
     if ('letterSpacing' in c) c.letterSpacing = cs.letterSpacing;
     c.textBaseline = 'middle'; c.fillStyle = '#000';
-    c.fillText(h1.textContent, 0, r.height * 0.5);
+    const lines = h1.innerText.split('\n'), lh = r.height / lines.length; // <br> 로 나뉜 줄마다 한 줄씩
+    lines.forEach((t, i) => c.fillText(t, 0, lh * (i + 0.5)));
     const px = c.getImageData(0, 0, off.width, off.height).data;
     const ox = r.left - hr.left, oy = r.top - hr.top, cx = W * 0.5, cy = H * 0.5, R = Math.hypot(W, H) * 0.75;
     const pos = [], start = [], meta = [];
@@ -108,7 +109,7 @@ else {
   new IntersectionObserver(([e]) => { const was = running; running = e.isIntersecting; if (running && !was) requestAnimationFrame(frame); }).observe(hero);
 
   // 글꼴이 준비된 뒤에 뽑아야 글자 모양이 맞음
-  Promise.all([Promise.race([document.fonts.ready, new Promise((r) => setTimeout(r, 2500))]), window.introDone]).then(() => {
+  Promise.race([document.fonts.ready, new Promise((r) => setTimeout(r, 2500))]).then(() => {
     build();
     started = performance.now();
     requestAnimationFrame(frame);
