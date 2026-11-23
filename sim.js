@@ -27,7 +27,7 @@
       fact: '테스트 3회 모두 초과/중복 지급 0건, 응답 처리량 1,667~3,125 rps' },
     pubsub: { group: 1, set: 'write-behind', name: 'Pub/Sub', store: 'Redis', gate: 'Lua 후 PUBLISH', queue: '구독자 메모리 큐', stock: 1000, n: 1500, spread: 150, slow: 8, restartAfter: 260,
       fact: 'subscriber 프로세스를 SIGKILL로 종료하자 지급 접수 성공 응답(202)을 받은 1,000건 중 967건이 유실' },
-    stream: { group: 1, set: 'write-behind', name: 'Redis Streams', store: 'Redis', gate: 'Lua 한 번: XADD, SADD', queue: 'Stream', stock: 1000, n: 1500, spread: 150, slow: 40, killAt: 95, restartAfter: 36, // killAt: 여섯 번째 묶음의 INSERT(약 94ms)와 XACK(약 96ms) 사이 = DB 커밋 후 ACK 전
+    stream: { group: 1, set: 'write-behind', name: 'Redis Streams', store: 'Redis', gate: 'Lua 한 번: XADD, SADD', queue: 'Stream', stock: 1000, n: 1500, spread: 150, slow: 40, killAt: 90, restartAfter: 36, // killAt: 여섯 번째 묶음을 읽고 INSERT 하는 도중. 커밋 뒤(95)로 옮기면 점이 이미 DB 칸에 있어 PEL 재처리가 화면에 안 보임
       fact: 'ACK를 받지 못한 메시지는 PEL에 보관되고, 재시작한 Consumer가 PEL부터 읽어 재처리. (쿠폰 ID, 회원 ID) UNIQUE 제약으로 쿠폰 중복 지급 방지' },
   };
   const AUTO = ['pessimistic', 'scard', 'lua', 'pubsub', 'stream'];
@@ -36,7 +36,7 @@
   // 같은 씨앗이면 같은 실행이 나오는 난수 (방문자의 요청을 미리 골라 두려고 씀)
   const seeded = (a) => () => { a |= 0; a = (a + 0x6d2b79f5) | 0; let t = Math.imul(a ^ (a >>> 15), 1 | a); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
   // 방문자의 요청 하나를 고름. 같은 씨앗으로 미리 돌려 보고 방식마다 보여 줄 장면이 생기는 요청을 고름
-  // - Streams: 강제 종료 순간 Consumer 가 들고 있던(PEL) 요청 → DB 에는 커밋됐고 ACK 만 빠짐. 재처리 때 UNIQUE 로 걸러짐
+  // - Streams: 강제 종료 순간 Consumer 가 들고 있던(PEL) 요청 → 다시 처리돼 DB 에 저장됨
   // - Pub/Sub: 202 를 받고 메모리 큐에 있다가 사라지는 요청
   // - 나머지: 재고 안쪽 순번으로 일찍 도착한 요청 (먼저 와도 받는지 보려고)
   function pickMe(key, seed) {
@@ -318,7 +318,7 @@
     let text, tone = 'bad';
     const me = sim.me;
     if (key === 'pubsub') { text = `강제 종료 시점에 구독자 메모리 큐의 ${fmt(st.lost)}건이 유실됐습니다. 접수 응답은 ${fmt(st.success)}건인데 DB 에는 ${fmt(st.stored)}건이 적재됐습니다.`; if (me?.lost) text = `내 요청은 접수 응답(202)을 받았지만 구독자 메모리 큐에서 유실돼 DB 에 적재되지 않았습니다. ` + text; }
-    else if (key === 'stream' && sim.me) { text = `내 요청은 ${fmt(sim.me.rank + 1)}번째로 접수됐습니다. 처리 도중 Consumer 가 강제 종료됐지만 ACK 전이라 PEL 에 남아 재처리됐고, 이미 적재된 건은 UNIQUE 로 걸러져 DB 에 한 번만 적재됐습니다. 접수 ${fmt(st.success)}건 = DB ${fmt(st.stored)}건, 유실 0건.`; tone = 'good'; }
+    else if (key === 'stream' && sim.me) { text = `내 요청은 ${fmt(sim.me.rank + 1)}번째로 접수됐습니다. 처리 도중 Consumer 가 강제 종료됐지만 PEL 에 남아 재처리됐고 DB 에 적재됐습니다. 접수 ${fmt(st.success)}건 = DB ${fmt(st.stored)}건, 유실 0건.`; tone = 'good'; }
     else if (key === 'stream') { text = `강제 종료 뒤 PEL ${fmt(st.redelivered)}건부터 재처리했습니다. 접수 ${fmt(st.success)}건 = DB ${fmt(st.stored)}건, 유실 0건.`; tone = 'good'; }
     else if (st.recorded > S.stock) text = `Redis Set 이 재고를 ${st.recorded - S.stock}건 넘겨 초과 지급이 발생했습니다. 레포 실측에서는 뒤의 DB 조건부 UPDATE 가 막아 DB 최종 지급은 ${S.stock}장이었습니다.`;
     else if (st.success > st.recorded) text = `갱신 손실이 일어났습니다. 성공 응답은 ${st.success}건인데 ${S.rec}는 ${st.recorded}입니다.`;
