@@ -265,7 +265,7 @@ window.DATA = {
       headline: { a: '59,808', b: '123', unit: '회', label: 'RDB로 향하는 메뉴 조회 쿼리 99.8% 감소', note: '1,000 rps - 60초 기준, 캐시 히트율 99.8%' },
       demo: true,
       accent: ['#ff7a45', '#b83705'], // 프로젝트 안의 강조색 [다크, 라이트]: NoWait 주황
-      cover: { type: 'expand', img: 'assets/nowait/service.png', w: 2400, h: 1350, bg: '#fff', alt: 'NoWait 서비스 화면 모음: 노웨잇 로고와 “기다림 없는 즐거운 축제” 문구, 부스 목록·메뉴·주문·송금·대기 등록 화면' },
+      cover: { type: 'expand', img: 'assets/nowait/service.webp', w: 2400, h: 1350, bg: '#fff', alt: 'NoWait 서비스 화면 모음: 노웨잇 로고와 “기다림 없는 즐거운 축제” 문구, 부스 목록·메뉴·주문·송금·대기 등록 화면' },
       cases: [
         {
           title: 'Caffeine 캐시와 Redis Pub/Sub 기반 무효화로 RDB로 향하는 메뉴 조회 쿼리 99.8% 감소',
@@ -447,14 +447,14 @@ window.DATA = {
       type: 'image', case: 1, label: '실제 화면',
       title: '근로계약서 자동화 사용 화면',
       desc: '계약마다 Slack 스레드 하나로 발송 → 근로자 서명 → 회사 서명 요청 → 체결 완료를 추적합니다. 오른쪽은 미서명자에게 가는 리마인드 DM입니다.',
-      img: 'assets/unitblack/contract-slack-screens.png', w: 2396, h: 985,
+      img: 'assets/unitblack/contract-slack-screens.webp', w: 2396, h: 985,
       alt: '블랙이가 보낸 Slack 스레드: 근로계약서 발송, 근로자 서명 완료, 회사 서명 요청, 체결 완료 메시지와 서명 기한을 알리는 리마인드 DM. 대상자 정보는 가려져 있음',
     },
     {
       type: 'image', case: 0, label: '실제 화면',
       title: '사내 챗봇 ‘블랙이’ 런칭 공지와 사용 예시',
       desc: '질문하면 Notion 규정을 근거로 답하고, 출처 문서와 최종 수정일을 함께 보여 줍니다. 틀렸거나 아쉬운 답변은 버튼으로 피드백을 받아 매뉴얼을 보강합니다.',
-      img: 'assets/unitblack/chatbot-notice-usage.png', w: 2400, h: 1008,
+      img: 'assets/unitblack/chatbot-notice-usage.webp', w: 2400, h: 1008,
       alt: '왼쪽은 HR 챗봇 블랙이 런칭 공지, 오른쪽은 경조사 신청 절차를 물은 질문에 신청 과정, 준비 서류, 경조휴가 일수와 출처 문서 세 개, 피드백 버튼을 답한 Slack 화면',
     },
   ];
@@ -503,7 +503,7 @@ window.DATA = {
       title: '시스템 구성',
       desc: 'user-api 와 admin-api 가 다른 인스턴스로 돌고 메뉴가 바뀌면 Redis Pub/Sub 으로 user-api 의 Caffeine 캐시를 무효화합니다. 대기열은 Redis Sorted Set 으로 만들었습니다. 이미지는 S3 원본 → Lambda → S3 리사이즈 순서로 처리합니다. 배포 흐름은 GitHub Actions → Docker Hub → compose pull 입니다.',
       src: { label: 'README · System Architecture', url: NW },
-      img: 'assets/nowait/architecture.png', w: 2880, h: 2140,
+      img: 'assets/nowait/architecture.webp', w: 2880, h: 2140,
       alt: '손님과 주점 운영자가 웹을 거쳐 EC2 의 user-api, admin-api 로 요청하고, Redis Master 와 복제본 2대, RDS MySQL, S3 와 Lambda, Prometheus 와 Grafana, GitHub Actions 와 Docker Hub 배포 경로가 연결된 구성도',
     },
     {
