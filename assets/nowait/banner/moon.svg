@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 480" font-family="'Apple SD Gothic Neo','Malgun Gothic','Noto Sans KR',sans-serif" text-anchor="middle"><rect width="640" height="480" fill="#0f1b3d"/>
+<circle cx="500" cy="120" r="150" fill="#ffe9a8" opacity=".12"/><circle cx="500" cy="120" r="78" fill="#ffe9a8"/>
+<path d="M0 420 Q160 360 320 410 T640 390 V480 H0z" fill="#1c2c5c"/>
+<g fill="#fff" opacity=".7"><circle cx="70" cy="60" r="2"/><circle cx="180" cy="110" r="1.5"/><circle cx="290" cy="50" r="2"/><circle cx="120" cy="170" r="1.5"/><circle cx="360" cy="130" r="1.5"/></g>
+<text x="320" y="200" font-size="26" font-weight="700" fill="#ffe9a8" letter-spacing="6">공과대학 학생회 주점</text>
+<text x="320" y="285" font-size="84" font-weight="900" fill="#fff" letter-spacing="-3">달빛 주막</text>
+<text x="320" y="345" font-size="26" font-weight="700" fill="#ffe9a8">해물파전 · 두부김치 · 계란말이</text>
+<text x="320" y="405" font-size="20" font-weight="600" fill="#fff" opacity=".9">예시대학교 공학관 앞마당 · 18:00 - 23:00</text></svg>
