@@ -123,9 +123,9 @@
     return [wrap, table];
   }
 
-  // 작은 화면에서 글자를 읽을 수 있게 누르면 원본을 새 탭으로 엶
+  // 누르면 그 자리에서 화면 가득 커짐(fx.js 의 Flip). 스크립트가 없으면 원본이 새 탭으로 열림
   const image = (c) => [h('a', { href: c.img, target: '_blank', rel: 'noopener', className: 'ev__zoom' },
-    h('img', { src: c.img, alt: c.alt, loading: 'lazy', width: c.w, height: c.h }), h('span', { textContent: '원본 크기로 보기 ↗' }))];
+    h('img', { src: c.img, alt: c.alt, loading: 'lazy', decoding: 'async', width: c.w, height: c.h }), h('span', { textContent: '크게 보기 ⤢' }))];
 
   /* ── 동작 흐름: 캐시 무효화가 어떻게 오가는지 움직이는 도식 ──
      선은 GSAP DrawSVG 로 그려지고, 요청·메시지(점)는 MotionPath 로 선을 따라 이동. 화면에 보일 때만 반복 재생.
