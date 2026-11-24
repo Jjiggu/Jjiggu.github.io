@@ -1,6 +1,6 @@
 @font-face {
   font-family: 'Pretendard';
-  src: url('vendor/PretendardVariable.woff2') format('woff2-variations');
+  src: url('vendor/PretendardVariable.woff2') format('woff2-variations'); /* 서브셋: 사이트에 쓰인 글자 + KS X 1001 한글 2,350자 + 라틴. 그 밖의 글자는 시스템 글꼴로 대체됨 (원본 2.06MB → 462KB) */
   font-weight: 45 920;
   font-display: swap;
 }
