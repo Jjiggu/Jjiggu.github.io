@@ -1,7 +1,7 @@
 /* 선착순 쿠폰 시뮬레이션.
    녹화된 애니메이션이 아니라, 요청마다 읽기·쓰기 단계를 가상 시간(ms) 위에서 실제로 끼워 넣어 실행합니다.
    초과 지급·갱신 손실·메시지 유실은 그 끼어들기에서 그대로 생기고, 실행할 때마다 결과가 조금씩 다릅니다.
-   - 동시성 제어(data.js 첫 번째 사례의 목록 그대로): READ COMMITTED·REPEATABLE READ / SERIALIZABLE / 낙관적 락 / 비관적 락 / SCARD+SADD / MULTI·EXEC / WATCH / Lua
+   - 동시성 제어(data.js 쿠폰 세 번째 사례의 목록 그대로): READ COMMITTED·REPEATABLE READ / SERIALIZABLE / 낙관적 락 / 비관적 락 / SCARD+SADD / MULTI·EXEC / WATCH / Lua
    - write-behind: Pub/Sub / Redis Streams (도중에 Consumer 를 강제 종료)
    ponytail: 지연 시간은 손으로 맞춘 모델 값. 락을 쥐는 6.5ms 만 레포 EC2 실측(docs/learning/08).
    Pub/Sub 강제 종료 시점은 레포 실측 유실 범위(952~967건) 안에 들어오도록 잡은 구간에서 무작위(모델의 유실은 953~967건). 실측 수치는 fact 문구에만 있음.
