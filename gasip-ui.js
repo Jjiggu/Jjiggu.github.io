@@ -23,7 +23,7 @@
         <h4 class="ev__title">직접 눌러 보는 Gasip</h4>
         <p class="ev__desc">왼쪽 휴대폰에서 리뷰 목록을 내려 보고 리뷰를 눌러 상세로 들어가거나 새 리뷰를 써 보세요. 목록 10건을 조회할 때마다 DB 가 스캔한 행 수가 오른쪽에 표시됩니다. 조회 방식 세 개는 위 사례의 해결 과정 세 단계와 같습니다.</p>
       </header>
-      <figure class="nw__mock gs__video"><video src="assets/gasip/demo.mp4#t=1" aria-label="Gasip 실제 앱 화면 영상" controls muted playsinline preload="metadata"></video><figcaption>실제 앱 화면 영상. 출처: Gasip 백엔드 README</figcaption></figure>
+      <figure class="nw__mock gs__video"><video src="assets/gasip/demo.mp4#t=1" aria-label="Gasip 실제 앱 화면 영상" controls muted playsinline preload="none"></video><figcaption>실제 앱 화면 영상. 출처: Gasip 백엔드 README</figcaption></figure>
     </div>
     <div class="gs__grid">
       <div class="nw__col"><p class="nw__label">학생 화면</p><div class="phone">

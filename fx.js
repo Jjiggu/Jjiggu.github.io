@@ -130,3 +130,10 @@
   };
   if (window.motionReady) start(); else addEventListener('motionready', start, { once: true });
 })();
+
+// 첫 화면이 다 뜬 뒤, 아래쪽 이미지와 영상 정보를 미리 받아 둠 (스크롤해서 도착했을 때 빈 칸이 보이지 않게).
+// 첫 화면을 그리는 동안에는 받지 않도록 load 이후로 미룸.
+addEventListener('load', () => setTimeout(() => {
+  document.querySelectorAll('img[loading="lazy"]').forEach((i) => (i.loading = 'eager'));
+  document.querySelectorAll('video[preload="none"]').forEach((v) => (v.preload = 'metadata'));
+}, 300));
