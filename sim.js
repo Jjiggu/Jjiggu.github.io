@@ -1,7 +1,7 @@
 /* 선착순 쿠폰 시뮬레이션.
    녹화된 애니메이션이 아니라, 요청마다 읽기·쓰기 단계를 가상 시간(ms) 위에서 실제로 끼워 넣어 실행합니다.
    초과 지급·갱신 손실·메시지 유실은 그 끼어들기에서 그대로 생기고, 실행할 때마다 결과가 조금씩 다릅니다.
-   - 동시성 제어(data.js 첫 번째 사례의 목록 그대로): READ COMMITTED·REPEATABLE READ / SERIALIZABLE / 낙관적 락 / 비관적 락 / SCARD+SADD / MULTI·EXEC / WATCH / Lua
+   - 동시성 제어(data.js 쿠폰 세 번째 사례의 목록 그대로): READ COMMITTED·REPEATABLE READ / SERIALIZABLE / 낙관적 락 / 비관적 락 / SCARD+SADD / MULTI·EXEC / WATCH / Lua
    - write-behind: Pub/Sub / Redis Streams (도중에 Consumer 를 강제 종료)
    ponytail: 지연 시간은 손으로 맞춘 모델 값. 락을 쥐는 6.5ms 만 레포 EC2 실측(docs/learning/08).
    Pub/Sub 강제 종료 시점은 레포 실측 유실 범위(952~967건) 안에 들어오도록 잡은 구간에서 무작위(모델의 유실은 953~967건). 실측 수치는 fact 문구에만 있음.
@@ -14,7 +14,7 @@
     serializable: { group: 0, set: 'DB 격리 수준 조정', name: 'SERIALIZABLE', store: 'MySQL', gate: 'S 락으로 읽고 X 락으로 갱신', rec: 'issued_count', stock: 50, n: 50, spread: 8, slow: 300,
       fact: 'S 락을 쥔 채 X 락으로 issued_count를 갱신하는 구조라 데드락 발생' },
     optimistic: { group: 0, set: 'DB 수준 락', name: '낙관적 락', store: 'MySQL', gate: 'version 이 같을 때만 갱신', rec: 'issued_count', stock: 50, n: 50, spread: 8, slow: 300,
-      fact: 'Retry가 없으면 50건 중 6건만 지급, Retry하면 선착순이 보장되지 않아 제외' },
+      fact: '재시도가 없으면 50건 중 6건만 지급, 재시도하면 선착순이 보장되지 않아 제외' },
     pessimistic: { group: 0, set: 'DB 수준 락', name: '비관적 락', store: 'MySQL', gate: '쿠폰 행 락', rec: 'issued_count', stock: 100, n: 1000, spread: 150, slow: 3,
       fact: '락 대기로 단순 조회 p95가 10ms → 444ms, 응답 처리량 431~704 rps' },
     scard: { group: 0, set: 'Redis Set', name: 'SCARD + SADD', store: 'Redis', gate: '커맨드 3번 개별 실행', rec: 'Redis Set 크기', stock: 100, n: 1000, spread: 150, slow: 16,
