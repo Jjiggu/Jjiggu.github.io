@@ -6,18 +6,19 @@
    자체 점검: `node nowait-demo.js` */
 (() => {
   const STORE = {
-    id: 7, code: 'nowait-pocha', name: '노웨잇 포차', dept: '예시 데이터', isActive: true, // isActive: 대기 접수 on/off
+    id: 7, code: 'nowait-pocha', name: '노웨잇 포차', dept: '컴퓨터공학과', isActive: true, // isActive: 대기 접수 on/off
     location: '예시대학교 중앙광장', hours: '18:00 - 24:00',
-    desc: '안녕하세요! 축제 기간에만 여는 노웨잇 포차입니다.\n\n줄 서지 말고 원격으로 대기하세요.\n자리에 앉으면 QR 로 바로 주문할 수 있어요.',
+    desc: '안녕하세요! 컴공과가 버그 없이 준비한 이스터에그 가득한 노웨잇 포차입니다 🚀\n\n남다른 디버깅 실력으로 부치는 치즈김치전,\n데이터 손실 없는 어묵탕,\n그리고 메모리 오류 없는 넉넉한 양까지\n완벽 구현했습니다.', // Figma 부스 상세의 소개글을 이 주점 메뉴에 맞춤
     notice: { title: '입장 시 신분증 검사 필수', content: '주류를 판매하는 부스라 입장할 때 신분증을 확인합니다.\n호출 후 10분 안에 오지 않으면 대기가 취소될 수 있어요.' },
     banners: ['assets/nowait/banner/open.svg', 'assets/nowait/banner/menu.svg', 'assets/nowait/banner/queue.svg'], // 직접 그린 주점 홍보 배너
+    card: 'assets/nowait/banner/open-card.svg', // 홈 가로 카드 배경(글자 뺀 배너)
   };
   // ponytail: 두 번째 주점은 목록·상세만 보이는 예시(대기 접수 마감). 서버 모델은 STORE 하나만 다룸. 여러 주점을 실제로 돌리려면 queueKey·캐시 키를 주점별로.
   const OTHER = {
-    id: 12, code: 'moonlight', name: '달빛 주막', dept: '예시 데이터', teams: 12,
+    id: 12, code: 'moonlight', name: '달빛 주막', dept: '기계공학과', teams: 12,
     location: '예시대학교 공학관 앞마당', hours: '18:00 - 23:00',
     desc: '공과대학 학생회가 여는 달빛 주막입니다.\n\n오늘은 대기 접수가 마감됐어요.',
-    banners: ['assets/nowait/banner/moon.svg'],
+    banners: ['assets/nowait/banner/moon.svg'], card: 'assets/nowait/banner/moon-card.svg',
     menus: [{ id: 1, name: '해물파전', price: 12000 }, { id: 2, name: '두부김치', price: 10000 }, { id: 3, name: '계란말이', price: 8000 }],
   };
   const CACHE_TTL = 5 * 60_000, IN_PROGRESS_TTL = 60_000, COMPLETED_TTL = 180_000;

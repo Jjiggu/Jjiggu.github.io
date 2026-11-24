@@ -193,7 +193,7 @@
     return [wrap, steps];
   }
 
-  /* ── 실제 화면 흐름: 흐름 하나가 한 줄(같은 칸 폭). 이미지가 없는 칸은 NoWait 밖 단계, focus 단계는 마지막에 떠오름 ── */
+  /* ── 실제 화면 흐름: 흐름 하나가 한 줄(같은 칸 폭). 이미지가 없는 칸은 NoWait 밖 단계, focus 단계는 대표색으로 표시 ── */
   function flows(c) {
     const wrap = h('div', { className: 'flows' }, c.rows.map((r, i) => h('section', { className: 'flows__row' + (i ? ' is-after' : '') },
       h('p', { className: 'flows__head' }, h('em', { textContent: r.tag }), r.name),
@@ -204,10 +204,7 @@
         h('p', { textContent: cap })))))));
     if (window.gsap && window.ScrollTrigger && !matchMedia('(prefers-reduced-motion: reduce)').matches) {
       wrap.querySelectorAll('ol').forEach((ol) => {
-        const tl = gsap.timeline({ scrollTrigger: { trigger: ol, start: 'top 80%', once: true } })
-          .from(ol.children, { y: 70, opacity: 0, duration: 0.8, stagger: 0.08, ease: 'power3.out' });
-        const f = ol.querySelector('.is-focus');
-        if (f) tl.from(f, { '--lift': 0, duration: 0.6, ease: 'back.out(2)' }, '-=0.2');
+        gsap.from(ol.children, { y: 70, opacity: 0, duration: 0.8, stagger: 0.08, ease: 'power3.out', scrollTrigger: { trigger: ol, start: 'top 80%', once: true } });
       });
     }
     return [wrap];

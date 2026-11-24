@@ -52,7 +52,7 @@
   const myOrders = () => B.db.orders.filter((o) => o.tableId === TABLE);
 
   /* ── 손님 화면 공통 조각 ── */
-  const footer = (label, attrs, disabled) => `<div class="p-foot"><button type="button" class="p-big" ${attrs} ${disabled ? 'disabled' : ''}>${label}</button></div>`;
+  const footer = (label, attrs, disabled, side = '') => `<div class="p-foot${side ? ' p-foot--side' : ''}">${side}<button type="button" class="p-big" ${attrs} ${disabled ? 'disabled' : ''}>${label}</button></div>`;
   const back = (to, onImage) => `<button type="button" class="p-back${onImage ? ' is-on-image' : ''}" data-act="go" data-to="${to}" aria-label="뒤로"><img src="${A}back.svg" alt=""></button>`;
   const qty = (n, dec, inc, min = 1, max = 99) => `<div class="p-qty"><button type="button" data-act="${dec}" ${n <= min ? 'disabled' : ''} aria-label="줄이기"><img src="${A}minus.svg" alt=""></button><b>${n}</b><button type="button" data-act="${inc}" ${n >= max ? 'disabled' : ''} aria-label="늘리기"><img src="${A}plus.svg" alt=""></button></div>`;
   const menuList = (clickable, menus = st.menus) => `<h2 role="presentation" class="p-t20s">메뉴</h2><ul class="p-menus">${menus.map((m) => {
@@ -60,37 +60,49 @@
     return `<li class="${m.soldOut ? 'is-sold' : ''}">${clickable ? `<button type="button" data-act="menu" data-id="${m.id}" ${m.soldOut ? 'disabled' : ''}>${inner}</button>` : inner}</li>`;
   }).join('')}</ul>`;
   const center = (img, title, text, extra = '') => `<section class="p-center"><img src="${A}${img}" alt="" width="150">${title}<p>${text}</p>${extra}</section>`;
+  // 홈의 주점 원 (실제 앱은 주점 프로필 사진, 여기서는 색 원과 첫 글자)
+  const H = 'assets/nowait/fe/home/';
+  const bookmark = `<span class="p-bookmark" aria-hidden="true"><img src="${H}bookmark.svg" alt="" width="13" height="17"></span>`; // 부스 상세 하단 북마크(보기 전용, NoWait_FE StoreActionSection)
+  const avatar = (S) => `<i class="p-avatar" style="background:${S.color || (S === B.STORE ? '#0062AD' : '#3F5A86')}">${esc(S.name[0])}</i>`;
+  // ponytail: 모든 주점 목록을 채우는 예시 주점(누를 수 없음). 실제로 들어갈 수 있는 주점은 위 두 곳
+  const EXTRA = [
+    { name: '별빛 포장마차', dept: '관광경영학과', color: '#E0102F', badge: '<em class="p-wbadge">대기 5팀</em>' },
+    { name: '청춘 주점', dept: '치위생학과', color: '#1C7C6F', badge: '<em class="p-wbadge">대기 9팀</em>' },
+    { name: '새벽 포차', dept: '경찰행정학과', color: '#4B8B3B', badge: '<em class="p-wbadge is-off">오픈 전</em>' },
+  ];
   const STATUS = { WAITING_FOR_PAYMENT: '입금 대기 중', COOKING: '조리 중', COOKED: '조리 완료', CANCELLED: '주문 취소' };
 
   const screens = {
     /* 원격 줄서기 */
-    home() {
-      const rank = B.myRank(ME);
-      return `<header class="p-top"><img src="${A}logo.svg" alt="NoWait" width="58" height="24"></header>
-        <section class="p-pad"><h2 role="presentation" class="p-t20b">나의 대기카드</h2>
-        ${rank != null ? `<div class="p-card"><p class="p-card-store">${B.STORE.name}</p>
+    home() { // NoWait_FE 홈: 헤더 → 나의 대기카드(대기 중일 때만) → 대기가 가장 적어요 → 부스 지도 배너 → 모든 주점
+      const rank = B.myRank(ME), n = B.STORE.isActive ? queue().length : 0, calling = B.active(ME)?.status === 'CALLING';
+      const pick = (S, to, k) => `<button type="button" class="p-pickcard" data-act="go" data-to="${to}" style="background-image:url('${S.card}')">${k ? `<em>대기 ${k}팀</em>` : ''}<b>${esc(S.name)}</b><small>${esc(S.dept)}</small></button>`;
+      const row = (S, badge, to) => `<li>${to ? `<button type="button" class="p-srow" data-act="go" data-to="${to}">` : '<div class="p-srow">'}${avatar(S)}<span><span class="p-srow__name"><b>${esc(S.name)}</b>${badge}</span><small>${esc(S.dept)}</small></span>${to ? '</button>' : '</div>'}</li>`;
+      return `<header class="p-top"><img src="${A}logo.svg" alt="NoWait" width="58" height="24"><span class="p-top__icons" aria-hidden="true"><img src="${H}search.svg" alt="" width="24" height="24"><img src="${H}menu.svg" alt="" width="24" height="24"></span></header>
+        ${rank != null ? `<section class="p-pad"><h2 role="presentation" class="p-t20b">나의 대기카드</h2>
+          <div class="p-card"><span class="p-card-dots" aria-hidden="true"><i></i></span><p class="p-card-store">${B.STORE.name}</p>
             <p class="p-card-ahead">내 앞 대기 <b>${rank}팀</b><button type="button" data-act="refresh" aria-label="새로고침"><img src="${A}refresh.svg" alt=""></button></p>
-            <p class="p-card-meta">#${rank + 1} · 인원 ${st.waiting.partySize}명 · 대기번호 ${st.waiting.waitingNumber}</p></div>
-          ${B.active(ME)?.status === 'CALLING' ? `<p class="p-calling">10분 안에 입장해주세요!<b data-cd="${B.active(ME).calledAt + 600000}"></b></p>` : ''}
-          <button type="button" class="p-cancel" data-act="askCancel"><img src="${A}close.svg" alt="">대기 취소</button>`
-          : '<div class="p-empty">대기 중인 주점이 없어요</div>'}
-        <h2 role="presentation" class="p-t20b">대기가 가장 적어요</h2>
-        <button type="button" class="p-pick" data-act="go" data-to="store"><img src="${B.STORE.banners[0]}" alt=""><em>${B.STORE.isActive ? `대기 ${queue().length}팀` : '접수 마감'}</em><span>${B.STORE.name}<small>${B.STORE.dept}</small></span></button>
-        <h2 role="presentation" class="p-t20b">모든 주점</h2>
-        <button type="button" class="p-store-row" data-act="go" data-to="store"><img src="${A}default-department.png" alt=""><span><small>${B.STORE.dept}</small>${B.STORE.name}</span>${B.STORE.isActive ? `<em>대기 ${queue().length}팀</em>` : '<em class="is-closed">접수 마감</em>'}</button>
-        <button type="button" class="p-store-row" data-act="go" data-to="store2"><img src="${A}default-department.png" alt=""><span><small>${B.OTHER.dept}</small>${B.OTHER.name}</span><em class="is-closed">접수 마감</em></button></section>`;
+            <span class="p-card-logo" aria-hidden="true">${avatar(B.STORE)}</span></div>
+          ${calling ? `<p class="p-calling">10분 안에 입장해주세요!<b data-cd="${B.active(ME).calledAt + 600000}"></b></p>` : ''}
+          <button type="button" class="p-cancel" data-act="askCancel"><img src="${A}close.svg" alt="">대기 취소</button></section>` : ''}
+        <section class="p-pad p-home">
+          <h2 role="presentation" class="p-t20b p-sorthead">대기가 가장 적어요<i aria-hidden="true"><img src="${H}arrow_down.svg" alt="" width="16" height="16"></i></h2>
+          <div class="p-picks">${pick(B.STORE, 'store', n)}${pick(B.OTHER, 'store2', 0)}</div>
+          <div class="p-mapban"><div><b>축제 부스 한눈에 찾기</b><span>지도로 부스의 위치를 확인해 보세요!</span></div><img src="${H}banner_img.svg" alt="" width="100" height="100"></div>
+          <h2 role="presentation" class="p-t20b">모든 주점</h2>
+          <ul class="p-stores">${row(B.STORE, n ? `<em class="p-wbadge">대기 ${n}팀</em>` : B.STORE.isActive ? '' : '<em class="p-wbadge is-off">접수 마감</em>', 'store')}${row(B.OTHER, '<em class="p-wbadge is-off">접수 마감</em>', 'store2')}${EXTRA.map((S) => row(S, S.badge)).join('')}</ul></section>`;
     },
     store2() { return this.store(B.OTHER); },
     store(S = B.STORE) {
       const mine = S === B.STORE, waiting = mine && B.myRank(ME) != null, n = mine ? queue().length : S.teams;
       return `${back('home', true)}<div class="p-swiper"><div class="p-swiper__track" id="nw-swiper">${S.banners.map((b, i) => `<img src="${b}" alt="주점 배너 ${i + 1}">`).join('')}</div>
           <div class="p-swiper__dots">${S.banners.map((_, i) => `<button type="button" data-act="banner" data-i="${i}" aria-label="배너 ${i + 1}" aria-pressed="${i === st.banner}"></button>`).join('')}</div></div>
-        <section class="p-pad"><div class="p-store-head"><div><p class="p-dept">${S.dept}</p><h1 role="presentation" class="p-h22">${S.name}</h1></div><img src="${A}default-department.png" alt=""></div>
+        <section class="p-pad"><div class="p-store-head"><div><p class="p-dept">${S.dept}</p><h1 role="presentation" class="p-h22">${S.name}</h1></div>${avatar(S)}</div>
         ${n ? `<p class="p-badge">대기 ${n}팀</p>` : ''}
         <div class="p-info"><p><img src="${A}subtract.svg" alt="위치">${esc(S.location)}</p><p><img src="${A}clock.svg" alt="운영 시간">${esc(S.hours)}</p>
           <p class="p-desc">${esc(S.desc)}</p>
-          ${S.notice ? `<button type="button" class="p-notice" data-act="go" data-to="notice"><span>${esc(S.notice.title)}</span><img src="${A}arrow-right.svg" alt=""></button>` : ''}</div></section><div class="p-divider"></div>
-        <section class="p-pad p-menu-sec">${menuList(false, S.menus)}</section>${mine && (waiting || S.isActive) ? footer(waiting ? '대기 중이에요' : '대기하기', 'data-act="toParty"', waiting) : footer('대기 접수가 마감됐어요', '', true)}`;
+          ${S.notice ? `<button type="button" class="p-notice" data-act="go" data-to="notice"><span><em>공지</em>${esc(S.notice.title)}</span><img src="${A}arrow-right.svg" alt=""></button>` : ''}</div></section><div class="p-divider"></div>
+        <section class="p-pad p-menu-sec">${menuList(false, S.menus)}</section>${mine && (waiting || S.isActive) ? footer(waiting ? '대기 중이에요' : '대기하기', 'data-act="toParty"', waiting, bookmark) : footer('대기 접수가 마감됐어요', '', true, bookmark)}`;
     },
     notice: () => `${back('store')}<p class="p-navtitle">공지사항</p><section class="p-pad p-notice-body"><h1 role="presentation">${esc(B.STORE.notice.title)}</h1><p>${esc(B.STORE.notice.content)}</p></section>`,
     party: () => `${back('store')}<section class="p-pad p-form"><h1 role="presentation" class="p-h24">대기 등록을 위해<br>인원 수를 입력해주세요</h1>
