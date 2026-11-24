@@ -109,7 +109,7 @@ main, section[id], footer[id], .cp { scroll-margin-top: var(--nav-h); } /* 고�
   font-size: clamp(4rem, 12vw, 10.5rem); font-weight: 900; line-height: 0.92; letter-spacing: -0.05em;
   margin: 0.08em 0 0 -0.04em; padding-bottom: 0.06em; white-space: nowrap;
 }
-.hero__intro { margin-top: 1.25rem; max-width: 40rem; font-size: clamp(1rem, 1.25vw, 1.2rem); line-height: 1.65; color: color-mix(in srgb, var(--ink) 84%, transparent); text-wrap: pretty; }
+.hero__intro { margin-top: 1.5rem; max-width: 40rem; font-size: clamp(1.15rem, 1.8vw, 1.6rem); font-weight: 600; line-height: 1.5; letter-spacing: -0.01em; color: var(--ink); white-space: pre-line; text-wrap: pretty; } /* 한 줄 소개: 두 문장을 두 줄로 */
 
 /* 연락처 아이콘: 첫 화면과 footer 가 같이 씀 */
 .links { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: clamp(1.5rem, 3vw, 2.25rem); }
@@ -255,8 +255,6 @@ main, section[id], footer[id], .cp { scroll-margin-top: var(--nav-h); } /* 고�
 .foot { margin-top: clamp(4rem, 10vw, 8rem); padding: clamp(3rem, 7vw, 5rem) var(--pad) 2rem; border-top: 1px solid var(--line); }
 .foot__main { display: flex; flex-wrap: wrap; align-items: center; gap: 1rem 2rem; }
 .foot__h { flex-basis: 100%; font-size: 0.8rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--mute); }
-.foot__mail { font-size: clamp(1.3rem, 2.4vw, 2rem); font-weight: 800; letter-spacing: -0.02em; text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 0.2em; text-decoration-color: var(--line); transition: text-decoration-color 0.2s; }
-.foot__mail:hover { text-decoration-color: currentColor; }
 .foot .links { margin: 0; }
 .foot__base { display: flex; justify-content: space-between; align-items: center; gap: 1rem; flex-wrap: wrap; margin-top: clamp(2.5rem, 5vw, 4rem); padding-top: 1.25rem; border-top: 1px solid var(--line); font-size: 0.82rem; color: var(--mute); }
 .foot__base p { max-width: 52rem; line-height: 1.6; }
@@ -1027,9 +1025,6 @@ html[data-theme='light'] .project.has-accent, html[data-theme='light'] .panel.ha
 .lb__x:hover { background: #eef0ff; color: #060916; }
 .lb :focus-visible { outline: 2px solid #ffd84a; outline-offset: 3px; }
 
-/* Contact: 이 페이지의 마지막 행동(메일 보내기)이라 본문보다 크게 */
-.foot__mail { font-size: 1.15rem; font-weight: 700; letter-spacing: 0; overflow-wrap: anywhere; }
-
 @media (prefers-reduced-motion: reduce) { .hero__cue i::after { animation: none; } .nav__pill { transition: none; } }
 
 /* ═════════ 가벼운 모드 (html.lite): 저사양 기기이거나 프레임이 느리게 재어졌을 때 ═════════
@@ -1045,17 +1040,17 @@ html.lite .sim__trace { -webkit-backdrop-filter: none; backdrop-filter: none; ba
 .flows { display: grid; gap: clamp(2rem, 4vw, 3rem); }
 .flows__head { display: flex; align-items: baseline; gap: 0.6rem; padding-bottom: 0.6rem; border-bottom: 2px solid var(--mute); font-weight: 800; color: var(--mute); }
 .flows__head em { font-style: normal; font-size: 0.9rem; letter-spacing: 0.02em; }
-.flows ol { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: clamp(0.5rem, 1.2vw, 1.25rem); margin: 0; padding: 1.5rem 0 0; list-style: none; counter-reset: step; }
-.flows li { display: grid; gap: 0.8rem; align-content: start; counter-increment: step; }
+.flows ol { --g: clamp(0.5rem, 1.2vw, 1.25rem); display: flex; justify-content: space-between; gap: var(--g); margin: 0; padding: 1.5rem 0 0; list-style: none; counter-reset: step; } /* 칸 폭은 두 줄 모두 1/7, 칸이 적은 줄은 간격이 넓어져 가로를 꽉 채움 */
+.flows li { flex: 0 0 calc((100% - 6 * var(--g)) / 7); display: grid; gap: 0.8rem; align-content: start; counter-increment: step; }
 .flows .ev__zoom img { border-radius: 0; }
 .flows__out { display: grid; place-items: center; aspect-ratio: 492 / 1015; margin: 4.1% 3.9% 3.9%; /* 프레임 이미지 속 휴대폰 크기·위치와 같게 */ border: 1.5px dashed var(--mute); border-radius: 16% / 8%; font-size: 0.8rem; font-weight: 700; color: var(--mute); }
-.flows li p { display: flex; align-items: baseline; gap: 0.45rem; font-size: 0.85rem; font-weight: 600; line-height: 1.4; color: var(--mute); text-wrap: pretty; }
-.flows li p::before { content: counter(step); font-family: 'Big Shoulders', 'Pretendard', sans-serif; font-size: 1.15rem; font-weight: 800; line-height: 1; color: var(--ink); }
+.flows li p { font-size: 0.85rem; font-weight: 600; line-height: 1.4; color: var(--mute); text-align: center; text-wrap: balance; } /* 번호를 글줄 안에 두어 줄마다 가운데 정렬 */
+.flows li p::before { content: counter(step); margin-right: 0.4em; font-family: 'Big Shoulders', 'Pretendard', sans-serif; font-size: 1.15rem; font-weight: 800; line-height: 1; color: var(--ink); }
 .flows__row.is-after .flows__head, .flows__row.is-after .flows__out { border-color: var(--sun); color: var(--sun); } /* 이후 = 대표색 */
 .flows li.is-focus p, .flows li.is-focus p::before { color: var(--sun); } /* 짚어 줄 단계는 글자만 대표색 */
 @media (max-width: 899px) { /* 좁은 화면: 칸 폭을 고정하고 옆으로 밀어서 봄 */
-  .flows ol { grid-template-columns: none; grid-auto-flow: column; grid-auto-columns: 40%; overflow-x: auto; padding-bottom: 0.5rem; scroll-snap-type: x mandatory; scrollbar-width: none; }
-  .flows li { scroll-snap-align: start; }
+  .flows ol { justify-content: flex-start; overflow-x: auto; padding-bottom: 0.5rem; scroll-snap-type: x mandatory; scrollbar-width: none; }
+  .flows li { flex-basis: 40%; scroll-snap-align: start; }
 }
 
 

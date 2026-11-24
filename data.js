@@ -4,12 +4,12 @@
 window.DATA = {
   name: 'Jihoon Kim', // 첫 화면에서는 이름 아래 성으로 두 줄
   role: 'Backend Engineer',
-  line:
-    '느린 쿼리와 락 경합을 감으로 넘기지 않고, 부하 테스트로 원인을 찾아 숫자로 확인합니다. (주)유닛블랙에서는 사내 챗봇의 검색 품질을 recall@5 0.92까지 올리고, 약 30분 걸리던 근로계약서 작업을 2분 이내로 줄였습니다. 교수 리뷰 앱 Gasip은 MAU 1,560명 규모로 15개월간 운영했습니다.',
+  line: '기술로 사용자 불편을 해결하며 보람을 느낍니다.', // 임시 문구. 성과 숫자는 바로 아래 Summary 카드에
   contact: [ // icon: main.js 의 ICONS
     { label: 'GitHub', icon: 'github', href: 'https://github.com/Jjiggu' },
     { label: 'LinkedIn', icon: 'linkedin', href: '' }, // ponytail: 주소를 받으면 채움. 비어 있으면 화면에 안 나옴
     { label: '이메일', icon: 'mail', href: 'mailto:zh1229@naver.com', text: 'zh1229@naver.com' },
+    { label: '전화', icon: 'phone', href: 'tel:+821020784947', text: '+82-10-2078-4947' },
   ],
 
 
@@ -271,7 +271,6 @@ window.DATA = {
           title: 'Redis Pub/Sub 기반 캐시 무효화로 RDB로 향하는 메뉴 조회 쿼리 99.8% 감소',
           metrics: [
             { a: '59,808', b: '123', unit: '회', label: '메뉴 조회 쿼리 (1,000 rps - 60초 기준)', bar: [59808, 123] },
-            { a: '57.6', b: '1.3', unit: 'ms', label: '2,000 rps에서 p95', bar: [57.6, 1.3] },
             { a: '99', b: '31', unit: '%', label: '2,000 rps에서 DB CPU 사용률', bar: [99, 31] },
             { b: '99.8', unit: '%', label: '캐시 히트율' },
           ],
@@ -325,7 +324,7 @@ window.DATA = {
           ],
         },
         {
-          title: '간편 송금 연결로 테이블 오더 사용성 점수 2.8점 → 4.3점',
+          title: '사용성 테스트 기반 송금 흐름 개선으로 테이블 오더 사용성 점수 2.8점 → 4.3점',
           metrics: [{ a: '2.8', b: '4.3', unit: '점', label: '사용성 점수 평균 (5점 만점, 같은 테스터 24명)', bar: [2.8, 4.3] }],
           problem: [
             '테이블 오더에 결제 모듈 없이 손님이 주점 계좌로 직접 이체하는 방식을 적용해, 실제 주문 과정에서 계좌 송금이 원활하게 이루어지는지 확인 필요',
@@ -482,7 +481,7 @@ window.DATA = {
     {
       type: 'image', case: 0, label: '실제 화면',
       title: '사내 챗봇 ‘블랙이’ 런칭 공지와 사용 예시',
-      desc: '질문하면 사내 문서를 근거로 답변하고, 출처 문서와 최종 수정일을 함께 보여 줍니다. 틀렸거나 아쉬운 답변은 버튼으로 피드백을 받아 매뉴얼을 보강합니다.',
+      desc: '질문하면 사내 문서를 근거로 답변하고, 출처 문서와 최종 수정일을 함께 보여 줍니다.',
       img: 'assets/unitblack/chatbot-notice-usage.webp', w: 2400, h: 1008,
       alt: '왼쪽은 HR 챗봇 블랙이 런칭 공지, 오른쪽은 경조사 신청 절차를 물은 질문에 신청 과정, 준비 서류, 경조휴가 일수와 출처 문서 세 개, 피드백 버튼을 답한 Slack 화면',
     },
@@ -528,7 +527,7 @@ window.DATA = {
   P.nowait.repo = NW;
   P.nowait.evidence = [
     {
-      type: 'image', at: 'head',
+      type: 'image', at: 'head', wide: true,
       title: '시스템 아키텍처',
       img: 'assets/nowait/architecture.webp', w: 2880, h: 2140,
       alt: '손님과 주점 운영자가 웹을 거쳐 EC2 의 user-api, admin-api 로 요청하고, Redis Master 와 복제본 2대, RDS MySQL, S3 와 Lambda, Prometheus 와 Grafana, GitHub Actions 와 Docker Hub 배포 경로가 연결된 구성도',
