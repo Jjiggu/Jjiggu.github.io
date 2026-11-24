@@ -16,7 +16,7 @@
       <header class="ev__head">
         <p class="eyebrow">직접 해 보기</p>
         <h4 class="ev__title">직접 눌러 보는 NoWait</h4>
-        <p class="ev__desc">휴대폰에서 줄을 서거나 테이블에서 주문하면 오른쪽에 서버 상태와 처리 로그가 바로 나옵니다. 아래 운영자 화면에서 입장 호출과 주문 처리를 해 보세요. 위 두 사례(캐시 무효화, 멱등성 처리)가 여기서 그대로 동작합니다.</p>
+        <p class="ev__desc">손님 화면에서 줄을 서거나 주문하면 서버 상태와 처리 로그가 바로 바뀝니다. 운영자 화면에서는 입장 호출과 주문 처리를 해 볼 수 있습니다. 위에서 설명한 캐시 무효화와 멱등성 처리가 실제로 어떻게 동작하는지도 여기서 볼 수 있습니다.</p>
         <div class="bk__actions nw__flow"><button type="button" data-act="flow" data-f="wait">원격 줄서기</button><button type="button" data-act="flow" data-f="order">테이블 주문 (QR)</button></div>
       </header>
     </div>
@@ -29,7 +29,7 @@
       </div>
       <div class="nw__col nw__admin"><p class="nw__label">운영자 화면</p><div class="ipad"><div class="ipad__screen admin" id="nw-admin" data-lenis-prevent></div></div></div>
     </div>
-    <details class="nw__credit"><summary>화면 출처와 안내</summary><p>화면 디자인과 프론트엔드는 NoWait 팀의 디자이너와 프론트엔드 개발자들이 만들었습니다(<a href="https://github.com/GTable/NoWait_FE" target="_blank" rel="noopener">GTable/NoWait_FE</a>). 여기서는 그 화면을 본떠 다시 그렸습니다. 실제 서버에 연결되지 않으며 실제 송금도 일어나지 않습니다. 음식 사진은 위키미디어 공용의 CC0(퍼블릭 도메인) 사진입니다: <a href="https://commons.wikimedia.org/wiki/File:Garaetteok_Tteokbokki.jpg" target="_blank" rel="noopener">Garaetteok Tteokbokki</a>(Kimseoeun2023079825), <a href="https://commons.wikimedia.org/wiki/File:Mozzarella-kimchi-buchimgae.jpg" target="_blank" rel="noopener">Mozzarella-kimchi-buchimgae</a>(b00142), <a href="https://commons.wikimedia.org/wiki/File:Eomuk-tang_2.jpg" target="_blank" rel="noopener">Eomuk-tang 2</a>(bigtorica), <a href="https://commons.wikimedia.org/wiki/File:Korean_corn_with_cheese.jpg" target="_blank" rel="noopener">Korean corn with cheese</a>(Fumikas Sagisavas). 카카오페이·토스·네이버페이 로고는 각 회사의 상표입니다. 주점·메뉴·대기 팀, 주점 위치·소개글·공지, 손님 이름은 모두 예시 데이터이고 전화번호는 가렸습니다. 원격 줄서기 요청의 멱등 키(Idempotency-Key 헤더)는 이 체험 화면이 생성해 보냅니다. 운영자 화면은 위쪽 탭 구성을 단순하게 바꿨고 확인 창은 생략했습니다.</p></details>`;
+    <details class="nw__credit"><summary>화면 출처와 안내</summary><p>화면 디자인과 프론트엔드는 NoWait 팀의 디자이너와 프론트엔드 개발자들이 만들었습니다(<a href="https://github.com/GTable/NoWait_FE" target="_blank" rel="noopener">GTable/NoWait_FE</a>). 여기서는 그 화면을 본떠 다시 그렸습니다. 실제 서버에 연결되지 않으며 실제 송금도 일어나지 않습니다. 음식 사진은 위키미디어 공용의 CC0(퍼블릭 도메인) 사진입니다: <a href="https://commons.wikimedia.org/wiki/File:Garaetteok_Tteokbokki.jpg" target="_blank" rel="noopener">Garaetteok Tteokbokki</a>(Kimseoeun2023079825), <a href="https://commons.wikimedia.org/wiki/File:Mozzarella-kimchi-buchimgae.jpg" target="_blank" rel="noopener">Mozzarella-kimchi-buchimgae</a>(b00142), <a href="https://commons.wikimedia.org/wiki/File:Eomuk-tang_2.jpg" target="_blank" rel="noopener">Eomuk-tang 2</a>(bigtorica), <a href="https://commons.wikimedia.org/wiki/File:Korean_corn_with_cheese.jpg" target="_blank" rel="noopener">Korean corn with cheese</a>(Fumikas Sagisavas). 카카오페이, 토스, 네이버페이 로고는 각 회사의 상표입니다. 주점과 메뉴, 대기 팀, 주점 위치와 소개글, 공지, 손님 이름은 모두 예시 데이터이고 전화번호는 가렸습니다. 원격 줄서기 요청의 멱등 키(Idempotency-Key 헤더)는 이 체험 화면이 생성해 보냅니다. 운영자 화면에서 통계와 입금계좌 설정, 확인 창은 생략했습니다.</p></details>`;
   host.append(root);
 
   const $ = (s) => root.querySelector(s);
@@ -45,7 +45,7 @@
     logEl.scrollTop = logEl.scrollHeight;
   };
   const B = window.NoWaitBackend({ emit: log });
-  const st = { flow: 'wait', screen: 'home', party: 1, waiting: null, busy: false, last: null, modal: null, menus: [], cart: [], pick: null, qty: 1, depositor: '', nameErr: '', pay: '카카오페이', toast: '', tab: 'wait', wf: 'ALL', of: 'ING', banner: 0, draft: null };
+  const st = { flow: 'wait', screen: 'home', party: 1, waiting: null, busy: false, last: null, modal: null, menus: [], cart: [], pick: null, qty: 1, depositor: '', nameErr: '', pay: '카카오페이', toast: '', tab: 'wait', bt: 'menu', wf: 'ALL', of: 'ING', banner: 0, draft: null };
   const queue = () => B.redis.zrange(B.queueKey);
   const total = () => st.cart.reduce((n, c) => n + c.price * c.quantity, 0);
   const count = () => st.cart.reduce((n, c) => n + c.quantity, 0);
@@ -138,7 +138,11 @@
 
   /* ── 운영자 화면 (태블릿) ── */
   const pill = (act, key, cur, label, n) => `<button type="button" class="ad-pill" data-act="${act}" data-k="${key}" aria-pressed="${cur === key}">${label}${n != null ? ` <b>${n}</b>` : ''}</button>`;
-  const tbl = (o) => `<i class="ad-tbl">${o.tableId}</i>`;
+  // 테이블 번호별 원 색 (NoWait_FE utils/tableColors.ts, 1~30번)
+  const TABLE_COLORS = ['#576376', '#CEB4F0', '#A5B8D6', '#84A6AD', '#788FB6', '#99a3b4', '#6C707A', '#898BBC', '#95C8BC', '#B4B4B4', '#3C485C', '#A27FCF', '#849CC3', '#5F8992', '#5472A3',
+    '#6B7C99', '#4B4F59', '#6B6D9B', '#6FA99B', '#929292', '#3C485C', '#875FBB', '#6484B7', '#4C6E75', '#3F5A86', '#52637F', '#3E4045', '#4C4E75', '#507F74', '#767676'];
+  const tbl = (o) => `<i class="ad-tbl" style="background:${TABLE_COLORS[o.tableId - 1] || '#6C707A'}">${o.tableId}</i>`;
+  const ADM = 'assets/nowait/fe/admin/';
   const menuImg = (m) => m.img || A + 'menu_placeholder.png';
   const adminPages = {
     wait() {
@@ -157,28 +161,35 @@
     order() {
       const by = (s) => B.db.orders.filter((o) => o.status === s);
       const wait = by('WAITING_FOR_PAYMENT'), cook = by('COOKING'), done = by('COOKED');
-      const tabs = `<div class="ad-bar"><div>${pill('of', 'ING', st.of, '진행 중', wait.length + cook.length)}${pill('of', 'DONE', st.of, '조리 완료', done.length)}</div></div>`;
+      const tabs = `<div class="ad-bar"><div>${pill('of', 'ING', st.of, '진행 중', wait.length + cook.length)}${pill('of', 'DONE', st.of, '조리 완료', done.length)}</div><button type="button" class="ad-refresh" data-act="arefresh" aria-label="새로고침"><img src="${ADM}refresh.svg" alt="" width="16" height="16"></button></div>`;
       if (st.of === 'DONE') return tabs + `<div class="ad-col"><p class="ad-thead ad-thead--done"><span>테이블</span><span>입금자</span><span>메뉴</span><span>금액</span><span>주문 시간</span><span></span></p><ul class="ad-rows ad-rows--done">${done.map((o) => `<li>${tbl(o)}<span>${esc(o.depositorName)}</span><span>${esc(o.items[0].name)}${o.items.length > 1 ? ` 외 ${o.items.length - 1}개` : ''}</span><span>${won(o.totalPrice)}</span><span>${hhmm(o.createdAt)}</span><button type="button" class="is-line" data-act="ostatus" data-id="${o.id}" data-to="COOKING">주문 복구</button></li>`).join('') || '<li class="ad-none">조리 완료된 주문이 없어요!</li>'}</ul></div>`;
       return tabs + `<div class="ad-cols">
         <div class="ad-col"><h4>입금 대기 <b>${wait.length}</b></h4><p class="ad-thead"><span>테이블</span><span>입금 내역</span></p><ul class="ad-rows">${wait.map((o) => `<li>${tbl(o)}<div><time>${hhmm(o.createdAt)}</time><p>${esc(o.depositorName)} <s></s> ${won(o.totalPrice)}</p></div><button type="button" data-act="ostatus" data-id="${o.id}" data-to="COOKING">입금 확인</button></li>`).join('') || '<li class="ad-none">아직 입금 대기 중인 주문이 없어요!</li>'}</ul></div>
-        <div class="ad-col"><h4>조리 중 <b>${cook.length}</b></h4><p class="ad-thead"><span>테이블</span><span>메뉴</span><span>수량</span></p><ul class="ad-rows">${cook.map((o) => `<li>${tbl(o)}<div>${o.items.map((i) => `<p class="ad-line"><span>${esc(i.name)}</span><b>${i.quantity}</b></p>`).join('')}</div><button type="button" data-act="ostatus" data-id="${o.id}" data-to="COOKED">조리 완료</button></li>`).join('') || '<li class="ad-none">조리 중인 주문이 없어요!</li>'}</ul></div></div>`;
+        <div class="ad-col"><h4>조리 중 <b>${cook.length}</b></h4><p class="ad-thead ad-thead--cook"><span>테이블</span><span>메뉴</span><span>수량</span><span></span></p><ul class="ad-rows ad-rows--cook">${cook.map((o) => `<li>${tbl(o)}<div>${o.items.map((i) => `<p class="ad-line"><span>${esc(i.name)}</span><b>${i.quantity}</b></p>`).join('')}</div><button type="button" data-act="ostatus" data-id="${o.id}" data-to="COOKED">조리 완료</button></li>`).join('') || '<li class="ad-none">조리 중인 주문이 없어요!</li>'}</ul></div></div>`;
     },
-    booth() {
-      const d = st.draft || (st.draft = { desc: B.STORE.desc, title: B.STORE.notice.title, content: B.STORE.notice.content });
-      return `<div class="ad-bar"><p class="ad-title">부스 정보</p><button type="button" class="ad-save" data-act="saveStore">저장하기</button></div>
-        <div class="ad-form"><div class="ad-banners">${B.STORE.banners.map((b) => `<img src="${b}" alt="">`).join('')}</div>
-          <label>부스 소개<textarea data-draft="desc" rows="5" maxlength="250">${esc(d.desc)}</textarea></label>
-          <label>공지사항 제목<input type="text" data-draft="title" maxlength="20" value="${esc(d.title)}"></label>
-          <label>공지사항 내용<textarea data-draft="content" rows="4" maxlength="200">${esc(d.content)}</textarea></label></div>`;
+    booth() { // NoWait_FE 의 부스 관리: 메뉴 관리 | 부스 관리 하위 탭 (입금계좌 설정은 체험에서 생략)
+      const menu = st.bt === 'menu';
+      return `<div class="ad-bar"><div>${pill('bt', 'menu', st.bt, '메뉴 관리')}${pill('bt', 'info', st.bt, '부스 관리')}</div>${menu ? '' : '<button type="button" class="ad-save" data-act="saveStore">저장하기</button>'}</div>${menu ? adminMenus() : adminInfo()}`;
     },
-    menu: () => `<div class="ad-bar"><p class="ad-title">메뉴</p></div><p class="ad-sub"><span>${B.db.menus.length}개의 메뉴</span><span>품절 표시</span></p>
-      <ul class="ad-menus">${B.db.menus.map((m) => `<li><img src="${menuImg(m)}" alt=""><span>${esc(m.name)}<small>${won(m.price)}</small></span>
-        <button type="button" class="ad-toggle" role="switch" aria-checked="${m.soldOut}" aria-label="${esc(m.name)} 품절 표시" data-act="soldout" data-id="${m.id}"></button></li>`).join('')}</ul>`,
   };
+  function adminInfo() {
+    const d = st.draft || (st.draft = { desc: B.STORE.desc, title: B.STORE.notice.title, content: B.STORE.notice.content });
+    return `<div class="ad-form"><div class="ad-banners">${B.STORE.banners.map((b) => `<img src="${b}" alt="">`).join('')}</div>
+        <label>부스 소개<textarea data-draft="desc" rows="5" maxlength="250">${esc(d.desc)}</textarea></label>
+        <label>공지사항 제목<input type="text" data-draft="title" maxlength="20" value="${esc(d.title)}"></label>
+        <label>공지사항 내용<textarea data-draft="content" rows="4" maxlength="200">${esc(d.content)}</textarea></label></div>`;
+  }
+  const adminMenus = () => `<p class="ad-sub"><span>${B.db.menus.length}개의 메뉴</span><span>품절 표시</span></p>
+      <ul class="ad-menus">${B.db.menus.map((m) => `<li><img src="${menuImg(m)}" alt=""><span>${esc(m.name)}<small>${won(m.price)}</small></span>
+        <button type="button" class="ad-toggle" role="switch" aria-checked="${m.soldOut}" aria-label="${esc(m.name)} 품절 표시" data-act="soldout" data-id="${m.id}"></button></li>`).join('')}</ul>`;
+  // 왼쪽 사이드바 (NoWait_FE AdminSidebar): 로고, 대기·주문·통계·부스 관리, 아래 로그아웃. 통계와 로그아웃은 체험에서 누르지 않음
+  const side = (key, label, icon, on) => `<button type="button" class="ad-side__item" data-act="tab" data-k="${key}" aria-pressed="${st.tab === key}"><img src="${ADM}${st.tab === key ? on : icon}.svg" alt="" width="24" height="24"><span>${label}</span></button>`;
   function drawAdmin() {
-    const y = admin.scrollTop;
-    admin.innerHTML = `<nav class="ad-nav"><img src="${A}logo.svg" alt="NoWait" width="58" height="24"><span>${B.STORE.name}</span><div>${pill('tab', 'wait', st.tab, '웨이팅')}${pill('tab', 'order', st.tab, '주문')}${pill('tab', 'menu', st.tab, '메뉴')}${pill('tab', 'booth', st.tab, '부스')}</div></nav><div class="ad-page">${adminPages[st.tab]()}</div>`;
-    admin.scrollTop = y;
+    const y = admin.querySelector('.ad-page')?.scrollTop || 0;
+    admin.innerHTML = `<aside class="ad-side"><img class="ad-side__logo" src="${ADM}nw_text_logo.svg" alt="NoWait" width="68" height="36">
+      <nav aria-label="운영자 메뉴">${side('wait', '대기', 'Waiting', 'waitIconActive')}${side('order', '주문', 'Order', 'orderIconActive')}<span class="ad-side__item is-off" aria-disabled="true"><img src="${ADM}Statistics.svg" alt="" width="24" height="24"><span>통계</span></span>${side('booth', '부스 관리', 'Tent', 'boothIconActive')}</nav>
+      <span class="ad-side__out"><img src="${ADM}log-out.svg" alt="" width="24" height="24"><span>로그아웃</span></span></aside><div class="ad-page">${adminPages[st.tab]()}</div>`;
+    admin.querySelector('.ad-page').scrollTop = y;
     tick();
   }
   // 호출 뒤 10분 카운트다운 숫자만 매초 갱신
@@ -189,12 +200,12 @@
   /* ── 서버 상태판 ── */
   const none = '<li class="is-none">(없음)</li>';
   function drawState() {
-    const cacheBlock = `<div><h4>user-api 메뉴 캐시</h4><ul><li>HIT <b>${B.stats.hit}</b> · MISS <b>${B.stats.miss}</b></li><li>메뉴 조회 쿼리 <b>${B.db.menuQueries}</b>회</li><li>Pub/Sub 구독 <b class="${B.isSubscribed() ? '' : 'is-bad'}">${B.isSubscribed() ? '연결됨' : '끊김'}</b></li></ul></div>`;
+    const cacheBlock = `<div><h4>user-api 메뉴 캐시</h4><ul><li>HIT <b>${B.stats.hit}</b> / MISS <b>${B.stats.miss}</b></li><li>메뉴 조회 쿼리 <b>${B.db.menuQueries}</b>회</li><li>Pub/Sub 구독 <b class="${B.isSubscribed() ? '' : 'is-bad'}">${B.isSubscribed() ? '연결됨' : '끊김'}</b></li></ul></div>`;
     const pubsub = `<button type="button" data-act="pubsub">${B.isSubscribed() ? 'Pub/Sub 연결 끊기' : 'Pub/Sub 재구독'}</button>`;
     if (st.flow === 'wait') {
       const keys = B.redis.keys('idempotency:');
       $('#nw-state').innerHTML = `<div><h4>Redis Sorted Set <code>${B.queueKey}</code></h4><ol>${queue().map((e) => `<li class="${e.m === String(ME) ? 'is-me' : ''}"><code>user:${e.m}</code>${e.m === String(ME) ? ' 나' : ''}</li>`).join('') || none}</ol></div>
-        <div><h4>멱등 키</h4><ul>${keys.map((k) => `<li><code>…${esc(k.k.slice(-8))}</code> ${k.v.endsWith('::IN-PROGRESS') ? '처리 중' : '완료 응답 저장'} · TTL ${Math.max(0, Math.ceil((k.exp - Date.now()) / 1000))}초</li>`).join('') || none}</ul></div>${cacheBlock}`;
+        <div><h4>멱등 키</h4><ul>${keys.map((k) => `<li><code>…${esc(k.k.slice(-8))}</code> ${k.v.endsWith('::IN-PROGRESS') ? '처리 중' : '완료 응답 저장'}, TTL ${Math.max(0, Math.ceil((k.exp - Date.now()) / 1000))}초</li>`).join('') || none}</ul></div>${cacheBlock}`;
       $('#nw-actions').innerHTML = `<button type="button" data-act="burst" ${B.myRank(ME) != null || st.busy ? 'disabled' : ''}>같은 키로 동시 요청 10건</button><button type="button" data-act="replay" ${!st.last || st.busy ? 'disabled' : ''}>같은 키로 재시도</button>${pubsub}`;
     } else {
       const pop = B.redis.zrange(B.popularKey()).reverse();
@@ -269,10 +280,12 @@
   const acts = {
     tab: (t) => { st.tab = t.dataset.k; },
     banner: (t) => { st.banner = +t.dataset.i; },
-    toggleActive: () => { const on = B.toggleActive(); log('http', `← 응답 200 · 대기 접수 ${on ? 'on' : 'off'}, 손님 화면에 바로 반영`); },
-    saveStore: () => { const d = st.draft; B.updateStore({ desc: d.desc, notice: { title: d.title.trim() || '공지', content: d.content } }); log('http', '← 응답 200 · 손님 화면의 주점 상세에 바로 반영'); },
+    toggleActive: () => { const on = B.toggleActive(); log('http', `← 응답 200, 대기 접수 ${on ? 'on' : 'off'}, 손님 화면에 바로 반영`); },
+    saveStore: () => { const d = st.draft; B.updateStore({ desc: d.desc, notice: { title: d.title.trim() || '공지', content: d.content } }); log('http', '← 응답 200, 손님 화면의 주점 상세에 바로 반영'); },
     wf: (t) => { st.wf = t.dataset.k; },
     of: (t) => { st.of = t.dataset.k; },
+    bt: (t) => { st.bt = t.dataset.k; },
+    arefresh: () => { log('http', `GET /admin/orders/${B.STORE.id}`); },
     call: (t) => { B.call(t.dataset.m); log('http', '← 응답 200'); },
     acancel: (t) => { B.adminCancel(t.dataset.m); if (t.dataset.m === String(ME)) { st.waiting = null; st.last = null; if (st.flow === 'wait') st.screen = 'home'; } },
     flow: (t) => { st.flow = t.dataset.f; st.tab = st.flow; st.screen = st.flow === 'wait' ? 'home' : 'ostore'; st.modal = null; if (st.flow === 'order') { log('http', `QR 접속 /${B.STORE.code}/${TABLE} → ${TABLE}번 테이블`); loadMenus(); } },
@@ -311,7 +324,7 @@
     },
     double: async () => {
       const items = st.cart.length ? cartItems() : [{ menuId: (B.db.menus.find((m) => !m.soldOut) || B.db.menus[0]).id, quantity: 1 }];
-      log('user-api', '같은 테이블·같은 장바구니로 주문 요청 2건 연속 도착');
+      log('user-api', '같은 테이블, 같은 장바구니로 주문 요청 2건 연속 도착');
       st.busy = true; draw();
       const first = await order(items, st.depositor.trim() || '체험손님');
       await order(items, st.depositor.trim() || '체험손님');

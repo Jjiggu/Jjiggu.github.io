@@ -10,7 +10,7 @@
   const MODES = {
     scan: { name: '인덱스 없는 OFFSET', fact: 'OFFSET 8,300 기준 SQL 실행 시간 6,271ms. 요청마다 100만 행 스캔과 727,554행 filesort, VU 20에서 모든 요청 실패' },
     index: { name: '커버링 인덱스 + OFFSET', fact: 'OFFSET 8,300에서는 147.6 TPS로 목표를 넘겼지만, OFFSET 100,000에서는 건너뛰는 행만큼 인덱스를 읽어 31 TPS' },
-    cursor: { name: 'No-Offset (lastPostId)', fact: 'OFFSET 8,300 기준 SQL 실행 시간 0.90ms · 205.8 TPS, OFFSET 100,000 기준 211.8 TPS. 이미 본 리뷰가 중복 노출되지 않음' },
+    cursor: { name: 'No-Offset', fact: 'OFFSET 8,300 기준 SQL 실행 시간 0.90ms, 205.8 TPS, OFFSET 100,000 기준 211.8 TPS. 이미 본 리뷰가 중복 노출되지 않음' },
   };
   const REPLIES = ['저도 같은 생각이에요.', '이번 학기에 듣는데 도움이 됐어요.', '과제 제출 기한은 넉넉한가요?', '시험 범위 정보 감사합니다!', '다음 학기에 수강하려고요.'];
 
@@ -23,7 +23,7 @@
         <h4 class="ev__title">직접 눌러 보는 Gasip</h4>
         <p class="ev__desc">왼쪽 휴대폰에서 리뷰 목록을 내려 보고 리뷰를 눌러 상세로 들어가거나 새 리뷰를 써 보세요. 목록 10건을 조회할 때마다 DB 가 스캔한 행 수가 오른쪽에 표시됩니다. 조회 방식 세 개는 위 사례의 해결 과정 세 단계와 같습니다.</p>
       </header>
-      <figure class="nw__mock gs__video"><video src="assets/gasip/demo.mp4#t=1" aria-label="Gasip 실제 앱 화면 영상" controls muted playsinline preload="none"></video><figcaption>실제 앱 화면 영상. 출처: Gasip 백엔드 README</figcaption></figure>
+      <figure class="nw__mock gs__video"><video src="assets/gasip/demo.mp4#t=1" aria-label="Gasip 앱 데모 영상" controls muted playsinline preload="none"></video><figcaption>Gasip 앱 데모 영상</figcaption></figure>
     </div>
     <div class="gs__grid">
       <div class="nw__col"><p class="nw__label">학생 화면</p><div class="phone">
@@ -53,7 +53,7 @@
         <ol class="bk__log gs-log" id="gs-log" data-lenis-prevent aria-live="polite"></ol>
       </div>
     </div>
-    <details class="nw__credit"><summary>화면 출처와 안내</summary><p>화면 디자인과 앱은 Gasip 팀의 디자이너와 프론트엔드 개발자들이 만들었습니다(<a href="https://github.com/GASIP-PROJECT/gasip-frontend" target="_blank" rel="noopener">GASIP-PROJECT/gasip-frontend</a>). 여기서는 그 화면을 본떠 다시 그렸고 실제 서버에는 연결되지 않습니다. 리뷰·댓글 내용과 강의·교수·닉네임은 예시 데이터입니다. 스캔한 행 수는 브라우저에서 시뮬레이션으로 계산한 값입니다. 조회 방식을 화면에서 고르는 기능은 이 체험에만 있고 글쓰기의 교수 검색과 답글·신고는 생략했습니다.</p></details>`;
+    <details class="nw__credit"><summary>화면 출처와 안내</summary><p>화면 디자인과 앱은 Gasip 팀의 디자이너와 프론트엔드 개발자들이 만들었습니다(<a href="https://github.com/GASIP-PROJECT/gasip-frontend" target="_blank" rel="noopener">GASIP-PROJECT/gasip-frontend</a>). 여기서는 그 화면을 본떠 다시 그렸고 실제 서버에는 연결되지 않습니다. 리뷰와 댓글 내용, 강의, 교수, 닉네임은 예시 데이터입니다. 스캔한 행 수는 브라우저에서 시뮬레이션으로 계산한 값입니다. 조회 방식을 화면에서 고르는 기능은 이 체험에만 있고 글쓰기의 교수 검색과 답글과 신고는 생략했습니다.</p></details>`;
   host.append(root);
 
   const $ = (s) => root.querySelector(s);
@@ -171,7 +171,7 @@
     s.comments.push({ nick: '나', text, ago: '방금' });
     s.added = (s.added || 0) + 1;
     log(`POST 댓글 (글 #${fmt(ui.post.id)})`, 'http');
-    log('INSERT INTO comment … · 1행');
+    log('INSERT INTO comment … → 1행');
     syncCard(ui.post); drawOver();
     over.scrollTop = over.scrollHeight;
     over.querySelector('.gd-input input').focus();
@@ -183,17 +183,17 @@
     if (act === 'mode') { mode = t.dataset.k; logEl.replaceChildren(); log(`목록 조회 방식: ${MODES[mode].name}`); start(); }
     else if (act === 'reset') { logEl.replaceChildren(); start(); }
     else if (act === 'deep') { log('100,000번째 글 위치로 이동'); start({ keepBoard: true, deep: true }); }
-    else if (act === 'other') { const p = board.addPost(); log(`INSERT INTO board … (새 리뷰 #${fmt(p.id)}) · 학생 화면에는 아직 미반영`); }
+    else if (act === 'other') { const p = board.addPost(); log(`INSERT INTO board … (새 리뷰 #${fmt(p.id)}), 학생 화면에는 아직 미반영`); }
     else if (act === 'home') { ui.view = 'home'; drawOver(true); }
     else if (act === 'list') { ui.view = null; drawOver(true); }
     else if (act === 'open') {
       ui.from = ui.view; ui.post = board.post(+t.dataset.id); ui.view = 'detail';
       stateOf(ui.post).views++;
       log(`GET /boards/details/${ui.post.id}`, 'http');
-      log('SELECT … FROM board WHERE post_id = ? → PK 로 1행 · 조회수 +1');
+      log('SELECT … FROM board WHERE post_id = ? → PK 로 1행, 조회수 +1');
       opener = t; syncCard(ui.post); drawOver(true);
     }
-    else if (act === 'like') { const s = stateOf(ui.post); s.liked = !s.liked; const keep = over.querySelector('.gd-input input')?.value; log(`${s.liked ? '좋아요' : '좋아요 취소'} (글 #${fmt(ui.post.id)})`, 'http'); log(`${s.liked ? 'INSERT INTO' : 'DELETE FROM'} likes … · 1행`); syncCard(ui.post); drawOver(); if (keep) over.querySelector('.gd-input input').value = keep; over.querySelector('[data-act="like"]').focus(); }
+    else if (act === 'like') { const s = stateOf(ui.post); s.liked = !s.liked; const keep = over.querySelector('.gd-input input')?.value; log(`${s.liked ? '좋아요' : '좋아요 취소'} (글 #${fmt(ui.post.id)})`, 'http'); log(`${s.liked ? 'INSERT INTO' : 'DELETE FROM'} likes … → 1행`); syncCard(ui.post); drawOver(); if (keep) over.querySelector('.gd-input input').value = keep; over.querySelector('[data-act="like"]').focus(); }
     else if (act === 'write') { opener = t; ui.from = ui.view; ui.view = 'write'; ui.draft = ''; ui.toast = ''; drawOver(); $('#gw-text').focus(); }
     else if (act === 'close') { ui.view = ui.from; ui.from = null; drawOver(true); }
     else if (act === 'submit') {

@@ -77,7 +77,7 @@
       emit('http', `POST /v2/waiting/${STORE.code}  Idempotency-Key: ${idemKey.slice(0, 8)}`);
       return idempotent(`waiting:register:${userId}:${STORE.code}`, idemKey, { partySize }, async () => {
         if (active(userId)) throw new HttpError(409, '이미 대기 중'); // 멱등 키가 만료된 뒤의 재시도가 두 번째 예약을 만들지 않게
-        emit('mysql', 'BEGIN · INSERT INTO reservation (status=WAITING)');
+        emit('mysql', 'BEGIN, INSERT INTO reservation (status=WAITING)');
         await wait(txMs);
         if (failCommit) { emit('mysql', 'ROLLBACK (커밋 실패)'); throw new HttpError(500, '커밋 실패'); }
         const waitingNumber = `${STORE.id}-${String(++db.seq).padStart(4, '0')}`;
@@ -100,7 +100,7 @@
     function updateStore(patch) {
       emit('http', 'PATCH (admin) 주점 정보 수정');
       Object.assign(STORE, patch);
-      emit('mysql', 'UPDATE stores SET description = ?, notice_title = ?, notice_content = ? · COMMIT');
+      emit('mysql', 'UPDATE stores SET description = ?, notice_title = ?, notice_content = ?, COMMIT');
     }
     /* ── admin-api: 호출 · 입장 · 취소 ── */
     const active = (m) => db.reservations.find((x) => String(x.userId) === String(m) && (x.status === 'WAITING' || x.status === 'CALLING'));
@@ -147,7 +147,7 @@
       const m = db.menus.find((x) => x.id === menuId);
       m.soldOut = !m.soldOut;
       emit('http', `PATCH (admin) 메뉴 ${m.name} 품절=${m.soldOut}`);
-      emit('mysql', 'UPDATE menus SET is_sold_out = ? · COMMIT');
+      emit('mysql', 'UPDATE menus SET is_sold_out = ?, COMMIT');
       emit('redis', `PUBLISH cache:menus invalidate:${STORE.id} → 구독자 ${subscribed ? 1 : 0}`);
       if (subscribed) { cache.delete(String(STORE.id)); emit('user-api', '무효화 메시지 수신 → 로컬 캐시에서 해당 주점 키 삭제'); }
       else emit('user-api', '구독 연결이 끊겨 무효화 메시지 유실 (Pub/Sub 은 Fire-and-Forget, 재전송 없음)');
@@ -174,7 +174,7 @@
       emit('user-api', `장바구니 signature ${signature} = 해시(주점-테이블-메뉴:수량)`);
       emit('mysql', 'SELECT EXISTS(… WHERE signature = ? AND created_at > 2초 전)');
       if (db.orders.some((o) => o.signature === signature && now() - o.createdAt < 2000)) throw new HttpError(400, 'order003 2초 내 같은 장바구니 중복 주문');
-      emit('mysql', 'BEGIN · INSERT INTO user_order (status=WAITING_FOR_PAYMENT)');
+      emit('mysql', 'BEGIN, INSERT INTO user_order (status=WAITING_FOR_PAYMENT)');
       await wait(txMs);
       emit('mysql', 'SELECT … FROM menus WHERE id IN (…)  ← 캐시를 거치지 않고 DB 에서 품절 재확인');
       const lines = items.map((i) => ({ ...i, ...db.menus.find((m) => m.id === i.menuId) }));
@@ -182,7 +182,7 @@
       if (sold) { emit('mysql', 'ROLLBACK (앞서 INSERT 한 주문 포함)'); throw new HttpError(409, `menu012 ${sold.name} 품절`); }
       const order = { id: ++db.orderSeq, tableId, depositorName, totalPrice, signature, status: 'WAITING_FOR_PAYMENT', createdAt: now(), items: lines.map((l) => ({ menuId: l.menuId, name: l.name, quantity: l.quantity, price: l.price })) };
       db.orders.push(order);
-      emit('mysql', 'INSERT INTO order_item … · COMMIT');
+      emit('mysql', 'INSERT INTO order_item …, COMMIT');
       return order;
     }
     /* ── admin-api: 주문 상태 (UserOrder.isValidTransition) ── */
@@ -193,7 +193,7 @@
       const o = db.orders.find((x) => x.id === orderId);
       if (!NEXT[o.status].includes(status)) throw new HttpError(0, `order009 ${o.status} → ${status} 는 허용되지 않는 상태 전이`);
       o.status = status;
-      emit('mysql', `UPDATE user_order SET status = ${status} · COMMIT`);
+      emit('mysql', `UPDATE user_order SET status = ${status}, COMMIT`);
       if (status === 'COOKED') { // 커밋 뒤 CookingCompleteEvent → 인기 메뉴 집계
         emit('admin-api', '커밋 후 조리 완료 이벤트 → 인기 메뉴 집계');
         o.items.forEach((i) => redis.zincrby(popularKey(), i.quantity, i.name));

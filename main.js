@@ -69,7 +69,7 @@
   const heads = D.projects.flatMap((p) => [].concat(p.headline || []).map((h) => ({ p, h })));
   $('#overview-track').innerHTML = heads
     .map(({ p, h }, i) => `<a class="panel${p.accent ? ' has-accent' : ''}" href="#${p.id}"${p.accent ? ` style="--acc-d:${p.accent[0]};--acc-l:${p.accent[1]}"` : ''}>
-        <p class="panel__top"><span>${esc(p.kind)} · <span class="num">${p.period}</span></span><span class="num">${i + 1} / ${heads.length}</span></p>
+        <p class="panel__top"><span>${esc(p.kind)}<span class="num">${p.period}</span></span><span class="num">${i + 1} / ${heads.length}</span></p>
         <h3 class="panel__name">${esc(p.name)}</h3>
         <div class="panel__fig num">${h.a ? was(h) : '<s style="visibility:hidden" aria-hidden="true">0</s>' /* 이전 값이 없어도 큰 숫자 높이를 옆 카드와 맞춤 */}<div><b data-count data-from="${h.a || ''}">${h.b}</b><span>${h.unit}</span></div></div>
         <p class="panel__label">${esc(h.label)}</p>
@@ -91,32 +91,11 @@
       </div>
     </article></div>`;
 
-  // 송금 화면 전후 비교: nowait-ui.js 의 주문하기 화면과 같은 마크업(보기 전용)
-  const NW = 'assets/nowait/fe/';
-  const remitPhone = (c) => {
-    const direct = c.pay === 'direct';
-    const radio = (label, on, img = '') => `<button type="button" role="radio" aria-checked="${on}"><i></i>${img}${label}</button>`;
-    // AS-IS: 2025-06 의 RemittanceRequestPage (계좌 안내 한 장, 송금 수단 선택 없음) / TO-BE: 현재 RemittancePage
-    return `<figure><header><em>${c.tag}</em><strong>${c.steps}</strong><span>송금 화면 진입</span></header><div class="phone" inert aria-hidden="true"><div class="phone__screen">${direct ? `
-        <div class="p-old"><h2>주문을 위해 이체해 주세요</h2><p>아래 계좌로 결제를 완료해주세요.<br>입금 확인 후 주문이 확정됩니다.</p>
-          <div class="p-old__box"><span>노웨잇대디자인과학생회</span><u class="is-hot">기업은행 000-000000-00-000 <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V6a2 2 0 0 1 2-2h9"/></svg></u><b>24,000원</b></div></div>
-        <div class="p-foot"><button type="button" class="p-big">다음</button></div>` : `
-        <p class="p-navtitle">주문하기</p>
-        <section class="p-pad p-remit"><h2 class="p-t18" role="presentation">송금 수단</h2>
-          <div class="p-paybox"><p>간편 송금</p>${[['카카오페이', 'kakaoPay.png', 42, 18], ['토스', 'tossPay.png', 46, 16], ['네이버페이', 'naverPay.png', 43, 15]].map(([p, f, w, h]) => radio(p, c.pay === p, `<img src="${NW}${f}" width="${w}" height="${h}" alt="">`)).join('')}</div>
-          <div class="p-paybox">${radio('계좌로 직접 이체하기', false)}</div>
-          <div class="p-total"><span>결제 금액</span><b>24,000원</b></div></section>
-        <div class="p-foot"><button type="button" class="p-big is-hot">24,000원 이체하기</button></div>`}
-      </div></div><figcaption><b>${esc(c.title)}</b>${esc(c.text)}</figcaption></figure>`;
-  };
-  const compareHtml = (cs) => `<div class="ab">${cs.map(remitPhone).join('<span class="ab__arrow" aria-hidden="true">→</span>')}</div>
-      <p class="ab__src">화면은 NoWait 프론트엔드 레포(<a href="https://github.com/GTable/NoWait_FE" target="_blank" rel="noopener">GTable/NoWait_FE</a>)의 2025년 6월과 현재 송금 화면 코드를 본떠 다시 그렸습니다. 계좌번호와 금액은 예시입니다.</p>`;
-
   const moreHtml = (items) => `<section class="more">
       <h4 class="more__head">그 밖의 작업</h4>
       <ul>${items.map((m) => `<li class="more__item split">
         <div><p class="more__title">${esc(m.title)}</p>${m.metric ? `<p class="more__metric">${esc(m.metric)}</p>` : ''}</div>
-        <div class="more__body">${m.text ? `<p>${esc(m.text)}</p>${m.compare ? compareHtml(m.compare) : ''}`
+        <div class="more__body">${m.text ? `<p>${esc(m.text)}</p>`
           : `${list(m.result)}<details class="more__detail"><summary>문제와 해결 과정 보기</summary>${phase('문제', m.problem)}${phase('해결 과정', m.solution)}</details>`}</div>
       </li>`).join('')}</ul>
     </section>`;

@@ -14,7 +14,7 @@
   /* ───────── 1. 길잡이: 메뉴의 현재 위치 표시 + 오른쪽 프로젝트 목차 ───────── */
   const rail = document.createElement('nav');
   rail.className = 'rail';
-  rail.setAttribute('aria-label', '경력·프로젝트 바로가기');
+  rail.setAttribute('aria-label', '경력과 프로젝트 바로가기');
   rail.innerHTML = D.projects.map((p) => `<a href="#${p.id}"><span>${esc(p.name)}</span><i></i></a>`).join('');
   document.body.append(rail);
 
