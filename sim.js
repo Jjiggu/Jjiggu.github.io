@@ -14,7 +14,7 @@
     serializable: { group: 0, set: 'DB 격리 수준 조정', name: 'SERIALIZABLE', store: 'MySQL', gate: 'S 락으로 읽고 X 락으로 갱신', rec: 'issued_count', stock: 50, n: 50, spread: 8, slow: 300,
       fact: 'S 락을 쥔 채 X 락으로 issued_count를 갱신하는 구조라 데드락 발생' },
     optimistic: { group: 0, set: 'DB 수준 락', name: '낙관적 락', store: 'MySQL', gate: 'version 이 같을 때만 갱신', rec: 'issued_count', stock: 50, n: 50, spread: 8, slow: 300,
-      fact: 'Retry가 없으면 50건 중 6건만 지급, Retry하면 선착순이 보장되지 않아 제외' },
+      fact: '재시도가 없으면 50건 중 6건만 지급, 재시도하면 선착순이 보장되지 않아 제외' },
     pessimistic: { group: 0, set: 'DB 수준 락', name: '비관적 락', store: 'MySQL', gate: '쿠폰 행 락', rec: 'issued_count', stock: 100, n: 1000, spread: 150, slow: 3,
       fact: '락 대기로 단순 조회 p95가 10ms → 444ms, 응답 처리량 431~704 rps' },
     scard: { group: 0, set: 'Redis Set', name: 'SCARD + SADD', store: 'Redis', gate: '커맨드 3번 개별 실행', rec: 'Redis Set 크기', stock: 100, n: 1000, spread: 150, slow: 16,
