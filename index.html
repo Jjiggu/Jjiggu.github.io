@@ -3,10 +3,10 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>김지훈 · 포트폴리오</title>
+  <title>김지훈 포트폴리오</title>
   <meta name="description" content="백엔드 개발자 김지훈의 경력, 프로젝트, 측정 결과">
   <meta property="og:type" content="website">
-  <meta property="og:title" content="김지훈 · 포트폴리오">
+  <meta property="og:title" content="김지훈 포트폴리오">
   <meta property="og:description" content="백엔드 개발자 김지훈의 경력, 프로젝트, 측정 결과">
   <meta property="og:url" content="https://jjiggu.github.io/">
   <meta name="twitter:card" content="summary">
@@ -90,19 +90,20 @@
   <!-- 쿠폰 프로젝트의 '직접 해 보기'. main.js 가 #coupon 의 사례 뒤에 붙인 뒤 sim.js 가 그립니다. -->
   <template id="tpl-coupon-demo">
     <section class="demo cp" aria-label="선착순 쿠폰 동시성 시뮬레이션">
-      <div class="split demo__intro">
+      <div class="demo__intro">
         <header class="ev__head">
-          <p class="eyebrow">전체 그림 · 직접 해 보기</p>
+          <p class="eyebrow">선착순 쿠폰 발급 시뮬레이션</p>
           <h4 class="ev__title">선착순 쿠폰 발급을 직접 돌려 보세요</h4>
-          <p class="ev__desc">방식을 고르면 요청 수백~천 건이 가상 시간 위에서 동시에 실행되며 실제로 경합합니다. 방식을 직접 누르면 요청 하나가 노란 고리로 표시됩니다. 그것이 <b>내 요청</b>이고, 끝나면 내 요청이 어떻게 됐는지 아래 판정에 나옵니다. ‘DB 격리 수준 조정’부터 ‘Lua Script’까지는 아래 세 번째 사례에서 비교한 방법이고, ‘write-behind’는 첫 번째 사례의 방식입니다.</p>
         </header>
-        <div class="dock">
+      </div>
+      <div class="split dock">
+        <div class="dock__tabs" id="sim-tabs"></div>
+        <div>
           <p class="dock__title">시나리오 <span id="sim-scen"></span></p>
-          <div class="dock__tabs" id="sim-tabs"></div>
           <dl class="dock__stats" id="sim-stats"></dl>
           <p class="dock__verdict" id="sim-verdict" aria-live="polite"></p>
           <p class="dock__fact"><b>실측</b> <span id="sim-fact"></span></p>
-          <p class="dock__note">위 숫자는 브라우저에서 실시간으로 계산한 시뮬레이션 값이고 느리게 재생합니다. 시뮬레이션 계산에 쓴 실측값은 락 점유 시간 6.5ms 하나입니다. 강제 종료 시점은 실측 유실 범위에 맞췄습니다. <button type="button" id="sim-again">다시 실행</button></p>
+          <p class="dock__note">위 수치는 브라우저에서 돌린 시뮬레이션 결과이고, 실제보다 느리게 재생됩니다. <button type="button" id="sim-again">다시 실행</button></p>
         </div>
       </div>
       <div class="sim"><canvas id="sim" aria-hidden="true"></canvas><div class="sim__trace" id="sim-trace" aria-live="polite" hidden></div></div>

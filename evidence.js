@@ -113,7 +113,7 @@
           if (v === max) s('text', { x: x + bw / 2 - 1, y: y - 8, 'text-anchor': 'middle', class: 'chart__label' }, svg).textContent = fmt(v) + me.unit;
           if (i % 2 === 0 || bw > 34) s('text', { x: x + bw / 2 - 1, y: H - 8, 'text-anchor': 'middle', class: 'chart__tick' }, svg).textContent = c.labels[i];
           const hit = s('rect', { x: m.l + i * bw, y: m.t, width: bw, height: H - m.t - m.b, fill: 'transparent' }, svg);
-          hit.addEventListener('pointermove', (e) => { bar.setAttribute('fill', C.ink); showTip(e, `${c.labels[i]}${c.xUnit} · ${c.context[i]}`, [[null, me.name, fmt(v) + me.unit]]); });
+          hit.addEventListener('pointermove', (e) => { bar.setAttribute('fill', C.ink); showTip(e, `${c.labels[i]}${c.xUnit}, ${c.contextLabel} ${c.context[i]}`, [[null, me.name, fmt(v) + me.unit]]); });
           hit.addEventListener('pointerleave', () => { bar.setAttribute('fill', accent(host)); hideTip(); });
         });
       });
@@ -193,18 +193,35 @@
     return [wrap, steps];
   }
 
-  // 전체 그림(구성도)은 프로젝트 첫머리에, 나머지는 해당 사례 바로 밑에 붙임. 모두 왼쪽 설명 | 오른쪽 자료
-  const kinds = { line: lineChart, bars: barCharts, image, flow };
+  /* ── 실제 화면 흐름: 흐름 하나가 한 줄(같은 칸 폭). 이미지가 없는 칸은 NoWait 밖 단계, focus 단계는 대표색으로 표시 ── */
+  function flows(c) {
+    const wrap = h('div', { className: 'flows' }, c.rows.map((r, i) => h('section', { className: 'flows__row' + (i ? ' is-after' : '') },
+      h('p', { className: 'flows__head' }, h('em', { textContent: r.tag }), r.name),
+      h('ol', {}, r.shots.map(([img, cap, alt], j) => h('li', { className: j === r.focus ? 'is-focus' : '' },
+        img ? h('a', { className: 'ev__zoom', href: c.dir + img + '.webp', target: '_blank', rel: 'noopener' },
+          h('img', { src: c.dir + img + '.webp', alt, width: c.size[0], height: c.size[1], loading: 'lazy', decoding: 'async' }))
+          : h('div', { className: 'flows__out', textContent: 'NoWait 밖' }),
+        h('p', { textContent: cap })))))));
+    if (window.gsap && window.ScrollTrigger && !matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      wrap.querySelectorAll('ol').forEach((ol) => {
+        gsap.from(ol.children, { y: 70, opacity: 0, duration: 0.8, stagger: 0.08, ease: 'power3.out', scrollTrigger: { trigger: ol, start: 'top 80%', once: true } });
+      });
+    }
+    return [wrap];
+  }
+
+  // 구성도는 프로젝트 첫머리에(머리말 없이), 나머지는 해당 사례 바로 밑에 붙임. 왼쪽 설명 | 오른쪽 자료, wide 는 설명 아래 전체 폭
+  const kinds = { line: lineChart, bars: barCharts, image, flow, flows };
   D.projects.forEach((p) => {
     const sec = document.getElementById(p.id);
     (p.evidence || []).forEach((ev) => {
       const lead = ev.at === 'head';
       const host = lead ? sec.querySelector('.project__lead') : sec.querySelector(`.case-wrap[data-case="${ev.case}"]`);
-      host.append(h('section', { className: `ev ev--${ev.type} split${lead ? ' ev--lead' : ''}` },
+      host.append(h('section', { className: `ev ev--${ev.type}${ev.wide ? ' ev--wide' : ' split'}${lead ? ' ev--lead' : ''}` },
         h('header', { className: 'ev__head' },
-          h('p', { className: 'eyebrow', textContent: ev.label || (lead ? '전체 그림' : '근거') }),
+          lead ? null : h('p', { className: 'eyebrow', textContent: ev.label || '근거' }),
           h('h4', { className: 'ev__title', textContent: ev.title }),
-          h('p', { className: 'ev__desc', textContent: ev.desc || '' }),
+          ev.desc ? h('p', { className: 'ev__desc', textContent: ev.desc }) : null,
           ev.src ? h('a', { className: 'ev__src', href: ev.src.url, target: '_blank', rel: 'noopener', textContent: '출처: ' + ev.src.label }) : null),
         h('div', { className: 'ev__body' }, kinds[ev.type](ev))));
     });

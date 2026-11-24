@@ -9,9 +9,9 @@
    자체 점검: `node sim.js` */
 (() => {
   const STRATS = {
-    rc: { group: 0, set: 'DB 격리 수준 조정', name: 'READ COMMITTED · REPEATABLE READ', store: 'MySQL', gate: '쿠폰 행을 읽고 +1', rec: 'issued_count', stock: 50, n: 50, spread: 8, slow: 300,
+    rc: { group: 0, set: '트랜잭션 격리 수준', name: 'READ COMMITTED, REPEATABLE READ', store: 'MySQL', gate: '쿠폰 행을 읽고 +1', rec: 'issued_count', stock: 50, n: 50, spread: 8, slow: 300,
       fact: '재고 50장, 동시 요청 50건 테스트에서 성공 응답은 50건이었지만 실제 issued_count는 5~6' },
-    serializable: { group: 0, set: 'DB 격리 수준 조정', name: 'SERIALIZABLE', store: 'MySQL', gate: 'S 락으로 읽고 X 락으로 갱신', rec: 'issued_count', stock: 50, n: 50, spread: 8, slow: 300,
+    serializable: { group: 0, set: '트랜잭션 격리 수준', name: 'SERIALIZABLE', store: 'MySQL', gate: 'S 락으로 읽고 X 락으로 갱신', rec: 'issued_count', stock: 50, n: 50, spread: 8, slow: 300,
       fact: 'S 락을 쥔 채 X 락으로 issued_count를 갱신하는 구조라 데드락 발생' },
     optimistic: { group: 0, set: 'DB 수준 락', name: '낙관적 락', store: 'MySQL', gate: 'version 이 같을 때만 갱신', rec: 'issued_count', stock: 50, n: 50, spread: 8, slow: 300,
       fact: '재시도가 없으면 50건 중 6건만 지급, 재시도하면 선착순이 보장되지 않아 제외' },
@@ -72,7 +72,7 @@
       tr(r, 'lock', '쿠폰 행 락 획득');
       at(st.now + (ok ? 6.5 : 2), () => { // 락을 쥐는 시간: 지급 한 건 약 6.5ms 는 레포 EC2 실측
         if (ok) st.recorded++;
-        tr(r, 'write', ok ? `UPDATE issued_count = ${st.recorded} · COMMIT → 락 해제` : '재고 없음 · COMMIT → 락 해제');
+        tr(r, 'write', ok ? `UPDATE issued_count = ${st.recorded}, COMMIT → 락 해제` : '재고 없음, COMMIT → 락 해제');
         finish(r, ok ? 'ok' : 'soldout');
         locked = false; pump();
       });
@@ -101,7 +101,7 @@
           let fresh = 0;
           batch.forEach((r) => { if (!r.stored) { r.stored = true; st.stored++; fresh++; } }); // 이미 들어간 건 UNIQUE 로 걸러짐
           if (fromPel) st.redelivered += batch.length;
-          tr(null, 'write', `INSERT ${fresh}행${batch.length - fresh ? ` (중복 ${batch.length - fresh}행은 UNIQUE 로 무시)` : ''} · COMMIT`);
+          tr(null, 'write', `INSERT ${fresh}행${batch.length - fresh ? ` (중복 ${batch.length - fresh}행은 UNIQUE 로 무시)` : ''}, COMMIT`);
           at(st.now + 2, () => { if (!st.alive) return; pel.splice(0, pel.length); batch.forEach((r) => (r.acked = true)); if (fromPel) st.reacked = true; tr(null, 'eval', `XACK ${batch.length}건`); busy = false; work(); });
         });
       }
@@ -111,19 +111,19 @@
       const killAt = key === 'pubsub' ? 216 + rand() * 94 : S.killAt;
       at(killAt, () => {
         st.alive = false; busy = false;
-        if (key === 'pubsub') { [...(cur ? [cur] : []), ...memQ.splice(0)].forEach((r) => { r.lost = true; st.lost++; }); cur = null; tr(null, 'sys', `SIGKILL · 구독자 메모리 큐의 ${st.lost}건이 프로세스와 함께 유실됨`, true); }
-        else { st.meInPel = pel.some((r) => r.me); tr(null, 'sys', pel[0]?.stored ? `SIGKILL · ${pel.length}건은 DB 커밋까지 끝났지만 ACK 전이라 PEL 에 남음` : `SIGKILL · 처리 중이던 ${pel.length}건은 ACK 전이라 PEL 에 남음`, true); }
+        if (key === 'pubsub') { [...(cur ? [cur] : []), ...memQ.splice(0)].forEach((r) => { r.lost = true; st.lost++; }); cur = null; tr(null, 'sys', `SIGKILL: 구독자 메모리 큐의 ${st.lost}건이 프로세스와 함께 유실됨`, true); }
+        else { st.meInPel = pel.some((r) => r.me); tr(null, 'sys', pel[0]?.stored ? `SIGKILL: ${pel.length}건은 DB 커밋까지 끝났지만 ACK 전이라 PEL 에 남음` : `SIGKILL: 처리 중이던 ${pel.length}건은 ACK 전이라 PEL 에 남음`, true); }
       });
       at(killAt + S.restartAfter, () => {
         st.alive = true; st.restarted = true;
-        tr(null, 'sys', key === 'pubsub' ? '재시작 · Pub/Sub 은 놓친 메시지를 재전달하지 않음' : `재시작 · 같은 Consumer 이름으로 PEL ${pel.length}건부터 재처리`);
+        tr(null, 'sys', key === 'pubsub' ? '재시작: Pub/Sub 은 놓친 메시지를 재전달하지 않음' : `재시작: 같은 Consumer 이름으로 PEL ${pel.length}건부터 재처리`);
         work();
       });
     }
 
     const reserve = (r) => { // Lua: 중복 → 재고 → (XADD) → SADD 가 한 번에
-      if (st.recorded < S.stock) { st.recorded++; tr(r, 'eval', `EVAL [SISMEMBER · SCARD · ${key === 'stream' ? 'XADD · ' : ''}SADD] → ${st.recorded}번째`); finish(r, 'ok'); return true; }
-      tr(r, 'eval', 'EVAL [SISMEMBER · SCARD] → 매진');
+      if (st.recorded < S.stock) { st.recorded++; tr(r, 'eval', `EVAL [SISMEMBER, SCARD, ${key === 'stream' ? 'XADD, ' : ''}SADD] → ${st.recorded}번째`); finish(r, 'ok'); return true; }
+      tr(r, 'eval', 'EVAL [SISMEMBER, SCARD] → 매진');
       finish(r, 'soldout'); return false;
     };
     // SERIALIZABLE: 읽을 때 S 락, 갱신할 때 X 락. 둘 이상이 S 락을 쥔 채 X 락을 요청하면 데드락 → 나중에 요청한 쪽을 롤백
@@ -133,17 +133,17 @@
       const w = xWait[0];
       if (!w || sHold.size !== 1) return;
       xWait.shift(); sHold.delete(w); st.recorded++;
-      tr(w, 'write', `X 락 획득 · UPDATE issued_count = ${st.recorded} · COMMIT`);
+      tr(w, 'write', `X 락 획득, UPDATE issued_count = ${st.recorded}, COMMIT`);
       finish(w, 'ok');
       sWait.splice(0).forEach(sRead);
     };
     const sRead = (r) => {
       sHold.add(r);
       const c = st.recorded;
-      tr(r, 'read', `SELECT issued_count → ${c} · S 락 획득`);
+      tr(r, 'read', `SELECT issued_count → ${c}, S 락 획득`);
       at(st.now + gap(), () => {
         if (c >= S.stock) { sHold.delete(r); finish(r, 'soldout'); return grantX(); }
-        if (xWait.length) { st.dl ||= [xWait[0].id, r.id]; sHold.delete(r); tr(r, 'lock', 'X 락 요청 → Deadlock found · ROLLBACK', true); finish(r, 'fail'); }
+        if (xWait.length) { st.dl ||= [xWait[0].id, r.id]; sHold.delete(r); tr(r, 'lock', 'X 락 요청 → Deadlock found, ROLLBACK', true); finish(r, 'fail'); }
         else { xWait.push(r); if (sHold.size > 1) tr(r, 'lock', 'X 락 대기 (다른 트랜잭션이 S 락 점유)'); }
         grantX();
       });
@@ -153,17 +153,17 @@
       // MULTI/EXEC: 묶어서 실행은 되지만 SCARD 결과로 분기하지 못함 → 넣고 나서 넘쳤으면 SREM 으로 되돌림
       multi: (r) => redis(0.05, () => {
         const n = ++st.recorded;
-        if (n <= S.stock) { tr(r, 'eval', `MULTI · SADD · SCARD · EXEC → Set 크기 ${n}`); return finish(r, 'ok'); }
-        tr(r, 'eval', `MULTI · SADD · SCARD · EXEC → Set 크기 ${n} (재고 초과)`, true);
+        if (n <= S.stock) { tr(r, 'eval', `MULTI, SADD, SCARD, EXEC → Set 크기 ${n}`); return finish(r, 'ok'); }
+        tr(r, 'eval', `MULTI, SADD, SCARD, EXEC → Set 크기 ${n} (재고 초과)`, true);
         at(st.now + gap(), () => redis(0.02, () => { st.recorded--; st.rollbacks++; tr(r, 'write', `SREM 으로 Rollback → Set 크기 ${st.recorded}`); finish(r, 'soldout'); }));
       }),
       // WATCH: 읽은 뒤 Set 이 바뀌었으면 EXEC 가 nil → 처음부터 재시도. 재시도하는 동안 뒤에 온 요청이 먼저 받음
       watch: (r) => redis(0.004, () => {
         const n = st.recorded, v = st.version;
-        if (!r.retry) tr(r, 'read', `WATCH · SCARD → ${n}`);
+        if (!r.retry) tr(r, 'read', `WATCH, SCARD → ${n}`);
         at(st.now + gap(), () => redis(0.008, () => {
           if (n >= S.stock) return finish(r, 'soldout');
-          if (st.version === v) { st.recorded++; st.version++; tr(r, 'write', `MULTI · SADD · EXEC → Set 크기 ${st.recorded}${r.retry ? ` (재시도 ${r.retry}회 후)` : ''}`); return finish(r, 'ok'); }
+          if (st.version === v) { st.recorded++; st.version++; tr(r, 'write', `MULTI, SADD, EXEC → Set 크기 ${st.recorded}${r.retry ? ` (재시도 ${r.retry}회 후)` : ''}`); return finish(r, 'ok'); }
           r.retry = (r.retry || 0) + 1; st.retries++;
           if (r.retry === 1) tr(r, 'write', 'EXEC → nil (WATCH 한 키가 변경됨) → 재시도', true); // 기록은 첫 재시도만
           flows.watch(r);
@@ -195,7 +195,7 @@
       // 수량 확인과 추가가 별도 명령 → 그 사이에 다른 요청이 끼어듦
       scard: (r) => redis(0.02, () => {
         const n = st.recorded;
-        tr(r, 'read', `SISMEMBER → 0 · SCARD → ${n}`);
+        tr(r, 'read', `SISMEMBER → 0, SCARD → ${n}`);
         at(st.now + gap(), () => redis(0.02, () => {
           if (n >= S.stock) return finish(r, 'soldout');
           st.recorded++;
@@ -287,11 +287,11 @@
 
   const statDefs = () => (sim.isAsync
     ? [['접수 응답 (202)', () => fmt(sim.st.success)], ['매진 응답', () => fmt(sim.st.sold)], ['DB 에 적재', () => fmt(sim.st.stored)], ['유실', () => fmt(sim.st.lost)], [sim.S.queue === 'Stream' ? 'Stream 미처리' : `${sim.S.queue}`, () => fmt(sim.queued())]]
-    : [['도착한 요청', () => fmt(dots.reduce((n, d) => n + (d.r.start != null), 0))], ['성공 응답', () => fmt(sim.st.success)], [sim.S.rec, () => `${sim.st.recorded} / ${sim.S.stock}`], ['매진·실패 응답', () => fmt(sim.st.sold + sim.st.fail)]]);
+    : [['도착한 요청', () => fmt(dots.reduce((n, d) => n + (d.r.start != null), 0))], ['성공 응답', () => fmt(sim.st.success)], [sim.S.rec, () => `${sim.st.recorded} / ${sim.S.stock}`], ['매진/실패 응답', () => fmt(sim.st.sold + sim.st.fail)]]);
   function head() {
     const S = sim.S;
     [...el.tabs.querySelectorAll('button')].forEach((b) => b.setAttribute('aria-pressed', b.dataset.k === key));
-    el.scen.textContent = sim.isAsync ? `재고 ${fmt(S.stock)}장 · 요청 ${fmt(S.n)}건 · 도중에 Consumer 강제 종료` : `재고 ${S.stock}장 · 요청 ${fmt(S.n)}건`;
+    el.scen.textContent = sim.isAsync ? `재고 ${fmt(S.stock)}장, 요청 ${fmt(S.n)}건, 도중에 Consumer 강제 종료` : `재고 ${S.stock}장, 요청 ${fmt(S.n)}건`;
     el.fact.textContent = S.fact;
     el.stats.innerHTML = statDefs().map(([l]) => `<div><dt>${l}</dt><dd class="num">0</dd></div>`).join('');
     dds = [...el.stats.querySelectorAll('dd')];
@@ -328,7 +328,7 @@
     else if (key === 'watch') { text = `수량은 맞지만 EXEC 실패로 ${fmt(st.retries)}회 재시도했고 먼저 도착한 ${S.stock}명 중 ${sim.reqs.filter((r) => r.res === 'ok' && r.id <= S.stock).length}명만 받았습니다. 선착순이 보장되지 않습니다.`; tone = 'slow'; }
     else if (st.recorded < S.stock) text = `재고가 남았는데 ${st.success}건만 지급됐습니다. 나머지 ${S.n - st.success}건은 충돌로 실패했습니다.`;
     else if (key === 'pessimistic') { text = `수량은 맞지만 한 건씩 직렬로 처리되고 먼저 도착한 ${S.stock}명 중 ${sim.reqs.filter((r) => r.res === 'ok' && r.id <= S.stock).length}명만 받았습니다. 선착순이 보장되지 않습니다.`; tone = 'slow'; }
-    else { text = `초과·중복 지급은 0건이고 Redis 가 먼저 처리한 ${S.stock}명에게만 지급됐습니다.`; tone = 'good'; }
+    else { text = `초과/중복 지급은 0건이고 Redis 가 먼저 처리한 ${S.stock}명에게만 지급됐습니다.`; tone = 'good'; }
     if (me && !sim.isAsync) text = `${fmt(me.id)}번째로 도착한 내 요청은 ${me.res === 'ok' ? '성공 응답을 받았습니다' : me.res === 'soldout' ? '매진 응답을 받았습니다' : key === 'serializable' ? '데드락으로 롤백됐습니다' : '충돌로 실패했습니다'}. ` + text;
     el.verdict.dataset.tone = tone;
     say.textContent = text;
@@ -349,7 +349,7 @@
     if (key === 'lua') {
       const lastOk = trace.findLast((e) => e.text.includes('번째')), sold = trace.find((e) => e.text.endsWith('매진'));
       if (!sold) return null;
-      return { title: '원자적 실행', rows: [{ lane: null, text: `요청 #${lastOk.id}  ${lastOk.text}` }, { lane: null, text: `요청 #${sold.id}  ${sold.text}` }], note: '중복 확인·재고 확인·SADD 가 스크립트 하나로 원자적으로 실행됩니다. 재고가 소진되면 바로 매진으로 응답합니다.' };
+      return { title: '원자적 실행', rows: [{ lane: null, text: `요청 #${lastOk.id}  ${lastOk.text}` }, { lane: null, text: `요청 #${sold.id}  ${sold.text}` }], note: '중복 확인, 재고 확인, SADD 가 스크립트 하나로 원자적으로 실행됩니다. 재고가 소진되면 바로 매진으로 응답합니다.' };
     }
     if (key === 'pessimistic') {
       const ev = trace.slice(0, 60), a = ev.find((e) => e.text.includes('획득')), w = ev.filter((e) => e.text.startsWith('락 대기')), rel = ev.find((e) => e.kind === 'write');
@@ -436,7 +436,7 @@
     box(gx - gateW / 2, gateY, gateW, gateH, C.line);
     label(S.store, gx, gateY + 10, C.ink, 'center', 700);
     if (!small) label(S.gate, gx, gateY + gateH + 8, C.mute, 'center');
-    label(sim.isAsync ? `DB · coupon_issues  ${fmt(st.stored)} / ${fmt(S.stock)}행` : `쿠폰 ${S.stock}장`, gX, gY - 24, sim.isAsync && st.stored ? C.sun : C.mute);
+    label(sim.isAsync ? `DB coupon_issues  ${fmt(st.stored)} / ${fmt(S.stock)}행` : `쿠폰 ${S.stock}장`, gX, gY - 24, sim.isAsync && st.stored ? C.sun : C.mute);
     ctx.strokeStyle = C.faint;
     if (cell >= 5) { ctx.beginPath(); for (let i = 0; i < S.stock; i++) ctx.rect(gX + (i % cols) * cell + 1, gY + Math.floor(i / cols) * cell + 1, cell - 2, cell - 2); ctx.stroke(); } // 칸 전체를 한 번에
 
@@ -447,7 +447,7 @@
         label(name, trayX, y - 20, n ? col : C.mute);
         label(fmt(n) + '건', trayX + trayW, y - 20, n ? C.ink : C.mute, 'right', 700);
       });
-    } else if (!sim.isAsync && (st.sold || st.fail)) label(`매진 응답 ${fmt(st.sold)}건${st.fail ? ` · 충돌 실패 ${fmt(st.fail)}건` : ''}`, gX, gY + rows * cell + 8);
+    } else if (!sim.isAsync && (st.sold || st.fail)) label(`매진 응답 ${fmt(st.sold)}건${st.fail ? `, 충돌 실패 ${fmt(st.fail)}건` : ''}`, gX, gY + rows * cell + 8);
 
     // DB 에 옮겨 적기: Redis → Stream → Consumer → DB 를 메시지가 실제로 거쳐 감
     const A = sim.isAsync && (() => {
