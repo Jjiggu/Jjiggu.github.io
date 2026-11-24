@@ -34,11 +34,13 @@
         : `<li class="grp${it.pick ? ' is-' + it.pick : ''}"><strong>${it.pick ? `<em>${PICK[it.pick]}</em>` : ''}${esc(it.h)}</strong>${list(it.items)}</li>`))
       .join('')}</ul>`;
 
+  // 이전 값에도 단위를 붙임 (단위가 이후 값과 다르면 data.js 의 ua)
+  const was = (m) => `<s>${m.a}${(m.ua ?? m.unit) && `<span>${m.ua ?? m.unit}</span>`}</s>`;
   const metric = (m) => {
     const max = m.bar ? Math.max(...m.bar) : 0;
     const w = (v) => Math.max((v / max) * 100, 0.8).toFixed(2) + '%';
     return `<li class="metric${(m.a || '').length + m.b.length > 12 ? ' metric--wide' : ''}">
-      <div class="metric__val num">${m.a ? `<s>${m.a}</s>` : ''}<b data-count data-from="${m.a || ''}">${m.b}</b><span>${m.unit}</span></div>
+      <div class="metric__val num">${m.a ? was(m) : ''}<b data-count data-from="${m.a || ''}">${m.b}</b><span>${m.unit}</span></div>
       ${m.bar ? `<div class="bars" aria-hidden="true"><i style="--w:${w(m.bar[0])}"></i><i style="--w:${w(m.bar[1])}"></i></div>` : ''}
       <p>${esc(m.label)}</p></li>`;
   };
@@ -69,7 +71,7 @@
     .map(({ p, h }, i) => `<a class="panel${p.accent ? ' has-accent' : ''}" href="#${p.id}"${p.accent ? ` style="--acc-d:${p.accent[0]};--acc-l:${p.accent[1]}"` : ''}>
         <p class="panel__top"><span>${esc(p.kind)} · <span class="num">${p.period}</span></span><span class="num">${i + 1} / ${heads.length}</span></p>
         <h3 class="panel__name">${esc(p.name)}</h3>
-        <div class="panel__fig num">${h.a ? `<s>${h.a}</s>` : '<s style="visibility:hidden" aria-hidden="true">0</s>' /* 이전 값이 없어도 큰 숫자 높이를 옆 카드와 맞춤 */}<div><b data-count data-from="${h.a || ''}">${h.b}</b><span>${h.unit}</span></div></div>
+        <div class="panel__fig num">${h.a ? was(h) : '<s style="visibility:hidden" aria-hidden="true">0</s>' /* 이전 값이 없어도 큰 숫자 높이를 옆 카드와 맞춤 */}<div><b data-count data-from="${h.a || ''}">${h.b}</b><span>${h.unit}</span></div></div>
         <p class="panel__label">${esc(h.label)}</p>
         <p class="panel__note">${esc(h.note)}</p>
         <span class="panel__more">자세히 보기 →</span>

@@ -190,6 +190,7 @@ main, section[id], footer[id], .cp { scroll-margin-top: var(--nav-h); } /* 고�
   flex-basis: 100%; font-size: 1.5rem; color: var(--mute); margin-bottom: 0.35rem;
   text-decoration-thickness: 2px;
 }
+.metric__val s span, .panel__fig s span { font: inherit; margin-left: 0.15em; }
 .metric__val s::after { content: ' →'; display: inline-block; white-space: pre; text-decoration: none; }
 .metric__val b { font-size: clamp(2.6rem, 4vw, 4.2rem); color: var(--sun); font-weight: 800; }
 .metric__val span { font-size: 1.25rem; margin-left: 0.3em; font-weight: 700; }
