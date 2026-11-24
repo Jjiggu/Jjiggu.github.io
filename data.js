@@ -189,8 +189,8 @@ window.DATA = {
           ],
           problem: [
             'write-behind 적용 후 1,600 rps에서 DB CPU 사용률 89~95%, TPS 1,800',
-            'performance_schema로 쿼리별 CPU 시간을 측정한 결과, 회원 확인 요청당 약 340µs 중 SELECT는 115µs, set_option과 COMMIT 쿼리가 약 225µs 차지',
-            '원인은 의도하지 않은 Transactional 동작. existsById 호출에 SimpleJpaRepository의 클래스 레벨 @Transactional(readOnly = true)와 기본 propagation 속성 REQUIRED가 적용되어 DB 트랜잭션 시작. SELECT 1개 실행 시 set_option 쿼리 4개와 COMMIT 쿼리 1개가 추가로 실행됨을 확인',
+            'performance_schema로 쿼리별 CPU 시간을 측정한 결과, 회원 확인 요청당 약 340µs 중 SELECT는 115µs, set_option과 commit 쿼리가 약 225µs 차지',
+            '원인은 의도하지 않은 Transactional 동작. existsById 호출에 SimpleJpaRepository의 클래스 레벨 @Transactional(readOnly = true)와 기본 propagation 속성 REQUIRED가 적용되어 DB 트랜잭션 시작. SELECT 1개 실행 시 set_option 쿼리 4개와 commit 쿼리 1개가 추가로 실행됨을 확인',
           ],
           solution: [
             '회원 존재 여부를 확인하는 JPQL 커스텀 쿼리를 선언해 SimpleJpaRepository의 기본 트랜잭션 설정을 우회. JpaRepository 대신 Repository만 상속해 existsById 등 기본 메서드가 상속되지 않도록 구현',
