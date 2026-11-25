@@ -24,13 +24,14 @@
   --panel: rgba(0, 0, 0, 0.28);
   color-scheme: dark;
   --pad: clamp(1.25rem, 5vw, 5rem);
+  --settle: cubic-bezier(0.16, 1, 0.3, 1);   /* 등장: 빠르게 와서 느리게 안착 (JS의 'settle'과 같은 곡선) */
+  --swap: cubic-bezier(0.77, 0, 0.175, 1);   /* 화면 안에서 자리를 바꾸는 움직임 ('swap') */
 }
 
 *, *::before, *::after { box-sizing: border-box; }
 html { background: var(--navy); }
 body {
-  margin: 0;
-  background: var(--navy);
+  margin: 0; /* 바탕색은 html에만: 그 위에 요청 스트림 캔버스(#gl)가, 그 위에 본문이 놓임 */
   color: var(--ink);
   font-family: 'Pretendard', -apple-system, 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
   font-size: 1rem;
@@ -99,10 +100,11 @@ main, section[id], footer[id], .cp { scroll-margin-top: var(--nav-h); } /* 고�
   position: relative; min-height: 100svh; overflow: hidden;
   display: flex; align-items: flex-end;
   padding: calc(var(--nav-h) + 2rem) var(--pad) clamp(2.5rem, 9vh, 6rem);
-  background: radial-gradient(120% 80% at 70% 20%, var(--navy-2), var(--navy) 70%);
 }
-#hero-gl { position: absolute; inset: 0; width: 100%; height: 100%; }
-.gl-hero .hero__name { color: transparent; } /* 점(WebGL)이 글자를 대신 그림. 글자는 스크린리더·검색용으로 남김 */
+.hero::before { content: ''; position: absolute; inset: 0; z-index: -2; background: radial-gradient(120% 80% at 70% 20%, var(--navy-2), var(--navy) 70%); } /* 캔버스(z -1)보다 아래 */
+#gl { display: none; position: fixed; inset: 0; z-index: -1; width: 100%; height: 100%; pointer-events: none; }
+.gl-hero #gl:not([hidden]) { display: block; } /* 이름이 보이는 첫 화면과 Contact에서만 켬 (stream.js) */
+.gl-hero .hero__name, .gl-hero .foot__name { color: transparent; } /* 점(WebGL)이 글자를 대신 그림. 글자는 스크린리더·검색용으로 남김 */
 .hero__in { position: relative; max-width: 62rem; }
 .hero__role { font-size: clamp(1rem, 1.4vw, 1.25rem); font-weight: 700; color: var(--sun); }
 .hero__name {
@@ -251,11 +253,17 @@ main, section[id], footer[id], .cp { scroll-margin-top: var(--nav-h); } /* 고�
 .more__detail summary:hover { color: var(--ink); }
 .more__detail .phase { margin-top: 1rem; }
 
-/* ───── footer: Contact (평범한 맺음말 정도로) ───── */
-.foot { margin-top: clamp(4rem, 10vw, 8rem); padding: clamp(3rem, 7vw, 5rem) var(--pad) 2rem; border-top: 1px solid var(--line); }
-.foot__main { display: flex; flex-wrap: wrap; align-items: center; gap: 1rem 2rem; }
-.foot__h { flex-basis: 100%; font-size: 0.8rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--mute); }
+/* ───── footer: Contact. 흐르던 요청(점)이 다시 모여 이름이 되는 마지막 장면이라 화면 한 장을 씀 ───── */
+.foot { display: flex; flex-direction: column; min-height: 100svh; margin-top: clamp(4rem, 10vw, 8rem); padding: clamp(3rem, 7vw, 5rem) var(--pad) 2rem; border-top: 1px solid var(--line); }
+.foot__main { flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: flex-start; gap: clamp(1rem, 2.5vh, 2rem); }
+.foot__h { font-size: 0.8rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--mute); }
+.foot__name { /* 첫 화면 이름과 같은 글꼴 설정 (점이 같은 방식으로 글자를 채움) */
+  font-size: min(17.2vw, 22rem); font-weight: 900; line-height: 0.92; letter-spacing: -0.05em;
+  margin: 0 0 0 -0.04em; padding-bottom: 0.06em; white-space: nowrap;
+}
 .foot .links { margin: 0; }
+.foot .links a { width: 60px; height: 60px; }
+.foot .links svg { width: 24px; height: 24px; }
 .foot__base { display: flex; justify-content: space-between; align-items: center; gap: 1rem; flex-wrap: wrap; margin-top: clamp(2.5rem, 5vw, 4rem); padding-top: 1.25rem; border-top: 1px solid var(--line); font-size: 0.82rem; color: var(--mute); }
 .foot__base p { max-width: 52rem; line-height: 1.6; }
 .totop { flex: none; font-weight: 700; color: var(--ink); }
@@ -862,12 +870,14 @@ html[data-theme='light'] .phone, html[data-theme='light'] .ipad { box-shadow: 0 
   display: inline-grid; place-items: center; width: 34px; height: 34px; margin-left: clamp(0.9rem, 2vw, 2rem); padding: 0;
   border: 1.5px solid currentColor; border-radius: 50%; background: none; color: inherit; cursor: pointer; flex: none;
 }
-.theme svg { width: 16px; height: 16px; }
-.theme .sun, html[data-theme='light'] .theme .moon { display: none; }
-html[data-theme='light'] .theme .sun { display: block; }
+.theme svg { width: 16px; height: 16px; overflow: visible; }
+.theme .t-sun, .theme .t-rays, html[data-theme='light'] .theme .t-moon { display: none; }
+html[data-theme='light'] .theme .t-sun, html[data-theme='light'] .theme .t-rays { display: inline; }
+.theme.is-morph .t-sun { display: none !important; } /* 모션이 켜진 환경: 달 하나가 해로 변하고 햇살이 그려짐 (fx.js) */
+.theme.is-morph .t-moon, .theme.is-morph .t-rays { display: inline !important; }
 .nav nav { margin-left: auto; }
 html { transition: background-color 0.3s; }
-body { transition: background-color 0.3s, color 0.3s; }
+body { transition: color 0.3s; }
 
 
 /* ───── 프로젝트 표지: 넘어갈 때 화면을 꽉 채우는 장면 ───── */
@@ -1082,3 +1092,51 @@ html.lite .sim__trace { -webkit-backdrop-filter: none; backdrop-filter: none; ba
 .gh-sec li span { flex: 1; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
 .gh-sec li i { display: flex; align-items: center; gap: 3px; width: 34px; font-style: normal; font-variant-numeric: tabular-nums; }
 .gh-sec li img { width: 15px; height: 15px; }
+
+
+/* ═════════ 요청 스트림 · 모션 (main.js · fx.js · stream.js) ═════════
+   주인공은 하나, 점(요청)의 흐름입니다: 모여서 이름이 되고, 본문 양옆으로 흐르다, Contact에서 다시 모입니다.
+   나머지 움직임은 그 흐름을 거드는 정도로만: 글이 드러나는 순서, 누를 수 있는 것의 반응. */
+
+/* 본문 양옆의 요청 줄기 (stream.js). 점 무늬를 깐 좁은 띠 두 겹을 transform·opacity로만 움직임 (다시 그리기 없음) */
+.lane { position: fixed; top: 0; bottom: 0; left: var(--lane-x, 8px); z-index: -1; width: var(--lane-w, 44px); overflow: hidden; pointer-events: none; }
+.lane--r { left: auto; right: var(--lane-x, 8px); }
+.lane i { position: absolute; left: 0; right: 0; top: -640px; bottom: -640px; background: 0 0 / 100% 640px repeat-y; opacity: 0; will-change: transform, opacity; }
+html.lite .lane i:first-child { display: none; } /* 가벼운 모드: 먼 점 한 겹을 뺌 */
+
+/* 첫 화면 연출을 틀 환경(html.intro): 글이 먼저 보였다 사라지지 않게 main.js가 넘겨받을 때까지 가려 둠 */
+html.intro .hero__in > *, html.intro .hero__cue { visibility: hidden; }
+
+/* 요청 카운터: 점이 모이는 동안 오른쪽 위(요청 줄기가 들어오는 자리)에서 수를 세고, 다 모이면 빠짐 */
+.hero__count { position: absolute; right: var(--pad); top: calc(var(--nav-h) + clamp(1.25rem, 5vh, 3.5rem)); display: grid; justify-items: end; gap: 0.35rem; pointer-events: none; }
+.hero__count[hidden] { display: none; }
+.hero__count .num { display: block; overflow: clip; font-size: clamp(3.2rem, 8.6vw, 8.6rem); letter-spacing: -0.01em; color: color-mix(in srgb, var(--ink) 26%, transparent); }
+.hero__count .num b { display: block; font-weight: inherit; }
+.hero__count small { font-size: 0.78rem; font-weight: 700; letter-spacing: 0.06em; color: var(--mute); }
+@media (max-width: 720px) { .hero__count { top: calc(var(--nav-h) + 1rem); } }
+
+/* 섹션 제목 위의 가는 선: 요청 하나(점)가 왼쪽에서 오른쪽으로 지나가며 선을 그어 새 장을 엶 (값은 main.js가 --rule, --tip으로) */
+.block > .sec-head { position: relative; --head-w: calc(100vw - 2 * var(--pad)); }
+.block > .sec-head::before { content: ''; position: absolute; left: 0; right: 0; top: clamp(2.5rem, 6vh, 4.5rem); height: 1px; background: var(--line); transform: scaleX(var(--rule, 1)); transform-origin: 0 50%; }
+.block > .sec-head::after { content: ''; position: absolute; left: -3px; top: calc(clamp(2.5rem, 6vh, 4.5rem) - 3px); width: 7px; height: 7px; border-radius: 50%; background: var(--sun); box-shadow: 0 0 12px 2px var(--sun); opacity: var(--tip, 0); transform: translateX(calc(var(--rule, 1) * var(--head-w))); }
+
+/* 누르는 순간의 반응: 살짝 눌림 (연락처·테마 버튼은 fx.js가 안쪽 아이콘을 움직임) */
+.project__repo, .dock__tabs button, .bk__actions button { transition: background 0.25s, color 0.25s, border-color 0.25s, transform 0.16s var(--settle); }
+.project__repo:active, .dock__tabs button:active, .bk__actions button:active:not(:disabled) { transform: scale(0.97); }
+
+/* 포인터를 따라오는 고리 (fx.js). 원래 커서는 그대로 두고, 누르면 어떻게 되는지를 한 단어로 알려 줌. 터치·모션 줄이기에서는 만들지 않음 */
+.cursor {
+  position: fixed; left: 0; top: 0; z-index: 130; display: grid; place-items: center; width: 34px; height: 34px; margin: -17px 0 0 -17px;
+  border: 1.5px solid #fff; border-radius: 99px; mix-blend-mode: difference; pointer-events: none; opacity: 0;
+  transition: opacity 0.3s, width 0.35s var(--settle), height 0.35s var(--settle), margin 0.35s var(--settle), background-color 0.25s, border-color 0.25s;
+}
+.cursor.is-on { opacity: 1; }
+.cursor.is-link { width: 54px; height: 54px; margin: -27px 0 0 -27px; }
+.cursor.is-label { width: 5.4rem; height: 2.1rem; margin: 18px 0 0 18px; mix-blend-mode: normal; background: var(--ink); border-color: var(--ink); } /* 가리키는 것을 덮지 않게 포인터 오른쪽 아래에 */
+.cursor span { font-size: 0.78rem; font-weight: 800; letter-spacing: -0.01em; color: var(--navy); white-space: nowrap; opacity: 0; transition: opacity 0.2s; }
+.cursor.is-label span { opacity: 1; }
+
+/* 스크롤 막대도 사이트 색으로 */
+html { scrollbar-color: color-mix(in srgb, var(--ink) 30%, transparent) transparent; }
+
+@media (prefers-reduced-motion: reduce) { .project__repo, .dock__tabs button, .bk__actions button { transition: background 0.25s, color 0.25s, border-color 0.25s; } }
