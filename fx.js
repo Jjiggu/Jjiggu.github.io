@@ -1,7 +1,7 @@
-/* global gsap, ScrollTrigger, SplitText, Flip */
-/* 길잡이와 읽기 흐름. main.js가 내용을 그리고 기본 모션을 붙인 뒤에 얹습니다.
-   여기 있는 것은 모두 용도가 있습니다: 지금 어디인지(메뉴 표시·오른쪽 목차), 어디서 온 그림인지(이미지 크게 보기),
-   무엇부터 읽을지(줄 단위 등장). 꾸밈만을 위한 움직임은 두지 않습니다.
+/* global gsap, ScrollTrigger, SplitText, Flip, MorphSVGPlugin, DrawSVGPlugin */
+/* 길잡이와 읽기 흐름, 그리고 포인터에 대한 반응. main.js가 내용을 그리고 기본 모션을 붙인 뒤에 얹습니다.
+   지금 어디인지(메뉴 표시·오른쪽 목차), 어디서 온 그림인지(이미지 크게 보기), 무엇부터 읽을지(줄 단위 등장),
+   누르면 어떻게 되는지(포인터를 따라오는 고리, 끌리는 아이콘, 달이 해로 변하는 테마 버튼)를 알려 줍니다.
    모션 줄이기 환경이나 gsap이 없을 때는 1~2번이 움직임 없이 동작합니다. */
 (() => {
   const D = window.DATA;
@@ -30,9 +30,9 @@
   // 화면 가운데 선에 걸친 구간을 IntersectionObserver로 받음 (스크롤 프레임마다 위치를 재지 않음)
   const html = document.documentElement, isLite = () => html.classList.contains('lite');
   const setNav = (n) => { if (n === navOn) return; navOn = n; navLinks.forEach((a, i) => (i === n ? a.setAttribute('aria-current', 'true') : a.removeAttribute('aria-current'))); movePill(); };
-  // 목차와 진행 막대는 지금 읽는 프로젝트의 대표색을 따름 (프로젝트 밖에서는 기본 강조색)
+  // 목차와 진행 막대, 흐르는 점의 강조색은 지금 읽는 프로젝트의 대표색을 따름 (프로젝트 밖에서는 기본 강조색)
   const tinted = [rail, $('.progress')];
-  const tint = () => { const sec = projSecs[projOn], v = sec ? getComputedStyle(sec).getPropertyValue('--sun') : ''; tinted.forEach((el) => (v ? el.style.setProperty('--sun', v) : el.style.removeProperty('--sun'))); };
+  const tint = () => { const sec = projSecs[projOn], v = sec ? getComputedStyle(sec).getPropertyValue('--sun').trim() : ''; tinted.forEach((el) => (v ? el.style.setProperty('--sun', v) : el.style.removeProperty('--sun'))); window.Stream?.accent(v); };
   addEventListener('themechange', tint);
   const setProj = (p) => { if (p === projOn) return; projOn = p; rail.classList.toggle('is-on', p >= 0); railLinks.forEach((a, i) => a.classList.toggle('is-on', i === p)); tint(); };
   const midline = (els, on) => { const io = new IntersectionObserver((es) => es.forEach((e) => on(els.indexOf(e.target), e.isIntersecting)), { rootMargin: '-50% 0px -50% 0px' }); els.forEach((e) => io.observe(e)); };
@@ -95,7 +95,48 @@
   if (!motion) return;
   gsap.registerPlugin(ScrollTrigger, SplitText, Flip);
 
-  /* ───────── 3. 읽기 흐름: main.js의 고정 구간이 자리 잡은 뒤 ───────── */
+  /* ───────── 3. 포인터에 대한 반응 ───────── */
+  // 테마 버튼: 달이 해로 변하고 햇살이 가운데서부터 그려짐 (GSAP MorphSVG + DrawSVG). 새 테마가 원으로 퍼지는 동안 그 안에서 보임
+  if (window.MorphSVGPlugin && window.DrawSVGPlugin) {
+    gsap.registerPlugin(MorphSVGPlugin, DrawSVGPlugin);
+    const btn = $('#theme'), disc = $('.t-moon', btn), rays = $$('.t-rays path', btn), MOON = disc.getAttribute('d'), SUN = $('.t-sun', btn).getAttribute('d');
+    btn.classList.add('is-morph');
+    const icon = (d) => {
+      const light = html.dataset.theme === 'light';
+      gsap.to(disc, { morphSVG: light ? SUN : MOON, duration: d, ease: 'power3.inOut', overwrite: true });
+      gsap.to(rays, { drawSVG: light ? '0% 100%' : '50% 50%', opacity: light ? 1 : 0, duration: d * 0.7, delay: light ? d * 0.45 : 0, stagger: light ? d * 0.05 : 0, ease: 'power2.out', overwrite: true });
+    };
+    icon(0); addEventListener('themechange', () => icon(0.6));
+  }
+
+  if (matchMedia('(hover: hover) and (pointer: fine)').matches) {
+    // 따라오는 고리: 원래 커서는 그대로 두고 조금 늦게 따라옴. 누를 수 있는 것 위에서는 커지고, 카드와 그림 위에서는 누르면 일어나는 일을 한 단어로 알려 줌
+    const ring = document.createElement('div');
+    ring.className = 'cursor'; ring.setAttribute('aria-hidden', 'true'); ring.innerHTML = '<span></span>';
+    document.body.append(ring);
+    const word = $('span', ring), HINTS = [['.panel', '자세히'], ['.ev__zoom', '크게 보기']];
+    const xTo = gsap.quickTo(ring, 'x', { duration: 0.35, ease: 'power3' }), yTo = gsap.quickTo(ring, 'y', { duration: 0.35, ease: 'power3' });
+    addEventListener('pointermove', (e) => { if (e.pointerType !== 'mouse') return; xTo(e.clientX); yTo(e.clientY); ring.classList.add('is-on'); }, { passive: true });
+    document.addEventListener('pointerover', (e) => {
+      const el = e.target.closest ? e.target : null, hint = el && HINTS.find(([sel]) => el.closest(sel));
+      if (hint) word.textContent = hint[1];
+      ring.classList.toggle('is-label', !!hint);
+      ring.classList.toggle('is-link', !hint && !!el?.closest('a, button, summary, label, input, textarea'));
+    });
+    html.addEventListener('pointerleave', () => ring.classList.remove('is-on'));
+
+    // 끌리는 아이콘: 버튼은 제자리에 있고 안의 아이콘만 포인터 쪽으로 기울어짐 (버튼이 포인터 밑에서 달아나지 않게). 누르면 살짝 눌림
+    $$('.links a, .theme').forEach((el) => {
+      const svg = $('svg', el), x = gsap.quickTo(svg, 'x', { duration: 0.45, ease: 'power3' }), y = gsap.quickTo(svg, 'y', { duration: 0.45, ease: 'power3' });
+      const press = (s) => gsap.to(svg, { scale: s, duration: 0.14, ease: 'power2.out', overwrite: 'auto' });
+      el.addEventListener('pointermove', (e) => { const r = el.getBoundingClientRect(); x((e.clientX - r.left - r.width / 2) * 0.3); y((e.clientY - r.top - r.height / 2) * 0.3); });
+      el.addEventListener('pointerleave', () => { x(0); y(0); press(1); });
+      el.addEventListener('pointerdown', () => press(0.86));
+      el.addEventListener('pointerup', () => press(1));
+    });
+  }
+
+  /* ───────── 4. 읽기 흐름: main.js의 고정 구간이 자리 잡은 뒤 ───────── */
   const start = () => {
     // 첫 화면 글은 스크롤하면 물러나 다음 구역에 시선을 넘김
     gsap.to('.hero__in', { opacity: 0, ease: 'none', scrollTrigger: { trigger: '.hero', start: 'top top', end: 'bottom 35%', scrub: true } });

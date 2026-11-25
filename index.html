@@ -14,10 +14,16 @@
   <script>
     // 저장한 선택이 있으면 그것, 없으면 기기 설정을 따름 (첫 화면이 깜빡이지 않게 그리기 전에 정함)
     (function () { var t = null; try { t = localStorage.getItem('theme'); } catch (e) {} document.documentElement.dataset.theme = t || (matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark'); })();
-    // WebGL로 이름을 그릴 수 있으면 글자를 미리 투명하게 (깜빡임 방지). 실패하면 hero-gl.js가 되돌림
-    // hero-gl.js(three.js 포함)가 로드에 실패하거나 4초 안에 준비되지 않으면 원래 글자를 보여 줌
+    // WebGL로 이름을 그릴 수 있으면 글자를 미리 투명하게 (깜빡임 방지). 실패하면 stream.js가 되돌림
+    // stream.js(three.js 포함)가 로드에 실패하거나 4초 안에 준비되지 않으면 원래 글자를 보여 줌
     function showName() { document.documentElement.classList.remove('gl-hero'); }
-    (function () { try { if (!matchMedia('(prefers-reduced-motion: reduce)').matches && document.createElement('canvas').getContext('webgl2')) { document.documentElement.classList.add('gl-hero'); window.glHeroTimer = setTimeout(showName, 4000); } } catch (e) {} })();
+    // 첫 화면 연출(요청 수를 세는 동안 점이 모여 이름이 됨)을 틀 환경이면, 글이 먼저 보였다 사라지지 않게 그리기 전에 가려 둠.
+    // main.js가 3초 안에 넘겨받지 못하면(스크립트 실패 등) 가린 것을 풀어 그대로 보여 줌
+    function showHero() { document.documentElement.classList.remove('intro'); }
+    (function () { try { if (!matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      document.documentElement.classList.add('intro'); window.introTimer = setTimeout(showHero, 3000);
+      if (document.createElement('canvas').getContext('webgl2')) { document.documentElement.classList.add('gl-hero'); window.glHeroTimer = setTimeout(showName, 4000); }
+    } } catch (e) {} })();
     // 저사양 기기(코어·메모리 4 이하)는 처음부터 가벼운 모드: 배경 흐림을 끄고 점 개수와 해상도를 줄임. 느린 프레임이 재어져도 fx.js가 켬
     if ((navigator.hardwareConcurrency || 8) <= 4 || (navigator.deviceMemory || 8) <= 4) document.documentElement.classList.add('lite');
   </script>
@@ -29,6 +35,8 @@
 <body>
   <a class="skip" href="#main">본문으로 건너뛰기</a>
   <div class="progress" aria-hidden="true"></div>
+  <!-- 요청 스트림: 점(요청)이 이름을 만들고, 본문 양옆을 따라 흐르다, Contact에서 다시 모임 (stream.js) -->
+  <canvas id="gl" aria-hidden="true"></canvas>
 
   <header class="nav">
     <a class="nav__name" href="#top">Jihoon Kim</a>
@@ -40,20 +48,25 @@
       <i class="nav__pill" aria-hidden="true"></i>
     </nav>
     <button type="button" class="theme" id="theme" aria-label="라이트 모드로 바꾸기">
-      <svg class="moon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M20.3 14.6A8.5 8.5 0 0 1 9.4 3.7a8.5 8.5 0 1 0 10.9 10.9z"/></svg>
-      <svg class="sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4.2" fill="currentColor"/><path d="M12 2.5v2.4M12 19.1v2.4M2.5 12h2.4M19.1 12h2.4M5.3 5.3l1.7 1.7M17 17l1.7 1.7M18.7 5.3 17 7M7 17l-1.7 1.7"/></svg>
+      <!-- 달 ↔ 해: 모션이 켜진 환경에서는 달 모양이 해로 변함 (GSAP MorphSVG, fx.js). 아니면 CSS가 둘 중 하나만 보여 줌 -->
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path class="t-moon" fill="currentColor" d="M20.3 14.6A8.5 8.5 0 0 1 9.4 3.7a8.5 8.5 0 1 0 10.9 10.9z"/>
+        <path class="t-sun" fill="currentColor" d="M12 7.8a4.2 4.2 0 1 0 0 8.4a4.2 4.2 0 1 0 0-8.4z"/>
+        <g class="t-rays" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 4.9V2.5"/><path d="M17 7l1.7-1.7"/><path d="M19.1 12h2.4"/><path d="M17 17l1.7 1.7"/><path d="M12 19.1v2.4"/><path d="M7 17l-1.7 1.7"/><path d="M4.9 12H2.5"/><path d="M7 7 5.3 5.3"/></g>
+      </svg>
     </button>
   </header>
 
   <main id="main">
     <section class="hero" id="top">
-      <canvas id="hero-gl" aria-hidden="true"></canvas>
       <div class="hero__in">
         <p class="hero__role" id="role"></p>
         <h1 class="hero__name" id="name"></h1>
         <p class="hero__intro" id="line"></p>
         <ul class="links" id="hero-links" aria-label="연락처"></ul>
       </div>
+      <!-- 첫 화면 연출: 모여드는 요청(점) 수를 셈. 다 모이면 빠짐 (main.js) -->
+      <p class="hero__count" id="count" aria-hidden="true" hidden><span class="num"><b>0</b></span><small>requests</small></p>
       <a class="hero__cue" href="#overview" aria-label="아래 Summary로 이동"><span>Scroll</span><i></i></a>
     </section>
 
@@ -78,6 +91,8 @@
   <footer class="foot" id="contact" aria-labelledby="h-contact">
     <div class="foot__main">
       <h2 class="foot__h" id="h-contact">Contact</h2>
+      <!-- 흩어져 흐르던 점이 여기서 다시 모여 이름이 됨. 이름은 h1에 이미 있어 여기서는 장식 (stream.js) -->
+      <p class="foot__name" id="foot-name" aria-hidden="true"></p>
       <ul class="links" id="foot-links" aria-label="연락처"></ul>
     </div>
     <div class="foot__base">
@@ -116,6 +131,8 @@
   <script src="vendor/DrawSVGPlugin.min.js"></script>
   <script src="vendor/MotionPathPlugin.min.js"></script>
   <script src="vendor/Flip.min.js"></script>
+  <script src="vendor/CustomEase.min.js"></script>
+  <script src="vendor/MorphSVGPlugin.min.js"></script>
   <script src="vendor/lenis.min.js"></script>
   <script src="data.js"></script>
   <script src="main.js"></script>
@@ -126,6 +143,6 @@
   <script src="nowait-ui.js"></script>
   <script src="gasip-demo.js"></script>
   <script src="gasip-ui.js"></script>
-  <script type="module" src="hero-gl.js" onerror="showName()"></script>
+  <script type="module" src="stream.js" onerror="showName()"></script>
 </body>
 </html>

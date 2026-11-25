@@ -1,4 +1,4 @@
-/* global gsap, ScrollTrigger, SplitText, Lenis */
+/* global gsap, ScrollTrigger, SplitText, CustomEase, Lenis */
 (() => {
   const D = window.DATA;
   const $ = (s, r = document) => r.querySelector(s);
@@ -63,6 +63,7 @@
   $('#line').textContent = D.line;
   $('#hero-links').innerHTML = links;
   $('#foot-links').innerHTML = links; // 첫 화면과 같은 아이콘 목록 (주소와 번호는 마우스를 올리면 보임)
+  $('#foot-name').textContent = D.name; // 마지막 장면: 흩어져 흐르던 점이 다시 모여 만드는 이름 (stream.js)
 
   // 한눈에 보기: 본문과 같은 순서, 카드마다 대표 수치 하나
   const heads = D.projects.flatMap((p) => [].concat(p.headline || []).map((h) => ({ p, h })));
@@ -143,6 +144,7 @@
 
   /* 모션을 줄이도록 설정한 환경: 내용만 그대로 보여 주고 끝 */
   if (reduce || !window.gsap) { // 시뮬레이션은 자동 재생 없이, 누를 때만 실행
+    window.showHero?.(); clearTimeout(window.introTimer); // 첫 화면 연출 없이 바로 보여 줌
     if (gate) {
       const btn = $('.gate__btn', gate);
       gate.classList.add('is-open'); btn.disabled = false; $('.gate__title', gate).textContent = G.open; $('.gate__sec', gate).textContent = '00';
@@ -153,6 +155,9 @@
 
   gsap.registerPlugin(ScrollTrigger, SplitText);
   if (window.ScrambleTextPlugin) gsap.registerPlugin(ScrambleTextPlugin);
+  // 이징은 두 가지만 씀 (style.css의 --settle, --swap과 같은 곡선). 등장은 전부 settle: 빠르게 와서 느리게 안착
+  if (window.CustomEase) { gsap.registerPlugin(CustomEase); CustomEase.create('settle', '0.16, 1, 0.3, 1'); CustomEase.create('swap', '0.77, 0, 0.175, 1'); }
+  const SETTLE = window.CustomEase ? 'settle' : 'expo.out', SWAP = window.CustomEase ? 'swap' : 'power4.inOut';
 
   /* ───────── 2. 부드러운 스크롤 (Lenis ↔ ScrollTrigger) ───────── */
   const lenis = new Lenis({ anchors: true }); // 고정 메뉴 높이는 style.css의 scroll-margin-top이 뺌 (브라우저 해시 이동과 같은 위치)
@@ -278,17 +283,47 @@
   /* ───────── 5. 나머지 모션은 폰트와 근거·데모가 모두 붙은 뒤 ───────── */
   const fonts = Promise.race([document.fonts.ready, new Promise((r) => setTimeout(r, 2500))]);
   const domReady = new Promise((r) => (document.readyState === 'loading' ? addEventListener('DOMContentLoaded', r) : r()));
-  Promise.all([fonts, domReady]).then(() => {
-    const name = SplitText.create('#name', { type: 'chars', mask: 'chars' });
-    gsap.timeline()
-      .from(name.chars, { yPercent: 110, duration: 1.1, stagger: 0.08, ease: 'power4.out' })
-      .from('.hero__role, .hero__intro, #hero-links li, .hero__cue', { opacity: 0, y: 24, duration: 0.8, stagger: 0.08, ease: 'power3.out' }, '-=0.8');
+  // 요청 스트림(stream.js, 모듈이라 이 파일보다 늦게 실행됨)이 점을 다 뽑으면 그 수를, 못 쓰는 환경이면 0을 받음
+  Promise.all([fonts, domReady]).then(() => (window.Stream ? window.Stream.ready : 0)).then((dots) => {
+    /* 첫 화면: 주인공은 이름(점이 모여 만듦). 역할은 먼저 조용히 켜지고, 한 줄 소개와 연락처는 이름이 자리 잡을 즈음 뒤따름.
+       점으로 그리지 못하는 환경에서는 글자가 한 자씩 올라옴. 메뉴는 처음부터 보이고 눌림 */
+    const gl = dots > 0 && document.documentElement.classList.contains('gl-hero');
+    const T = gl ? window.Stream.intro : 0.9; // 이름이 자리 잡는 시각(초)
+    const hero = gsap.timeline({ defaults: { ease: SETTLE } });
+    hero.from('.hero__role', { opacity: 0, duration: 0.7, ease: 'none' }, 0.15);
+    if (gl) {
+      // 요청 카운터: 모여드는 점의 수를 세다가, 다 모이면 강조색으로 바뀌고 위로 빠짐
+      const box = $('#count'), num = $('b', box), o = { v: 0 };
+      box.hidden = false;
+      hero.from(box, { opacity: 0, duration: 0.4, ease: 'none' }, 0)
+        .to(o, { v: dots, duration: T, ease: 'power2.out', onUpdate: () => (num.textContent = Math.round(o.v).toLocaleString('en-US')) }, 0)
+        .to($('.num', box), { color: getComputedStyle(box).getPropertyValue('--sun').trim(), duration: 0.25, ease: 'none' }, T - 0.1)
+        .to(num, { yPercent: -105, duration: 0.6, ease: 'power3.in' }, T + 0.45)
+        .to($('small', box), { opacity: 0, duration: 0.3, ease: 'none' }, T + 0.45)
+        .set(box, { display: 'none' });
+    } else {
+      const name = SplitText.create('#name', { type: 'chars', mask: 'chars' });
+      hero.from(name.chars, { yPercent: 110, duration: 1.1, stagger: 0.08 }, 0);
+    }
+    SplitText.create('#line', { type: 'lines', mask: 'lines', autoSplit: true, onSplit: (s) => gsap.from(s.lines, { yPercent: 105, duration: 1, stagger: 0.12, ease: SETTLE, delay: Math.max(T - 0.9 - hero.time(), 0) }) });
+    hero.from('#hero-links li', { opacity: 0, y: 16, duration: 0.7, stagger: { each: 0.09, ease: 'power1.in' } }, T - 0.65) // 뒤로 갈수록 간격이 좁아짐
+      .from('.hero__cue', { opacity: 0, duration: 0.8, ease: 'none' }, T - 0.2);
+    window.showHero?.(); clearTimeout(window.introTimer); // 시작 상태가 잡혔으니 가려 둔 것을 풂
 
     // 상단 진행 막대
     gsap.to('.progress', { scaleX: 1, ease: 'none', scrollTrigger: { start: 0, end: 'max', scrub: 0.3 } });
 
-    // 섹션 제목
-    $$('.sec-head').forEach((h) => gsap.from(h.children, { opacity: 0, y: 24, duration: 0.8, stagger: 0.08, ease: 'power3.out', scrollTrigger: { trigger: h, start: 'top 85%', once: true } }));
+    // 섹션 제목: 요청 하나(점)가 지나가며 선을 긋고(새 장), 번호가 켜지고, 제목이 단어째 흐릿한 데서 또렷하게 올라옴
+    $$('.sec-head').forEach((h) => {
+      const words = SplitText.create($('h2', h), { type: 'words', mask: 'words' }).words;
+      gsap.timeline({ defaults: { ease: SETTLE }, scrollTrigger: { trigger: h, start: 'top 85%', once: true } })
+        .fromTo(h, { '--rule': 0 }, { '--rule': 1, duration: 1.3, ease: SWAP }, 0)
+        .fromTo(h, { '--tip': 0 }, { '--tip': 1, duration: 0.2, ease: 'none' }, 0)
+        .to(h, { '--tip': 0, duration: 0.35, ease: 'none' }, 1.05)
+        .from($('.num', h), { opacity: 0, duration: 0.6, ease: 'none' }, 0.1)
+        .from(words, { yPercent: 110, duration: 0.9, stagger: 0.07 }, 0.15)
+        .from($('h2', h), { filter: 'blur(8px)', duration: 0.9, clearProps: 'filter' }, 0.15);
+    });
 
     // 한눈에 보기: 넓은 화면에서는 가로로 넘어감 (카드 폭 50vw → 한 화면 분량만 가로 이동)
     const mm = gsap.matchMedia();
@@ -300,7 +335,7 @@
       const dist = () => Math.max(track.scrollWidth - track.clientWidth, 0);
       const tw = gsap.to(track, {
         x: () => -dist(), ease: 'none',
-        scrollTrigger: { trigger: sec, start: 'top top', pin: true, scrub: 0.6, end: () => '+=' + dist(), invalidateOnRefresh: true },
+        scrollTrigger: { trigger: sec, start: 'top top', pin: true, anticipatePin: 1, scrub: 0.6, end: () => '+=' + dist(), invalidateOnRefresh: true },
       });
       panels.forEach((p, i) => {
         const run = () => countUp($('[data-count]', p));
@@ -334,7 +369,12 @@
       mm.add('(min-width: 900px)', () => {
         const pan = () => (img ? Math.max(img.offsetWidth - innerWidth, 0) : 0);
         const len = { pan: () => pan() + innerHeight * 0.4, crowd: () => innerHeight * (gate ? 2 : 0.9), expand: () => innerHeight * 0.9 }[type];
-        const tl = gsap.timeline({ scrollTrigger: { trigger: stage, start: 'top top', end: () => '+=' + len(), pin: true, scrub: 0.6, invalidateOnRefresh: true } });
+        // 표지가 화면을 다 덮은 동안에는 그 뒤의 요청 스트림을 그리지 않음 (expand·crowd는 1, pan은 0.25에서 다 펼쳐짐. 화면이 실제로 따라온 시점 기준)
+        const fullAt = type === 'pan' ? 0.25 : 1, hide = (on) => { if (window.Stream) window.Stream.covered = on; };
+        const tl = gsap.timeline({
+          onUpdate() { hide(this.scrollTrigger.isActive && this.time() >= fullAt); },
+          scrollTrigger: { trigger: stage, start: 'top top', end: () => '+=' + len(), pin: true, anticipatePin: 1, scrub: 0.6, invalidateOnRefresh: true, onToggle: (self) => self.isActive || hide(false) },
+        });
         // expand는 로고까지 든 키 비주얼이라 자르지 않고 카드째로 키움, 나머지는 잘린 카드가 열림
         if (type === 'expand') tl.fromTo(frame, { scale: 0.74, borderRadius: 28 }, { scale: 1, borderRadius: 0, ease: 'none', duration: 1 }, 0);
         else tl.fromTo(frame, card, { ...full, duration: type === 'pan' ? 0.25 : 1 }, 0);
@@ -351,6 +391,7 @@
               .to({}, { duration: 0.4 });                                       // 누를 시간 동안 고정
           }
         }
+        return () => hide(false); // 좁은 화면으로 바뀌어 고정이 풀리면 스트림을 다시 그림
       });
       mm.add('(max-width: 899px)', () => {
         gsap.fromTo(frame, { clipPath: 'inset(6% 6% 6% 6% round 20px)' }, { clipPath: 'inset(0% 0% 0% 0% round 0px)', duration: 1.2, ease: 'power3.out', scrollTrigger: { trigger: frame, start: 'top 80%', once: true } });
@@ -364,9 +405,13 @@
     $$('.project__head').forEach((h) => {
       const st = { trigger: h, start: 'top 78%', once: true };
       const split = SplitText.create($('.project__name', h), { type: 'words,chars', mask: 'chars' }); // 단어 단위로만 줄바꿈
-      gsap.from(split.chars, { yPercent: 110, duration: 1, stagger: 0.03, ease: 'power4.out', scrollTrigger: st });
-      gsap.from($('.project__rule', h), { scaleX: 0, duration: 1.4, ease: 'power4.inOut', scrollTrigger: st });
-      gsap.from($$('.project__kind, .project__meta', h), { opacity: 0, y: 20, duration: 0.8, delay: 0.25, stagger: 0.08, scrollTrigger: st });
+      gsap.from(split.chars, { yPercent: 110, duration: 1, stagger: 0.03, ease: SETTLE, scrollTrigger: st });
+      gsap.from($('.project__name', h), { filter: 'blur(8px)', duration: 0.9, ease: SETTLE, clearProps: 'filter', scrollTrigger: st }); // 흐릿한 데서 또렷하게 (글자마다가 아니라 제목 한 덩어리에 한 번)
+      gsap.from($('.project__rule', h), { scaleX: 0, duration: 1.4, ease: SWAP, scrollTrigger: st });
+      gsap.from($$('.project__kind, .project__meta', h), { opacity: 0, y: 20, duration: 0.8, delay: 0.25, stagger: 0.08, ease: SETTLE, scrollTrigger: st });
+      // 소개 문장: 스크롤에 맞춰 어절이 차례로 또렷해짐 (옆 어절과 25% 겹침. 스크롤에 그대로 묶이므로 이징 없음)
+      const sub = $('.project__sub', h);
+      if (sub) gsap.fromTo(SplitText.create(sub, { type: 'words' }).words, { opacity: 0.25 }, { opacity: 1, duration: 1, stagger: 0.75, ease: 'none', scrollTrigger: { trigger: sub, start: 'top 88%', end: 'top 48%', scrub: true } });
     });
 
     // 사례: 제목 줄 단위 등장, 수치 카운트, 막대, 진행 선
@@ -374,14 +419,26 @@
       const st = { trigger: c, start: 'top 78%', once: true };
       SplitText.create($('.case__title', c), {
         type: 'lines', mask: 'lines', autoSplit: true,
-        onSplit: (s) => gsap.from(s.lines, { yPercent: 105, duration: 0.9, stagger: 0.08, ease: 'power4.out', scrollTrigger: st }),
+        onSplit: (s) => gsap.from(s.lines, { yPercent: 105, duration: 0.9, stagger: 0.08, ease: SETTLE, scrollTrigger: st }),
       });
-      gsap.from($$('.metric', c), { opacity: 0, y: 28, duration: 0.8, stagger: 0.09, ease: 'power3.out', scrollTrigger: { ...st, onEnter: () => $$('[data-count]', c).forEach(countUp) } });
-      if ($('.bars', c)) gsap.from($$('.bars i', c), { scaleX: 0, duration: 1.3, stagger: 0.08, ease: 'power4.out', delay: 0.25, scrollTrigger: st });
+      gsap.from($$('.metric', c), { opacity: 0, y: 28, duration: 0.8, stagger: 0.09, ease: SETTLE, scrollTrigger: { ...st, onEnter: () => $$('[data-count]', c).forEach(countUp) } });
+      if ($('.bars', c)) gsap.from($$('.bars i', c), { scaleX: 0, duration: 1.3, stagger: 0.08, ease: SETTLE, delay: 0.25, scrollTrigger: st });
       gsap.from($('.case__rail i', c), { scaleY: 0, ease: 'none', scrollTrigger: { trigger: $('.case__body', c), start: 'top 70%', end: 'bottom 70%', scrub: true } });
     });
     // 단계마다 따로 등장 (한꺼번에 건너뛰어도 밀리지 않게 묶지 않음)
-    $$('.case .phase').forEach((ph) => gsap.from(ph, { opacity: 0, y: 30, duration: 0.8, ease: 'power3.out', scrollTrigger: { trigger: ph, start: 'top 88%', once: true } }));
+    $$('.case .phase').forEach((ph) => gsap.from(ph, { opacity: 0, y: 30, duration: 0.8, ease: SETTLE, scrollTrigger: { trigger: ph, start: 'top 88%', once: true } }));
+
+    // 근거 그림: 위에서 아래로 열리고, 안의 그림은 조금 큰 데서 제 크기로 (한 번만. 화면 흐름 묶음은 evidence.js가 따로 등장시킴)
+    $$('.ev__zoom').filter((a) => !a.closest('.flows') && $('img', a)).forEach((a) => {
+      gsap.timeline({ scrollTrigger: { trigger: a, start: 'top 85%', once: true } })
+        .fromTo(a, { clipPath: 'inset(0% 0% 100% 0%)' }, { clipPath: 'inset(0% 0% 0% 0%)', duration: 1.1, ease: SWAP, clearProps: 'clipPath' })
+        .fromTo($('img', a), { scale: 1.08 }, { scale: 1, duration: 1.3, ease: SETTLE, clearProps: 'transform' }, 0);
+    });
+
+    // Contact: 점으로 이름을 그리지 못하는 환경에서는 글자가 한 자씩 올라옴. 연락처는 뒤따라 등장
+    const fst = { trigger: '.foot__main', start: 'top 70%', once: true };
+    if (!gl) gsap.from(SplitText.create('#foot-name', { type: 'chars', mask: 'chars' }).chars, { yPercent: 110, duration: 1.1, stagger: 0.05, ease: SETTLE, scrollTrigger: fst });
+    gsap.from('.foot__h, .foot .links li', { opacity: 0, y: 16, duration: 0.7, stagger: { each: 0.09, ease: 'power1.in' }, ease: SETTLE, scrollTrigger: fst });
 
     // 쿠폰 시뮬레이션: 화면에 처음 들어올 때 자동 재생 시작
     ScrollTrigger.create({ trigger: '.cp .sim', start: 'top 85%', once: true, onEnter: () => window.Sim?.start() });
