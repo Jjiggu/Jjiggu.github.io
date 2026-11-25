@@ -31,7 +31,7 @@
 *, *::before, *::after { box-sizing: border-box; }
 html { background: var(--navy); }
 body {
-  margin: 0; /* 바탕색은 html에만: 그 위에 요청 스트림 캔버스(#gl)가, 그 위에 본문이 놓임 */
+  margin: 0; /* 바탕색은 html에만: 그 위에 점 캔버스(#gl)가, 그 위에 본문이 놓임 */
   color: var(--ink);
   font-family: 'Pretendard', -apple-system, 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
   font-size: 1rem;
@@ -253,12 +253,12 @@ main, section[id], footer[id], .cp { scroll-margin-top: var(--nav-h); } /* 고�
 .more__detail summary:hover { color: var(--ink); }
 .more__detail .phase { margin-top: 1rem; }
 
-/* ───── footer: Contact. 흐르던 요청(점)이 다시 모여 이름이 되는 마지막 장면이라 화면 한 장을 씀 ───── */
-.foot { display: flex; flex-direction: column; min-height: 100svh; margin-top: clamp(4rem, 10vw, 8rem); padding: clamp(3rem, 7vw, 5rem) var(--pad) 2rem; border-top: 1px solid var(--line); }
+/* ───── footer: Contact. 첫 화면의 이름을 그리던 점이 다시 모여 이름이 되는 마지막 장면 ───── */
+.foot { display: flex; flex-direction: column; min-height: 78svh; margin-top: clamp(4rem, 10vw, 8rem); padding: clamp(3rem, 7vw, 5rem) var(--pad) 2rem; border-top: 1px solid var(--line); }
 .foot__main { flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: flex-start; gap: clamp(1rem, 2.5vh, 2rem); }
 .foot__h { font-size: 0.8rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--mute); }
-.foot__name { /* 첫 화면 이름과 같은 글꼴 설정 (점이 같은 방식으로 글자를 채움) */
-  font-size: min(17.2vw, 22rem); font-weight: 900; line-height: 0.92; letter-spacing: -0.05em;
+.foot__name { /* 첫 화면 이름(h1)과 같은 글꼴. 넓은 화면에서는 h1과 같은 크기까지만(제목보다 커지지 않게), 좁은 화면에서는 한 줄을 채움 */
+  font-size: min(17.2vw, 10.5rem); font-weight: 900; line-height: 0.92; letter-spacing: -0.05em;
   margin: 0 0 0 -0.04em; padding-bottom: 0.06em; white-space: nowrap;
 }
 .foot .links { margin: 0; }
@@ -886,11 +886,11 @@ body { transition: color 0.3s; }
 .cover__frame { position: relative; height: 100%; overflow: hidden; background: var(--cover-bg, var(--navy)); }
 .cover--expand .cover__img { display: block; width: 100%; height: 100%; object-fit: contain; } /* 로고까지 들어간 키 비주얼이라 자르지 않음 */
 .cover--pan .cover__img { display: block; height: 100%; width: auto; max-width: none; }
-.cover--crowd { --dot: #9db0ff; --ink: #eef0ff; --mute: #8f97cc; --cover-bg: #060916; color: var(--ink); } /* 두 모드에서 같은 어두운 장면 */
+.cover--crowd { color: var(--ink); } /* 바탕·점·글자 모두 테마 색을 따름 (바탕은 --navy, 점은 --dot) */
 .cover__crowd { position: absolute; inset: 0; width: 100%; height: 100%; }
 .cover__say { position: absolute; inset: 0; display: grid; place-content: center; gap: 1rem; padding: 0 var(--pad); text-align: center; pointer-events: none; }
-.cover__big { font-size: clamp(2.2rem, 6vw, 6rem); font-weight: 900; line-height: 1.1; letter-spacing: -0.04em; text-wrap: balance; text-shadow: 0 0 40px #060916; }
-.cover__small { justify-self: center; max-width: 34rem; font-size: clamp(1rem, 1.3vw, 1.2rem); color: color-mix(in srgb, var(--ink) 82%, transparent); text-wrap: balance; text-shadow: 0 0 20px #060916; }
+.cover__big { font-size: clamp(2.2rem, 6vw, 6rem); font-weight: 900; line-height: 1.1; letter-spacing: -0.04em; text-wrap: balance; text-shadow: 0 0 40px var(--navy); }
+.cover__small { justify-self: center; max-width: 34rem; font-size: clamp(1rem, 1.3vw, 1.2rem); color: color-mix(in srgb, var(--ink) 82%, transparent); text-wrap: balance; text-shadow: 0 0 20px var(--navy); }
 .demo__intro:not(.split) .ev__head { max-width: 46rem; }
 @media (max-width: 899px) { /* 고정 없이 이미지 비율대로, 긴 이미지는 손가락으로 밀어서 봄 */
   .cover__stage { height: auto; }
@@ -924,7 +924,6 @@ html[data-theme='light'] .project.has-accent, html[data-theme='light'] .panel.ha
 .flow__steps li.is-on::before { background: var(--sun); border-color: var(--sun); color: var(--navy); }
 
 /* 쿠폰 표지 안의 선착순 이벤트 화면 (예전 첫 화면 게이트를 옮김) */
-.cover--crowd { --sun: #ffd84a; --navy: #060916; }
 .cover__kicker { font-size: clamp(0.95rem, 1.2vw, 1.1rem); font-weight: 700; color: var(--sun); }
 .cover__gate { position: absolute; inset: 0; display: grid; place-content: center; justify-items: center; padding: 0 var(--pad); text-align: center; }
 .gate__tag { font-size: clamp(0.85rem, 1.1vw, 1rem); font-weight: 700; padding: 0.4rem 0.9rem; border: 1.5px solid currentColor; border-radius: 99px; background: color-mix(in srgb, var(--navy) 60%, transparent); }
@@ -941,11 +940,18 @@ html[data-theme='light'] .project.has-accent, html[data-theme='light'] .panel.ha
   transition: background 0.3s, color 0.3s, border-color 0.3s, box-shadow 0.3s;
 }
 .cover__gate.is-open .gate__btn { background: var(--sun); border-color: var(--sun); color: var(--navy); cursor: pointer; animation: gate-pulse 1.4s ease-out infinite; }
-.cover__gate.is-open .gate__btn:hover { background: #fff; border-color: #fff; }
-.cover__gate.is-open .gate__count { color: color-mix(in srgb, var(--ink) 30%, transparent); }
-@keyframes gate-pulse { 0% { box-shadow: 0 0 0 0 rgba(255, 216, 74, 0.6); } 100% { box-shadow: 0 0 0 26px rgba(255, 216, 74, 0); } }
+.cover__gate.is-open .gate__btn:hover { background: var(--ink); border-color: var(--ink); }
+/* 열리면 카운트다운 자리에 남은 재고가 들어옴. 끝나면(접수됐거나 매진) 흐려지고 버튼의 번짐도 멈춤 */
+.gate__left { display: none; justify-items: center; font-size: clamp(5.5rem, 17vw, 14rem); line-height: 0.95; color: var(--sun); text-shadow: 0 0 40px var(--navy); transition: color 0.4s; }
+.gate__left small { margin: 0.9rem 0 -0.2rem; font-size: clamp(0.85rem, 1.1vw, 1rem); font-weight: 700; line-height: 1.4; color: color-mix(in srgb, var(--ink) 78%, transparent); }
+.gate__left b { font-weight: inherit; }
+.cover__gate.is-open .gate__count { display: none; }
+.cover__gate.is-open .gate__left { display: grid; }
+.cover__gate.is-over .gate__left { color: color-mix(in srgb, var(--ink) 30%, transparent); }
+.cover__gate.is-over .gate__btn { animation: none; }
+@keyframes gate-pulse { 0% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--sun) 60%, transparent); } 100% { box-shadow: 0 0 0 26px color-mix(in srgb, var(--sun) 0%, transparent); } }
 .gate__hint { margin-top: 1rem; max-width: 30rem; font-size: 0.92rem; color: color-mix(in srgb, var(--ink) 78%, transparent); text-wrap: balance; text-shadow: 0 0 20px var(--navy); }
-.cover__gate :focus-visible { outline: 3px solid #fff; outline-offset: 4px; }
+.cover__gate :focus-visible { outline: 3px solid var(--ink); outline-offset: 4px; }
 @media (max-width: 899px), (prefers-reduced-motion: reduce) { /* 고정 없이(모션 줄이기 포함) 시나리오 문구와 이벤트 화면을 위아래로 */
   .cover--crowd .cover__stage { height: auto; }
   .cover--crowd .cover__frame { height: auto; display: grid; gap: 14vh; padding: 16vh 0; }
@@ -1094,26 +1100,12 @@ html.lite .sim__trace { -webkit-backdrop-filter: none; backdrop-filter: none; ba
 .gh-sec li img { width: 15px; height: 15px; }
 
 
-/* ═════════ 요청 스트림 · 모션 (main.js · fx.js · stream.js) ═════════
-   주인공은 하나, 점(요청)의 흐름입니다: 모여서 이름이 되고, 본문 양옆으로 흐르다, Contact에서 다시 모입니다.
-   나머지 움직임은 그 흐름을 거드는 정도로만: 글이 드러나는 순서, 누를 수 있는 것의 반응. */
-
-/* 본문 양옆의 요청 줄기 (stream.js). 점 무늬를 깐 좁은 띠 두 겹을 transform·opacity로만 움직임 (다시 그리기 없음) */
-.lane { position: fixed; top: 0; bottom: 0; left: var(--lane-x, 8px); z-index: -1; width: var(--lane-w, 44px); overflow: hidden; pointer-events: none; }
-.lane--r { left: auto; right: var(--lane-x, 8px); }
-.lane i { position: absolute; left: 0; right: 0; top: -640px; bottom: -640px; background: 0 0 / 100% 640px repeat-y; opacity: 0; will-change: transform, opacity; }
-html.lite .lane i:first-child { display: none; } /* 가벼운 모드: 먼 점 한 겹을 뺌 */
+/* ═════════ 모션 (main.js · fx.js · stream.js) ═════════
+   첫 화면에서는 점이 모여 이름이 되고 그 주위를 점 몇 개가 떠다닙니다. Contact에서 이름을 그리던 점이 다시 모입니다.
+   본문을 읽는 구간에는 계속 움직이는 것을 두지 않고, 글이 드러나는 순서와 누를 수 있는 것의 반응만 둡니다. */
 
 /* 첫 화면 연출을 틀 환경(html.intro): 글이 먼저 보였다 사라지지 않게 main.js가 넘겨받을 때까지 가려 둠 */
 html.intro .hero__in > *, html.intro .hero__cue { visibility: hidden; }
-
-/* 요청 카운터: 점이 모이는 동안 오른쪽 위(요청 줄기가 들어오는 자리)에서 수를 세고, 다 모이면 빠짐 */
-.hero__count { position: absolute; right: var(--pad); top: calc(var(--nav-h) + clamp(1.25rem, 5vh, 3.5rem)); display: grid; justify-items: end; gap: 0.35rem; pointer-events: none; }
-.hero__count[hidden] { display: none; }
-.hero__count .num { display: block; overflow: clip; font-size: clamp(3.2rem, 8.6vw, 8.6rem); letter-spacing: -0.01em; color: color-mix(in srgb, var(--ink) 26%, transparent); }
-.hero__count .num b { display: block; font-weight: inherit; }
-.hero__count small { font-size: 0.78rem; font-weight: 700; letter-spacing: 0.06em; color: var(--mute); }
-@media (max-width: 720px) { .hero__count { top: calc(var(--nav-h) + 1rem); } }
 
 /* 섹션 제목 위의 가는 선: 요청 하나(점)가 왼쪽에서 오른쪽으로 지나가며 선을 그어 새 장을 엶 (값은 main.js가 --rule, --tip으로) */
 .block > .sec-head { position: relative; --head-w: calc(100vw - 2 * var(--pad)); }

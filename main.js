@@ -63,7 +63,7 @@
   $('#line').textContent = D.line;
   $('#hero-links').innerHTML = links;
   $('#foot-links').innerHTML = links; // 첫 화면과 같은 아이콘 목록 (주소와 번호는 마우스를 올리면 보임)
-  $('#foot-name').textContent = D.name; // 마지막 장면: 흩어져 흐르던 점이 다시 모여 만드는 이름 (stream.js)
+  $('#foot-name').textContent = D.name; // 마지막 장면: 첫 화면의 이름을 그리던 점이 다시 모여 만드는 이름 (stream.js)
 
   // 한눈에 보기: 본문과 같은 순서, 카드마다 대표 수치 하나
   const heads = D.projects.flatMap((p) => [].concat(p.headline || []).map((h) => ({ p, h })));
@@ -109,6 +109,7 @@
              <p class="gate__tag">${esc(c.gate.tag)}</p>
              <p class="gate__title">${esc(c.gate.wait)}</p>
              <p class="gate__count num" aria-hidden="true"><span>00</span><i>:</i><span class="gate__sec">05</span></p>
+             <p class="gate__left" aria-hidden="true"><small>${esc(c.gate.left)}</small><b class="num">${c.gate.stock.toLocaleString('en-US')}</b></p>
              <button type="button" class="gate__btn" disabled>${esc(c.gate.btn)}</button>
              <p class="gate__hint">${esc(c.gate.hint)}</p>
            </div>` : ''}`
@@ -147,7 +148,7 @@
     window.showHero?.(); clearTimeout(window.introTimer); // 첫 화면 연출 없이 바로 보여 줌
     if (gate) {
       const btn = $('.gate__btn', gate);
-      gate.classList.add('is-open'); btn.disabled = false; $('.gate__title', gate).textContent = G.open; $('.gate__sec', gate).textContent = '00';
+      gate.classList.add('is-open'); btn.disabled = false; $('.gate__title', gate).textContent = G.open; // 카운트다운과 재고 소진 없이 바로 열어 둠
       btn.addEventListener('click', () => { sendMine(); $('#coupon .cp').scrollIntoView(); });
     }
     return;
@@ -229,7 +230,7 @@
         ctx.globalAlpha = 1; ctx.strokeStyle = ctx.fillStyle = st.sun; ctx.lineWidth = 2;
         ctx.beginPath(); ctx.arc(x, y, 6, 0, 6.283); ctx.fill();
         ctx.beginPath(); ctx.arc(x, y, rr, 0, 6.283); ctx.stroke();
-        ctx.font = '700 14px Pretendard, sans-serif'; ctx.textAlign = 'left'; ctx.fillText('내 요청', x + rr + 8, y + 5);
+        ctx.font = '700 14px Pretendard, sans-serif'; ctx.textAlign = 'left'; ctx.fillText(G.mine, x + rr + 8, y + 5);
       }
       requestAnimationFrame(loop);
     }
@@ -238,21 +239,38 @@
     requestAnimationFrame(loop);
     return st;
   }
-  // 히어로는 hero-gl.js(Three.js)가 이름을 점으로 그림
+  // 첫 화면의 이름은 stream.js(Three.js)가 점으로 그림
   const crowds = new Map($$('.cover__crowd').map((cv) => [cv, swarm(cv, (W, H) => ({ cx: W / 2, cy: H / 2, spread: Math.min(W * 0.42, H * 0.95), alpha: 0.6 }), 1000)]));
 
   const gateCtl = gate && (() => {
-    const btn = $('.gate__btn', gate), sec = $('.gate__sec', gate), title = $('.gate__title', gate);
+    /* 이벤트 한 판: 카운트다운 → 열림(남은 재고가 실측 소진 시간 동안 줄어듦) → 그 안에 누르면 접수(202), 못 누르면 매진(409) → 버튼이 이벤트를 다시 엶 */
+    const btn = $('.gate__btn', gate), sec = $('.gate__sec', gate), title = $('.gate__title', gate), left = $('.gate__left b', gate), hint = $('.gate__hint', gate);
     const cvs = $('#coupon .cover__crowd'), sw = crowds.get(cvs);
-    let started = false, fired = false;
+    const say = (t) => gsap.to(title, { duration: 0.8, scrambleText: { text: t, chars: '01', speed: 0.6 } });
+    let started = false, fired = false, drain = null;
+    const over = (t, note) => { gate.classList.add('is-over'); say(t); hint.textContent = note; btn.textContent = G.retry; }; // 끝남: 접수됐거나 매진
     const open = () => {
-      gate.classList.add('is-open'); btn.disabled = false;
-      gsap.to(title, { duration: 0.8, scrambleText: { text: G.open, chars: '01', speed: 0.6 } });
+      gate.classList.add('is-open'); btn.disabled = false; btn.removeAttribute('aria-disabled'); say(G.open);
       gsap.fromTo(btn, { scale: 0.9 }, { scale: 1, duration: 0.7, ease: 'elastic.out(1, 0.45)' });
+      const o = { v: G.stock };
+      drain = gsap.to(o, { v: 0, duration: G.drain, ease: 'none', onUpdate: () => (left.textContent = Math.ceil(o.v).toLocaleString('en-US')), onComplete: () => over(G.soldout, G.fact) });
+    };
+    const count = (n) => { // n초 뒤에 엶
+      sec.textContent = String(n).padStart(2, '0');
+      const iv = setInterval(() => {
+        sec.textContent = String(--n).padStart(2, '0');
+        gsap.fromTo(sec, { yPercent: -45, opacity: 0 }, { yPercent: 0, opacity: 1, duration: 0.35, ease: 'power3.out' });
+        if (n <= 0) { clearInterval(iv); open(); }
+      }, 1000);
     };
     btn.addEventListener('click', () => {
-      if (fired) return;
-      fired = true;
+      if (fired || !gate.classList.contains('is-open')) return; // 열리기 전에는 눌러도 보내지 않음
+      if (gate.classList.contains('is-over')) { // 다시 열기: 버튼은 그대로 두고(포커스 유지) 3초 뒤 새 이벤트
+        gate.classList.remove('is-open', 'is-over'); btn.setAttribute('aria-disabled', 'true'); btn.textContent = G.btn;
+        gsap.killTweensOf(title); title.textContent = G.wait; hint.textContent = G.hint; left.textContent = G.stock.toLocaleString('en-US');
+        return count(3);
+      }
+      fired = true; drain.kill(); // 재고가 남아 있을 때 눌렀으니 접수. 남은 재고는 그 순간에 멈춤
       const b = btn.getBoundingClientRect(), c = cvs.getBoundingClientRect();
       Object.assign(sw, { focus: { x: b.left + b.width / 2 - c.left, y: b.top + b.height / 2 - c.top }, suck: 1, me: 1 }); // 기다리던 요청이 버튼 자리로 몰림
       btn.textContent = G.sent;
@@ -262,46 +280,25 @@
       // 요청 흐름 캔버스가 화면 아래쪽에 다 들어오게 (위로는 수치·판정이 보임)
       gsap.delayedCall(1.2, () => { const sim = $('#coupon .cp .sim'); lenis.scrollTo(sim, { offset: -Math.max(innerHeight - sim.offsetHeight - 24, 72), duration: 1.6 }); });
       gsap.delayedCall(4, () => {
-        Object.assign(sw, { focus: null, suck: 0, me: 0 }); fired = false; btn.textContent = G.again;
+        Object.assign(sw, { focus: null, suck: 0, me: 0 }); fired = false; over(G.done, G.hint);
         gsap.to(gate, { autoAlpha: 1, scale: 1, duration: 0.4 });
       });
     });
-    return {
-      start() { // 5초 카운트다운 (한 번만)
-        if (started) return;
-        started = true;
-        let left = 5;
-        const iv = setInterval(() => {
-          sec.textContent = String(--left).padStart(2, '0');
-          gsap.fromTo(sec, { yPercent: -45, opacity: 0 }, { yPercent: 0, opacity: 1, duration: 0.35, ease: 'power3.out' });
-          if (left <= 0) { clearInterval(iv); open(); }
-        }, 1000);
-      },
-    };
+    return { start() { if (!started) { started = true; count(5); } } }; // 처음 보일 때 5초 카운트다운 (한 번만)
   })();
 
   /* ───────── 5. 나머지 모션은 폰트와 근거·데모가 모두 붙은 뒤 ───────── */
   const fonts = Promise.race([document.fonts.ready, new Promise((r) => setTimeout(r, 2500))]);
   const domReady = new Promise((r) => (document.readyState === 'loading' ? addEventListener('DOMContentLoaded', r) : r()));
-  // 요청 스트림(stream.js, 모듈이라 이 파일보다 늦게 실행됨)이 점을 다 뽑으면 그 수를, 못 쓰는 환경이면 0을 받음
+  // stream.js(모듈이라 이 파일보다 늦게 실행됨)가 점의 자리를 다 뽑으면 그 수를, 못 쓰는 환경이면 0을 받음
   Promise.all([fonts, domReady]).then(() => (window.Stream ? window.Stream.ready : 0)).then((dots) => {
-    /* 첫 화면: 주인공은 이름(점이 모여 만듦). 역할은 먼저 조용히 켜지고, 한 줄 소개와 연락처는 이름이 자리 잡을 즈음 뒤따름.
+    /* 첫 화면: 주인공은 이름(점이 모여 만듦, stream.js). 역할은 먼저 조용히 켜지고, 한 줄 소개와 연락처는 이름이 자리 잡을 즈음 뒤따름.
        점으로 그리지 못하는 환경에서는 글자가 한 자씩 올라옴. 메뉴는 처음부터 보이고 눌림 */
     const gl = dots > 0 && document.documentElement.classList.contains('gl-hero');
     const T = gl ? window.Stream.intro : 0.9; // 이름이 자리 잡는 시각(초)
     const hero = gsap.timeline({ defaults: { ease: SETTLE } });
     hero.from('.hero__role', { opacity: 0, duration: 0.7, ease: 'none' }, 0.15);
-    if (gl) {
-      // 요청 카운터: 모여드는 점의 수를 세다가, 다 모이면 강조색으로 바뀌고 위로 빠짐
-      const box = $('#count'), num = $('b', box), o = { v: 0 };
-      box.hidden = false;
-      hero.from(box, { opacity: 0, duration: 0.4, ease: 'none' }, 0)
-        .to(o, { v: dots, duration: T, ease: 'power2.out', onUpdate: () => (num.textContent = Math.round(o.v).toLocaleString('en-US')) }, 0)
-        .to($('.num', box), { color: getComputedStyle(box).getPropertyValue('--sun').trim(), duration: 0.25, ease: 'none' }, T - 0.1)
-        .to(num, { yPercent: -105, duration: 0.6, ease: 'power3.in' }, T + 0.45)
-        .to($('small', box), { opacity: 0, duration: 0.3, ease: 'none' }, T + 0.45)
-        .set(box, { display: 'none' });
-    } else {
+    if (!gl) {
       const name = SplitText.create('#name', { type: 'chars', mask: 'chars' });
       hero.from(name.chars, { yPercent: 110, duration: 1.1, stagger: 0.08 }, 0);
     }
@@ -369,7 +366,7 @@
       mm.add('(min-width: 900px)', () => {
         const pan = () => (img ? Math.max(img.offsetWidth - innerWidth, 0) : 0);
         const len = { pan: () => pan() + innerHeight * 0.4, crowd: () => innerHeight * (gate ? 2 : 0.9), expand: () => innerHeight * 0.9 }[type];
-        // 표지가 화면을 다 덮은 동안에는 그 뒤의 요청 스트림을 그리지 않음 (expand·crowd는 1, pan은 0.25에서 다 펼쳐짐. 화면이 실제로 따라온 시점 기준)
+        // 표지가 화면을 다 덮은 동안에는 그 뒤의 점 캔버스(stream.js)를 그리지 않음 (expand·crowd는 1, pan은 0.25에서 다 펼쳐짐. 화면이 실제로 따라온 시점 기준)
         const fullAt = type === 'pan' ? 0.25 : 1, hide = (on) => { if (window.Stream) window.Stream.covered = on; };
         const tl = gsap.timeline({
           onUpdate() { hide(this.scrollTrigger.isActive && this.time() >= fullAt); },
