@@ -1,5 +1,5 @@
 /* 레포에서 가져온 근거 자료(실측 차트 · 구성도)를 프로젝트 아래에 붙입니다.
-   데이터는 data.js 의 project.evidence. gsap 없이도 동작합니다(모션 줄이기 환경 포함). */
+   데이터는 data.js의 project.evidence. gsap 없이도 동작합니다(모션 줄이기 환경 포함). */
 (() => {
   const D = window.DATA;
   const NS = 'http://www.w3.org/2000/svg';
@@ -124,13 +124,13 @@
     return [wrap, table];
   }
 
-  // 누르면 그 자리에서 화면 가득 커짐(fx.js 의 Flip). 스크립트가 없으면 원본이 새 탭으로 열림
+  // 누르면 그 자리에서 화면 가득 커짐(fx.js의 Flip). 스크립트가 없으면 원본이 새 탭으로 열림
   const image = (c) => [h('a', { href: c.img, target: '_blank', rel: 'noopener', className: 'ev__zoom' },
     h('img', { src: c.img, alt: c.alt, loading: 'lazy', decoding: 'async', width: c.w, height: c.h }), h('span', { textContent: '크게 보기 ⤢' }))];
 
   /* ── 동작 흐름: 캐시 무효화가 어떻게 오가는지 움직이는 도식 ──
-     선은 GSAP DrawSVG 로 그려지고, 요청·메시지(점)는 MotionPath 로 선을 따라 이동. 화면에 보일 때만 반복 재생.
-     gsap 이 없거나 모션 줄이기 환경이면 도식과 단계 목록만 보임. */
+     선은 GSAP DrawSVG로 그려지고, 요청·메시지(점)는 MotionPath로 선을 따라 이동. 화면에 보일 때만 반복 재생.
+     gsap이 없거나 모션 줄이기 환경이면 도식과 단계 목록만 보임. */
   function flow(c) {
     const box = (id, x, y, w, hh, label, sub) => `<g class="fl-node" data-n="${id}"><rect x="${x}" y="${y}" width="${w}" height="${hh}" rx="14"/><text class="fl-t" x="${x + 18}" y="${y + 30}">${label}</text>${sub ? `<text class="fl-s" x="${x + 18}" y="${y + 52}">${sub}</text>` : ''}</g>`;
     const cell = (id, x, y) => `<g class="fl-cell is-full" data-c="${id}"><rect x="${x}" y="${y}" width="78" height="26" rx="7"/><text x="${x + 39}" y="${y + 18}">주점 7</text></g>`;
@@ -210,7 +210,7 @@
     return [wrap];
   }
 
-  // 구성도는 프로젝트 첫머리에(머리말 없이), 나머지는 해당 사례 바로 밑에 붙임. 왼쪽 설명 | 오른쪽 자료, wide 는 설명 아래 전체 폭
+  // 구성도는 프로젝트 첫머리에(머리말 없이), 나머지는 해당 사례 바로 밑에 붙임. 왼쪽 설명 | 오른쪽 자료, wide는 설명 아래 전체 폭
   const kinds = { line: lineChart, bars: barCharts, image, flow, flows };
   D.projects.forEach((p) => {
     const sec = document.getElementById(p.id);

@@ -1,8 +1,8 @@
 /* global gsap, ScrollTrigger, SplitText, Flip */
-/* 길잡이와 읽기 흐름. main.js 가 내용을 그리고 기본 모션을 붙인 뒤에 얹습니다.
+/* 길잡이와 읽기 흐름. main.js가 내용을 그리고 기본 모션을 붙인 뒤에 얹습니다.
    여기 있는 것은 모두 용도가 있습니다: 지금 어디인지(메뉴 표시·오른쪽 목차), 어디서 온 그림인지(이미지 크게 보기),
    무엇부터 읽을지(줄 단위 등장). 꾸밈만을 위한 움직임은 두지 않습니다.
-   모션 줄이기 환경이나 gsap 이 없을 때는 1~2번이 움직임 없이 동작합니다. */
+   모션 줄이기 환경이나 gsap이 없을 때는 1~2번이 움직임 없이 동작합니다. */
 (() => {
   const D = window.DATA;
   const $ = (s, r = document) => r.querySelector(s);
@@ -27,7 +27,7 @@
     pill.style.opacity = a ? 1 : 0;
     if (a) { pill.style.width = a.offsetWidth + 'px'; pill.style.transform = `translateX(${a.offsetLeft}px)`; }
   };
-  // 화면 가운데 선에 걸친 구간을 IntersectionObserver 로 받음 (스크롤 프레임마다 위치를 재지 않음)
+  // 화면 가운데 선에 걸친 구간을 IntersectionObserver로 받음 (스크롤 프레임마다 위치를 재지 않음)
   const html = document.documentElement, isLite = () => html.classList.contains('lite');
   const setNav = (n) => { if (n === navOn) return; navOn = n; navLinks.forEach((a, i) => (i === n ? a.setAttribute('aria-current', 'true') : a.removeAttribute('aria-current'))); movePill(); };
   // 목차와 진행 막대는 지금 읽는 프로젝트의 대표색을 따름 (프로젝트 밖에서는 기본 강조색)
@@ -39,7 +39,7 @@
   midline([...navSecs.slice(0, -1), $('.hero')], // 첫 화면에서는 메뉴 표시 없음
     (i, on) => { if (on) setNav(i < navSecs.length - 1 ? i : -1); });
   midline(projSecs, (i, on) => { if (on) setProj(i); else if (projOn === i) setProj(-1); });
-  // Contact 는 화면 가운데까지 못 올라오므로 맨 아랫줄이 보이면 켬
+  // Contact는 화면 가운데까지 못 올라오므로 맨 아랫줄이 보이면 켬
   new IntersectionObserver(([e]) => { if (e.isIntersecting) setNav(navSecs.length - 1); else if (navOn === navSecs.length - 1) setNav(navSecs.length - 2); }).observe($('.foot__base'));
   addEventListener('resize', movePill);
   document.fonts.ready.then(movePill);
@@ -95,13 +95,13 @@
   if (!motion) return;
   gsap.registerPlugin(ScrollTrigger, SplitText, Flip);
 
-  /* ───────── 3. 읽기 흐름: main.js 의 고정 구간이 자리 잡은 뒤 ───────── */
+  /* ───────── 3. 읽기 흐름: main.js의 고정 구간이 자리 잡은 뒤 ───────── */
   const start = () => {
     // 첫 화면 글은 스크롤하면 물러나 다음 구역에 시선을 넘김
     gsap.to('.hero__in', { opacity: 0, ease: 'none', scrollTrigger: { trigger: '.hero', start: 'top top', end: 'bottom 35%', scrub: true } });
     gsap.to('.hero__cue', { opacity: 0, ease: 'none', scrollTrigger: { trigger: '.hero', start: 'top top', end: '+=160', scrub: true } });
 
-    // 줄 단위 목록(그 밖의 작업): 본문의 다른 등장(main.js 의 섹션 제목)과 같은 값
+    // 줄 단위 목록(그 밖의 작업): 본문의 다른 등장(main.js의 섹션 제목)과 같은 값
     const rows = $$('.more__item');
     gsap.set(rows, { opacity: 0, y: 24 });
     ScrollTrigger.batch(rows, { start: 'top 90%', once: true, onEnter: (els) => gsap.to(els, { opacity: 1, y: 0, duration: 0.8, stagger: 0.08, ease: 'power3.out' }) });
