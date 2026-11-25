@@ -1,8 +1,8 @@
 /* NoWait 체험: 휴대폰 화면을 누르면 브라우저 안의 작은 백엔드 모델이 실제 백엔드 코드와 같은 순서로 움직입니다.
    - 멱등 처리: IdempotencyService.execute (SET NX → action → 커밋 뒤 응답 저장, 처리 중 1분 / 완료 3분)
    - 대기열: Redis Sorted Set (ZADD NX, ZRANK, ZREM)
-   - 메뉴 캐시: user-api 의 Caffeine 로컬 캐시 + Redis Pub/Sub 무효화, 재구독 시 전체 비움
-   ponytail: Redis·MySQL 은 Map 과 배열로 흉내 낸 모델. 주점·메뉴·대기 팀은 예시 데이터.
+   - 메뉴 캐시: user-api의 Caffeine 로컬 캐시 + Redis Pub/Sub 무효화, 재구독 시 전체 비움
+   ponytail: Redis·MySQL은 Map과 배열로 흉내 낸 모델. 주점·메뉴·대기 팀은 예시 데이터.
    자체 점검: `node nowait-demo.js` */
 (() => {
   const STORE = {
@@ -70,7 +70,7 @@
       }
       let res;
       try { res = await action(); } catch (e) { redis.del(key); throw e; } // 실패한 요청은 같은 키로 다시 시도 가능
-      redis.set(key, fp + '::' + JSON.stringify(res), COMPLETED_TTL); // action 이 돌아온 뒤 = 커밋 뒤
+      redis.set(key, fp + '::' + JSON.stringify(res), COMPLETED_TTL); // action이 돌아온 뒤 = 커밋 뒤
       return res;
     }
 
@@ -152,16 +152,16 @@
       emit('mysql', 'UPDATE menus SET is_sold_out = ?, COMMIT');
       emit('redis', `PUBLISH cache:menus invalidate:${STORE.id} → 구독자 ${subscribed ? 1 : 0}`);
       if (subscribed) { cache.delete(String(STORE.id)); emit('user-api', '무효화 메시지 수신 → 로컬 캐시에서 해당 주점 키 삭제'); }
-      else emit('user-api', '구독 연결이 끊겨 무효화 메시지 유실 (Pub/Sub 은 Fire-and-Forget, 재전송 없음)');
+      else emit('user-api', '구독 연결이 끊겨 무효화 메시지 유실 (Pub/Sub은 Fire-and-Forget, 재전송 없음)');
       return m.soldOut;
     }
     function setSubscribed(on) {
       subscribed = on;
-      if (on) { cache.clear(); emit('user-api', '재구독 성공 → 로컬 캐시 전체 비움 (방어적 캐시 클리어)'); }
+      if (on) { cache.clear(); emit('user-api', '재구독 성공 → 로컬 캐시 전체 비움 (놓친 무효화 메시지 대비)'); }
       else emit('user-api', 'Redis Pub/Sub 연결 끊김');
     }
 
-    /* ── user-api: 테이블 주문 (OrderService.createOrder 와 같은 순서) ── */
+    /* ── user-api: 테이블 주문 (OrderService.createOrder와 같은 순서) ── */
     const signatureOf = (tableId, items) => { // 실제 코드는 MD5. 여기서는 같은 입력을 짧은 해시로
       const raw = `${STORE.code}-${tableId}-` + items.slice().sort((a, b) => a.menuId - b.menuId).map((i) => `${i.menuId}:${i.quantity}`).join(',');
       let h = 2166136261;
@@ -178,7 +178,7 @@
       if (db.orders.some((o) => o.signature === signature && now() - o.createdAt < 2000)) throw new HttpError(400, 'order003 2초 내 같은 장바구니 중복 주문');
       emit('mysql', 'BEGIN, INSERT INTO user_order (status=WAITING_FOR_PAYMENT)');
       await wait(txMs);
-      emit('mysql', 'SELECT … FROM menus WHERE id IN (…)  ← 캐시를 거치지 않고 DB 에서 품절 재확인');
+      emit('mysql', 'SELECT … FROM menus WHERE id IN (…)  ← 캐시를 거치지 않고 DB에서 품절 재확인');
       const lines = items.map((i) => ({ ...i, ...db.menus.find((m) => m.id === i.menuId) }));
       const sold = lines.find((l) => l.soldOut);
       if (sold) { emit('mysql', 'ROLLBACK (앞서 INSERT 한 주문 포함)'); throw new HttpError(409, `menu012 ${sold.name} 품절`); }
@@ -193,7 +193,7 @@
     function updateOrderStatus(orderId, status) {
       emit('http', `PATCH /admin/orders/status/${orderId}  {"orderStatus":"${status}"}`);
       const o = db.orders.find((x) => x.id === orderId);
-      if (!NEXT[o.status].includes(status)) throw new HttpError(0, `order009 ${o.status} → ${status} 는 허용되지 않는 상태 전이`);
+      if (!NEXT[o.status].includes(status)) throw new HttpError(0, `order009 ${o.status} → ${status} 변경은 허용되지 않음`);
       o.status = status;
       emit('mysql', `UPDATE user_order SET status = ${status}, COMMIT`);
       if (status === 'COOKED') { // 커밋 뒤 CookingCompleteEvent → 인기 메뉴 집계
@@ -249,7 +249,7 @@
       const items = [{ menuId: 2, quantity: 2 }];
       const o1 = await b.createOrder(5, '체험', items, 24000);
       await assert.rejects(b.createOrder(5, '체험', items, 24000), (e) => e.status === 400);
-      b.setSubscribed(false); b.toggleSoldOut(3); // 캐시는 옛 값, DB 는 품절
+      b.setSubscribed(false); b.toggleSoldOut(3); // 캐시는 옛 값, DB는 품절
       assert.strictEqual(b.getMenus()[2].soldOut, false);
       await assert.rejects(b.createOrder(5, '체험', [{ menuId: 3, quantity: 1 }], 8000), (e) => e.status === 409);
       assert.strictEqual(b.db.orders.length, 1);

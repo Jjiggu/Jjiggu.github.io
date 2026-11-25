@@ -1,6 +1,6 @@
 /* Gasip 체험 화면: 전체 리뷰 목록 → 리뷰 상세(좋아요·댓글) → 리뷰 작성, 그리고 조회 방식 세 가지 비교.
    휴대폰 화면은 Gasip 프론트엔드(GASIP-PROJECT/gasip-frontend)의 색·크기·문구를 본떠 다시 만든 것이고,
-   오른쪽이 gasip-demo.js 의 조회 모델입니다. */
+   오른쪽이 gasip-demo.js의 조회 모델입니다. */
 (() => {
   const host = document.querySelector('#gasip .demo-slot');
   if (!host || !window.GasipBoard) return;
@@ -53,7 +53,7 @@
         <ol class="bk__log gs-log" id="gs-log" data-lenis-prevent aria-live="polite"></ol>
       </div>
     </div>
-    <details class="nw__credit"><summary>화면 출처와 안내</summary><p>화면 디자인과 앱은 Gasip 팀의 디자이너와 프론트엔드 개발자들이 만들었습니다(<a href="https://github.com/GASIP-PROJECT/gasip-frontend" target="_blank" rel="noopener">GASIP-PROJECT/gasip-frontend</a>). 여기서는 그 화면을 본떠 다시 그렸고 실제 서버에는 연결되지 않습니다. 리뷰와 댓글 내용, 강의, 교수, 닉네임은 예시 데이터입니다. 스캔한 행 수는 브라우저에서 시뮬레이션으로 계산한 값입니다. 조회 방식을 화면에서 고르는 기능은 이 체험에만 있고 글쓰기의 교수 검색과 답글과 신고는 생략했습니다.</p></details>`;
+    <details class="nw__credit"><summary>화면 출처와 안내</summary><p>화면 디자인과 앱은 Gasip 팀의 디자이너와 프론트엔드 개발자들이 만들었습니다(<a href="https://github.com/GASIP-PROJECT/gasip-frontend" target="_blank" rel="noopener">GASIP-PROJECT/gasip-frontend</a>). 여기서는 그 화면을 본떠 다시 그렸고 실제 서버에는 연결되지 않습니다. 리뷰와 댓글 내용, 강의, 교수, 닉네임은 예시 데이터입니다. 스캔한 행 수는 브라우저에서 시뮬레이션으로 계산한 값입니다. 조회 방식을 화면에서 고르는 기능은 이 체험에만 있고 글쓰기의 교수 검색, 답글, 신고 기능은 뺐습니다.</p></details>`;
   host.append(root);
 
   const $ = (s) => root.querySelector(s);
@@ -190,7 +190,7 @@
       ui.from = ui.view; ui.post = board.post(+t.dataset.id); ui.view = 'detail';
       stateOf(ui.post).views++;
       log(`GET /boards/details/${ui.post.id}`, 'http');
-      log('SELECT … FROM board WHERE post_id = ? → PK 로 1행, 조회수 +1');
+      log('SELECT … FROM board WHERE post_id = ? → PK로 1행, 조회수 +1');
       opener = t; syncCard(ui.post); drawOver(true);
     }
     else if (act === 'like') { const s = stateOf(ui.post); s.liked = !s.liked; const keep = over.querySelector('.gd-input input')?.value; log(`${s.liked ? '좋아요' : '좋아요 취소'} (글 #${fmt(ui.post.id)})`, 'http'); log(`${s.liked ? 'INSERT INTO' : 'DELETE FROM'} likes … → 1행`); syncCard(ui.post); drawOver(); if (keep) over.querySelector('.gd-input input').value = keep; over.querySelector('[data-act="like"]').focus(); }

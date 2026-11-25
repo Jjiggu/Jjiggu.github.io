@@ -1,6 +1,6 @@
 /* NoWait 체험 화면: 손님 휴대폰 · 서버 안 · 운영자 화면. 원격 줄서기와 테이블 주문 두 흐름.
    휴대폰과 운영자 화면은 NoWait 프론트엔드(GTable/NoWait_FE)의 색·문구·배치를 본떠 다시 만든 것이고,
-   가운데가 nowait-demo.js 의 백엔드 모델입니다. 화면의 문구는 프론트 레포 원문을 따랐습니다. */
+   가운데가 nowait-demo.js의 백엔드 모델입니다. 화면의 문구는 프론트 레포 원문을 따랐습니다. */
 (() => {
   const host = document.querySelector('#nowait .demo-slot');
   if (!host || !window.NoWaitBackend) return;
@@ -29,7 +29,7 @@
       </div>
       <div class="nw__col nw__admin"><p class="nw__label">운영자 화면</p><div class="ipad"><div class="ipad__screen admin" id="nw-admin" data-lenis-prevent></div></div></div>
     </div>
-    <details class="nw__credit"><summary>화면 출처와 안내</summary><p>화면 디자인과 프론트엔드는 NoWait 팀의 디자이너와 프론트엔드 개발자들이 만들었습니다(<a href="https://github.com/GTable/NoWait_FE" target="_blank" rel="noopener">GTable/NoWait_FE</a>). 여기서는 그 화면을 본떠 다시 그렸습니다. 실제 서버에 연결되지 않으며 실제 송금도 일어나지 않습니다. 음식 사진은 위키미디어 공용의 CC0(퍼블릭 도메인) 사진입니다: <a href="https://commons.wikimedia.org/wiki/File:Garaetteok_Tteokbokki.jpg" target="_blank" rel="noopener">Garaetteok Tteokbokki</a>(Kimseoeun2023079825), <a href="https://commons.wikimedia.org/wiki/File:Mozzarella-kimchi-buchimgae.jpg" target="_blank" rel="noopener">Mozzarella-kimchi-buchimgae</a>(b00142), <a href="https://commons.wikimedia.org/wiki/File:Eomuk-tang_2.jpg" target="_blank" rel="noopener">Eomuk-tang 2</a>(bigtorica), <a href="https://commons.wikimedia.org/wiki/File:Korean_corn_with_cheese.jpg" target="_blank" rel="noopener">Korean corn with cheese</a>(Fumikas Sagisavas). 카카오페이, 토스, 네이버페이 로고는 각 회사의 상표입니다. 주점과 메뉴, 대기 팀, 주점 위치와 소개글, 공지, 손님 이름은 모두 예시 데이터이고 전화번호는 가렸습니다. 원격 줄서기 요청의 멱등키(Idempotency-Key 헤더)는 이 체험 화면이 생성해 보냅니다. 운영자 화면에서 통계와 입금계좌 설정, 확인 창은 생략했습니다.</p></details>`;
+    <details class="nw__credit"><summary>화면 출처와 안내</summary><p>화면 디자인과 프론트엔드는 NoWait 팀의 디자이너와 프론트엔드 개발자들이 만들었습니다(<a href="https://github.com/GTable/NoWait_FE" target="_blank" rel="noopener">GTable/NoWait_FE</a>). 여기서는 그 화면을 본떠 다시 그렸습니다. 실제 서버에는 연결되지 않고, 송금도 이뤄지지 않습니다. 음식 사진은 위키미디어 공용의 CC0(퍼블릭 도메인) 사진입니다: <a href="https://commons.wikimedia.org/wiki/File:Garaetteok_Tteokbokki.jpg" target="_blank" rel="noopener">Garaetteok Tteokbokki</a>(Kimseoeun2023079825), <a href="https://commons.wikimedia.org/wiki/File:Mozzarella-kimchi-buchimgae.jpg" target="_blank" rel="noopener">Mozzarella-kimchi-buchimgae</a>(b00142), <a href="https://commons.wikimedia.org/wiki/File:Eomuk-tang_2.jpg" target="_blank" rel="noopener">Eomuk-tang 2</a>(bigtorica), <a href="https://commons.wikimedia.org/wiki/File:Korean_corn_with_cheese.jpg" target="_blank" rel="noopener">Korean corn with cheese</a>(Fumikas Sagisavas). 카카오페이, 토스, 네이버페이 로고는 각 회사의 상표입니다. 주점과 메뉴, 대기 팀, 주점 위치와 소개글, 공지, 손님 이름은 모두 예시 데이터이고 전화번호는 가렸습니다. 원격 줄서기 요청의 멱등키(Idempotency-Key 헤더)는 이 체험 화면에서 만들어 보냅니다. 운영자 화면에서 통계와 입금계좌 설정, 확인 창은 생략했습니다.</p></details>`;
   host.append(root);
 
   const $ = (s) => root.querySelector(s);
@@ -179,7 +179,7 @@
         <div class="ad-col"><h4>입금 대기 <b>${wait.length}</b></h4><p class="ad-thead"><span>테이블</span><span>입금 내역</span></p><ul class="ad-rows">${wait.map((o) => `<li>${tbl(o)}<div><time>${hhmm(o.createdAt)}</time><p>${esc(o.depositorName)} <s></s> ${won(o.totalPrice)}</p></div><button type="button" data-act="ostatus" data-id="${o.id}" data-to="COOKING">입금 확인</button></li>`).join('') || '<li class="ad-none">아직 입금 대기 중인 주문이 없어요!</li>'}</ul></div>
         <div class="ad-col"><h4>조리 중 <b>${cook.length}</b></h4><p class="ad-thead ad-thead--cook"><span>테이블</span><span>메뉴</span><span>수량</span><span></span></p><ul class="ad-rows ad-rows--cook">${cook.map((o) => `<li>${tbl(o)}<div>${o.items.map((i) => `<p class="ad-line"><span>${esc(i.name)}</span><b>${i.quantity}</b></p>`).join('')}</div><button type="button" data-act="ostatus" data-id="${o.id}" data-to="COOKED">조리 완료</button></li>`).join('') || '<li class="ad-none">조리 중인 주문이 없어요!</li>'}</ul></div></div>`;
     },
-    booth() { // NoWait_FE 의 부스 관리: 메뉴 관리 | 부스 관리 하위 탭 (입금계좌 설정은 체험에서 생략)
+    booth() { // NoWait_FE의 부스 관리: 메뉴 관리 | 부스 관리 하위 탭 (입금계좌 설정은 체험에서 생략)
       const menu = st.bt === 'menu';
       return `<div class="ad-bar"><div>${pill('bt', 'menu', st.bt, '메뉴 관리')}${pill('bt', 'info', st.bt, '부스 관리')}</div>${menu ? '' : '<button type="button" class="ad-save" data-act="saveStore">저장하기</button>'}</div>${menu ? adminMenus() : adminInfo()}`;
     },
@@ -227,7 +227,7 @@
     }
   }
 
-  // 다시 그려도 키보드 포커스 유지: 같은 id, 없으면 같은 data-act 의 같은 순번 요소로 되돌림
+  // 다시 그려도 키보드 포커스 유지: 같은 id, 없으면 같은 data-act의 같은 순번 요소로 되돌림
   let lost = null; // 처리 중 비활성화돼 못 돌려준 포커스. 다음에 그릴 때 다시 시도
   function keepFocus(paint) {
     const a = document.activeElement;
@@ -306,8 +306,8 @@
     inc: () => { st.party++; }, dec: () => { st.party--; },
     refresh: () => { log('http', 'GET /v1/users/me/waitings'); log('redis', `ZRANK ${B.queueKey} ${ME} → ${B.myRank(ME)}`); },
     register: async () => { if (await send(1, crypto.randomUUID(), st.party)) st.screen = 'success'; },
-    burst: async () => { log('user-api', '같은 Idempotency-Key 로 등록 요청 10건이 동시에 도착'); if (await send(10, crypto.randomUUID(), st.party)) st.screen = 'success'; },
-    replay: async () => { log('user-api', '처리 완료된 요청과 같은 Idempotency-Key 로 재시도 요청 도착'); await send(1, st.last.key, st.last.party); },
+    burst: async () => { log('user-api', '같은 Idempotency-Key로 등록 요청 10건이 동시에 도착'); if (await send(10, crypto.randomUUID(), st.party)) st.screen = 'success'; },
+    replay: async () => { log('user-api', '처리 완료된 요청과 같은 Idempotency-Key로 재시도 요청 도착'); await send(1, st.last.key, st.last.party); },
     askCancel: () => { st.modal = 'cancel'; }, closeModal: () => { st.modal = null; },
     cancel: () => { B.cancelWaiting(ME); st.modal = null; st.last = null; },
     enter: (t) => { B.enter(t.dataset.m); if (t.dataset.m === String(ME)) { st.last = null; if (st.flow === 'wait' && st.screen !== 'store') st.screen = 'home'; } },

@@ -14,11 +14,11 @@
   <script>
     // 저장한 선택이 있으면 그것, 없으면 기기 설정을 따름 (첫 화면이 깜빡이지 않게 그리기 전에 정함)
     (function () { var t = null; try { t = localStorage.getItem('theme'); } catch (e) {} document.documentElement.dataset.theme = t || (matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark'); })();
-    // WebGL 로 이름을 그릴 수 있으면 글자를 미리 투명하게 (깜빡임 방지). 실패하면 hero-gl.js 가 되돌림
+    // WebGL로 이름을 그릴 수 있으면 글자를 미리 투명하게 (깜빡임 방지). 실패하면 hero-gl.js가 되돌림
     // hero-gl.js(three.js 포함)가 로드에 실패하거나 4초 안에 준비되지 않으면 원래 글자를 보여 줌
     function showName() { document.documentElement.classList.remove('gl-hero'); }
     (function () { try { if (!matchMedia('(prefers-reduced-motion: reduce)').matches && document.createElement('canvas').getContext('webgl2')) { document.documentElement.classList.add('gl-hero'); window.glHeroTimer = setTimeout(showName, 4000); } } catch (e) {} })();
-    // 저사양 기기(코어·메모리 4 이하)는 처음부터 가벼운 모드: 배경 흐림을 끄고 점 개수와 해상도를 줄임. 느린 프레임이 재어져도 fx.js 가 켬
+    // 저사양 기기(코어·메모리 4 이하)는 처음부터 가벼운 모드: 배경 흐림을 끄고 점 개수와 해상도를 줄임. 느린 프레임이 재어져도 fx.js가 켬
     if ((navigator.hardwareConcurrency || 8) <= 4 || (navigator.deviceMemory || 8) <= 4) document.documentElement.classList.add('lite');
   </script>
   <link rel="preload" href="vendor/PretendardVariable.woff2" as="font" type="font/woff2" crossorigin>
@@ -54,7 +54,7 @@
         <p class="hero__intro" id="line"></p>
         <ul class="links" id="hero-links" aria-label="연락처"></ul>
       </div>
-      <a class="hero__cue" href="#overview" aria-label="아래 Summary 로 이동"><span>Scroll</span><i></i></a>
+      <a class="hero__cue" href="#overview" aria-label="아래 Summary로 이동"><span>Scroll</span><i></i></a>
     </section>
 
     <section class="overview" id="overview" aria-labelledby="h-overview">
@@ -86,7 +86,7 @@
     </div>
   </footer>
 
-  <!-- 쿠폰 프로젝트의 '직접 해 보기'. main.js 가 #coupon 의 사례 뒤에 붙인 뒤 sim.js 가 그립니다. -->
+  <!-- 쿠폰 프로젝트의 '직접 해 보기'. main.js가 #coupon의 사례 뒤에 붙인 뒤 sim.js가 그립니다. -->
   <template id="tpl-coupon-demo">
     <section class="demo cp" aria-label="선착순 쿠폰 동시성 시뮬레이션">
       <div class="demo__intro">

@@ -18,7 +18,7 @@
   themeBtn.addEventListener('click', () => {
     const next = () => setTheme(document.documentElement.dataset.theme === 'light' ? 'dark' : 'light', true);
     if (reduce || !document.startViewTransition) return next();
-    // View Transitions API: 누른 버튼 자리에서 원이 퍼지며 새 테마가 덮음 (style.css 의 ::view-transition-new)
+    // View Transitions API: 누른 버튼 자리에서 원이 퍼지며 새 테마가 덮음 (style.css의 ::view-transition-new)
     const r = themeBtn.getBoundingClientRect(), x = r.left + r.width / 2, y = r.top + r.height / 2;
     const root = document.documentElement.style;
     root.setProperty('--vt-x', x + 'px'); root.setProperty('--vt-y', y + 'px');
@@ -34,7 +34,7 @@
         : `<li class="grp${it.pick ? ' is-' + it.pick : ''}"><strong>${it.pick ? `<em>${PICK[it.pick]}</em>` : ''}${esc(it.h)}</strong>${list(it.items)}</li>`))
       .join('')}</ul>`;
 
-  // 이전 값에도 단위를 붙임 (단위가 이후 값과 다르면 data.js 의 ua)
+  // 이전 값에도 단위를 붙임 (단위가 이후 값과 다르면 data.js의 ua)
   const was = (m) => `<s>${m.a}${(m.ua ?? m.unit) && `<span>${m.ua ?? m.unit}</span>`}</s>`;
   const metric = (m) => {
     const max = m.bar ? Math.max(...m.bar) : 0;
@@ -47,7 +47,7 @@
 
   const phase = (title, items, mod = '') => (items ? `<section class="phase ${mod}"><h5>${title}</h5>${list(items)}</section>` : '');
   const chips = (xs) => `<ul class="chips">${xs.map((s) => `<li>${esc(s)}</li>`).join('')}</ul>`;
-  // 연락처 아이콘 (GitHub, LinkedIn 은 Simple Icons, 메일과 전화는 Lucide 모양)
+  // 연락처 아이콘 (GitHub, LinkedIn은 Simple Icons, 메일과 전화는 Lucide 모양)
   const ICONS = {
     github: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.3 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61-.546-1.385-1.335-1.755-1.335-1.755-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 21.795 24 17.295 24 12c0-6.63-5.37-12-12-12z"/></svg>',
     linkedin: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 0 1-2.063-2.065 2.064 2.064 0 1 1 2.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>',
@@ -99,7 +99,7 @@
       </li>`).join('')}</ul>
     </section>`;
 
-  // 표지: 프로젝트로 넘어갈 때 화면을 꽉 채우는 장면 (data.js 의 cover)
+  // 표지: 프로젝트로 넘어갈 때 화면을 꽉 채우는 장면 (data.js의 cover)
   const coverHtml = (c) => `<div class="cover cover--${c.type}" data-type="${c.type}"${c.bg ? ` style="--cover-bg:${c.bg}"` : ''}>
       <div class="cover__stage"><div class="cover__frame">${c.type === 'crowd'
         ? `<canvas class="cover__crowd" aria-hidden="true"></canvas>
@@ -135,9 +135,9 @@
 
   $('#career-list').innerHTML = D.projects.filter((p) => p.group === 'career').map(projectHtml).join('');
   $('#project-list').innerHTML = D.projects.filter((p) => p.group === 'project').map(projectHtml).join('');
-  $('#coupon .demo-slot').append($('#tpl-coupon-demo').content.cloneNode(true)); // sim.js 가 이 다음에 그림
+  $('#coupon .demo-slot').append($('#tpl-coupon-demo').content.cloneNode(true)); // sim.js가 이 다음에 그림
 
-  // 쿠폰 표지의 이벤트 화면: 버튼을 누르면 바로 아래 시뮬레이션에서 내 요청을 Redis Streams 로 흘려 보냄
+  // 쿠폰 표지의 이벤트 화면: 버튼을 누르면 바로 아래 시뮬레이션에서 내 요청을 Redis Streams로 흘려 보냄
   const gate = $('#coupon .cover__gate'), G = D.projects.find((p) => p.id === 'coupon').cover.gate;
   const sendMine = () => window.Sim?.play('stream');
 
@@ -155,8 +155,8 @@
   if (window.ScrambleTextPlugin) gsap.registerPlugin(ScrambleTextPlugin);
 
   /* ───────── 2. 부드러운 스크롤 (Lenis ↔ ScrollTrigger) ───────── */
-  const lenis = new Lenis({ anchors: true }); // 고정 메뉴 높이는 style.css 의 scroll-margin-top 이 뺌 (브라우저 해시 이동과 같은 위치)
-  window.lenis = lenis; // fx.js 가 같은 스크롤을 씀
+  const lenis = new Lenis({ anchors: true }); // 고정 메뉴 높이는 style.css의 scroll-margin-top이 뺌 (브라우저 해시 이동과 같은 위치)
+  window.lenis = lenis; // fx.js가 같은 스크롤을 씀
   lenis.on('scroll', ScrollTrigger.update);
   gsap.ticker.add((t) => lenis.raf(t * 1000));
   gsap.ticker.lagSmoothing(0);
@@ -183,11 +183,11 @@
 
   /* ───────── 4. 몰려드는 요청(점 무리) ─────────
      예전 첫 화면(쿠폰 이벤트 대기)의 점 무리. 쿠폰 표지에서 스크롤할수록 가운데로 빨려 듦.
-     place(W, H) → { cx, cy, spread, alpha }, squeeze 0~1 이 클수록 가운데로 모임. 마우스는 비켜 감. */
+     place(W, H) → { cx, cy, spread, alpha }, squeeze 0~1이 클수록 가운데로 모임. 마우스는 비켜 감. */
   function swarm(cv, place, N = 700) {
     const ctx = cv.getContext('2d'), t0 = performance.now();
     const ps = Array.from({ length: N }, (_, i) => ({ a: Math.random() * 6.283, r: 0.18 + Math.random() * 0.5, sp: (Math.random() - 0.5) * 0.5, born: (i / N) * 2600 + Math.random() * 300, x: 0, y: 0, on: false, s: 1 + Math.random() * 1.4 }));
-    // focus: 모일 지점(없으면 place 의 중심) / suck: 1 이면 focus 한 점으로 한꺼번에 빨려 듦 / me: 1 이면 focus 에 '내 요청' 표시
+    // focus: 모일 지점(없으면 place의 중심) / suck: 1 이면 focus 한 점으로 한꺼번에 빨려 듦 / me: 1 이면 focus에 '내 요청' 표시
     const st = { mx: -999, my: -999, on: true, color: '#9db0ff', sun: '#ffd84a', squeeze: 0, focus: null, suck: 0, me: 0 };
     const readColor = () => { const cs = getComputedStyle(cv); st.color = cs.getPropertyValue('--dot').trim() || st.color; st.sun = cs.getPropertyValue('--sun').trim() || st.sun; };
     readColor(); addEventListener('themechange', readColor);
@@ -307,7 +307,7 @@
         // 처음 두 장은 가로 이동 전부터 보이므로 세로 기준으로 시작
         ScrollTrigger.create(i > 1 ? { trigger: p, containerAnimation: tw, start: 'left 80%', once: true, onEnter: run } : { trigger: sec, start: 'top 60%', once: true, onEnter: run });
       });
-      // 키보드로 화면 밖 카드에 포커스가 가면 그 카드가 보이는 세로 위치로 이동 (.overview 는 overflow: clip 이라 가로로 밀리지 않음)
+      // 키보드로 화면 밖 카드에 포커스가 가면 그 카드가 보이는 세로 위치로 이동 (.overview는 overflow: clip이라 가로로 밀리지 않음)
       const onFocus = (e) => {
         const p = e.target.closest('.panel');
         if (!p || !e.target.matches(':focus-visible')) return;
@@ -335,7 +335,7 @@
         const pan = () => (img ? Math.max(img.offsetWidth - innerWidth, 0) : 0);
         const len = { pan: () => pan() + innerHeight * 0.4, crowd: () => innerHeight * (gate ? 2 : 0.9), expand: () => innerHeight * 0.9 }[type];
         const tl = gsap.timeline({ scrollTrigger: { trigger: stage, start: 'top top', end: () => '+=' + len(), pin: true, scrub: 0.6, invalidateOnRefresh: true } });
-        // expand 는 로고까지 든 키 비주얼이라 자르지 않고 카드째로 키움, 나머지는 잘린 카드가 열림
+        // expand는 로고까지 든 키 비주얼이라 자르지 않고 카드째로 키움, 나머지는 잘린 카드가 열림
         if (type === 'expand') tl.fromTo(frame, { scale: 0.74, borderRadius: 28 }, { scale: 1, borderRadius: 0, ease: 'none', duration: 1 }, 0);
         else tl.fromTo(frame, card, { ...full, duration: type === 'pan' ? 0.25 : 1 }, 0);
         if (type === 'pan') tl.to(img, { x: () => -pan(), ease: 'none', duration: 1 }, 0.2);
@@ -387,7 +387,7 @@
     ScrollTrigger.create({ trigger: '.cp .sim', start: 'top 85%', once: true, onEnter: () => window.Sim?.start() });
 
     ScrollTrigger.refresh();
-    document.addEventListener('toggle', () => ScrollTrigger.refresh(), true); // details 를 열고 닫으면 본문 높이가 바뀌어 뒤쪽 고정 구간을 다시 계산
-    window.motionReady = true; dispatchEvent(new Event('motionready')); // fx.js 는 이 뒤에 붙음 (고정 구간 계산 순서)
+    document.addEventListener('toggle', () => ScrollTrigger.refresh(), true); // details를 열고 닫으면 본문 높이가 바뀌어 뒤쪽 고정 구간을 다시 계산
+    window.motionReady = true; dispatchEvent(new Event('motionready')); // fx.js는 이 뒤에 붙음 (고정 구간 계산 순서)
   });
 })();
