@@ -30,9 +30,9 @@
   // 화면 가운데 선에 걸친 구간을 IntersectionObserver로 받음 (스크롤 프레임마다 위치를 재지 않음)
   const html = document.documentElement, isLite = () => html.classList.contains('lite');
   const setNav = (n) => { if (n === navOn) return; navOn = n; navLinks.forEach((a, i) => (i === n ? a.setAttribute('aria-current', 'true') : a.removeAttribute('aria-current'))); movePill(); };
-  // 목차와 진행 막대, 흐르는 점의 강조색은 지금 읽는 프로젝트의 대표색을 따름 (프로젝트 밖에서는 기본 강조색)
+  // 목차와 진행 막대는 지금 읽는 프로젝트의 대표색을 따름 (프로젝트 밖에서는 기본 강조색)
   const tinted = [rail, $('.progress')];
-  const tint = () => { const sec = projSecs[projOn], v = sec ? getComputedStyle(sec).getPropertyValue('--sun').trim() : ''; tinted.forEach((el) => (v ? el.style.setProperty('--sun', v) : el.style.removeProperty('--sun'))); window.Stream?.accent(v); };
+  const tint = () => { const sec = projSecs[projOn], v = sec ? getComputedStyle(sec).getPropertyValue('--sun').trim() : ''; tinted.forEach((el) => (v ? el.style.setProperty('--sun', v) : el.style.removeProperty('--sun'))); };
   addEventListener('themechange', tint);
   const setProj = (p) => { if (p === projOn) return; projOn = p; rail.classList.toggle('is-on', p >= 0); railLinks.forEach((a, i) => a.classList.toggle('is-on', i === p)); tint(); };
   const midline = (els, on) => { const io = new IntersectionObserver((es) => es.forEach((e) => on(els.indexOf(e.target), e.isIntersecting)), { rootMargin: '-50% 0px -50% 0px' }); els.forEach((e) => io.observe(e)); };

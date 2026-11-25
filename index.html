@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="ko">
+<html lang="ko" data-theme="light">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -12,12 +12,12 @@
   <meta name="twitter:card" content="summary">
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%23060916'/%3E%3Ctext x='16' y='23' font-family='system-ui,sans-serif' font-size='20' font-weight='800' text-anchor='middle' fill='%23ffd84a'%3EJ%3C/text%3E%3C/svg%3E">
   <script>
-    // 저장한 선택이 있으면 그것, 없으면 기기 설정을 따름 (첫 화면이 깜빡이지 않게 그리기 전에 정함)
-    (function () { var t = null; try { t = localStorage.getItem('theme'); } catch (e) {} document.documentElement.dataset.theme = t || (matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark'); })();
+    // 기본은 라이트 모드(html의 data-theme), 다크를 골라 저장해 둔 방문자만 다크 (첫 화면이 깜빡이지 않게 그리기 전에 정함)
+    (function () { var t = null; try { t = localStorage.getItem('theme'); } catch (e) {} document.documentElement.dataset.theme = t === 'dark' ? 'dark' : 'light'; })();
     // WebGL로 이름을 그릴 수 있으면 글자를 미리 투명하게 (깜빡임 방지). 실패하면 stream.js가 되돌림
     // stream.js(three.js 포함)가 로드에 실패하거나 4초 안에 준비되지 않으면 원래 글자를 보여 줌
     function showName() { document.documentElement.classList.remove('gl-hero'); }
-    // 첫 화면 연출(요청 수를 세는 동안 점이 모여 이름이 됨)을 틀 환경이면, 글이 먼저 보였다 사라지지 않게 그리기 전에 가려 둠.
+    // 첫 화면 연출(점이 모여 이름이 됨)을 틀 환경이면, 글이 먼저 보였다 사라지지 않게 그리기 전에 가려 둠.
     // main.js가 3초 안에 넘겨받지 못하면(스크립트 실패 등) 가린 것을 풀어 그대로 보여 줌
     function showHero() { document.documentElement.classList.remove('intro'); }
     (function () { try { if (!matchMedia('(prefers-reduced-motion: reduce)').matches) {
@@ -35,7 +35,7 @@
 <body>
   <a class="skip" href="#main">본문으로 건너뛰기</a>
   <div class="progress" aria-hidden="true"></div>
-  <!-- 요청 스트림: 점(요청)이 이름을 만들고, 본문 양옆을 따라 흐르다, Contact에서 다시 모임 (stream.js) -->
+  <!-- 점이 첫 화면의 이름을 그리고 그 주위를 떠다니다, Contact에서 다시 모여 이름이 됨. 본문에서는 꺼 둠 (stream.js) -->
   <canvas id="gl" aria-hidden="true"></canvas>
 
   <header class="nav">
@@ -65,8 +65,6 @@
         <p class="hero__intro" id="line"></p>
         <ul class="links" id="hero-links" aria-label="연락처"></ul>
       </div>
-      <!-- 첫 화면 연출: 모여드는 요청(점) 수를 셈. 다 모이면 빠짐 (main.js) -->
-      <p class="hero__count" id="count" aria-hidden="true" hidden><span class="num"><b>0</b></span><small>requests</small></p>
       <a class="hero__cue" href="#overview" aria-label="아래 Summary로 이동"><span>Scroll</span><i></i></a>
     </section>
 
@@ -91,7 +89,7 @@
   <footer class="foot" id="contact" aria-labelledby="h-contact">
     <div class="foot__main">
       <h2 class="foot__h" id="h-contact">Contact</h2>
-      <!-- 흩어져 흐르던 점이 여기서 다시 모여 이름이 됨. 이름은 h1에 이미 있어 여기서는 장식 (stream.js) -->
+      <!-- 첫 화면의 이름을 그리던 점이 여기서 다시 모여 이름이 됨. 이름은 h1에 이미 있어 여기서는 장식 (stream.js) -->
       <p class="foot__name" id="foot-name" aria-hidden="true"></p>
       <ul class="links" id="foot-links" aria-label="연락처"></ul>
     </div>
