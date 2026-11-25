@@ -268,7 +268,7 @@ window.DATA = {
       stack: ['Java 17', 'Spring Boot 3.5', 'Spring Data JPA', 'Querydsl', 'MySQL', 'Redis', 'AWS(EC2, RDS, S3, Lambda)', 'Docker', 'GitHub Actions', 'Prometheus', 'Grafana'],
       headline: { a: '59,808', b: '123', unit: '회', label: 'RDB로 향하는 메뉴 조회 쿼리 99.8% 감소', note: '1,000 rps, 60초 기준, 캐시 히트율 99.8%' },
       demo: true,
-      accent: ['#ff7a45', '#b83705'], // 프로젝트 안의 강조색 [다크, 라이트]: NoWait 주황
+      accent: ['#ff7a45', '#ff4103'], // 프로젝트 안의 강조색 [다크, 라이트]: NoWait 주황 (라이트는 NoWait 브랜드 색)
       cover: { type: 'expand', img: 'assets/nowait/service.webp', w: 2400, h: 1350, bg: '#fff', alt: 'NoWait 서비스 화면 모음: 노웨잇 로고와 “기다림 없는 즐거운 축제” 문구, 부스 목록, 메뉴, 주문, 송금, 대기 등록 화면' },
       cases: [
         {
@@ -421,7 +421,7 @@ window.DATA = {
       stack: ['Java 17', 'Spring Boot 3.1', 'Spring Data JPA', 'Querydsl', 'MySQL', 'Redis', 'AWS(EC2, RDS, CodeDeploy)', 'GitHub Actions', 'nGrinder', 'k6'],
       headline: { a: '6,271', b: '0.90', unit: 'ms', label: '리뷰 목록 조회 SQL 실행 시간', note: '게시글 100만 건 부하 테스트, OFFSET 8,300 기준' },
       demo: true,
-      accent: ['#4f9dff', '#0a5bd6'], // Gasip 파랑
+      accent: ['#4f9dff', '#007aff'], // Gasip 파랑 (라이트는 앱의 리뷰 작성 버튼 색)
       // 앱스토어 소개 화면 원본 해상도 그대로 (WebP 92%)
       cover: { type: 'pan', img: 'assets/gasip/app-screens.webp', w: 4666, h: 1400, bg: '#007aff', alt: 'Gasip 앱스토어 소개 화면 7장: 가천대학교 유일 교수님 전문 리뷰앱, 가천인들만의 커뮤니티, 교수님 리뷰 확인과 작성, 정보 공유, 전체 리뷰 화면' },
       cases: [
