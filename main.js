@@ -65,14 +65,14 @@
   $('#foot-links').innerHTML = links; // 첫 화면과 같은 아이콘 목록 (주소와 번호는 마우스를 올리면 보임)
   $('#foot-name').textContent = D.name; // 마지막 장면: 첫 화면의 이름을 그리던 점이 다시 모여 만드는 이름 (stream.js)
 
-  // 한눈에 보기: 본문과 같은 순서, 카드마다 대표 수치 하나
+  // 한눈에 보기: 본문과 같은 순서, 카드마다 대표 수치 하나. 무엇에 대한 수치인지(label)를 숫자보다 먼저 보여 줌
   const heads = D.projects.flatMap((p) => [].concat(p.headline || []).map((h) => ({ p, h })));
   $('#overview-track').innerHTML = heads
     .map(({ p, h }, i) => `<a class="panel${p.accent ? ' has-accent' : ''}" href="#${p.id}"${p.accent ? ` style="--acc-d:${p.accent[0]};--acc-l:${p.accent[1]}"` : ''}>
         <p class="panel__top"><span>${esc(p.kind)}<span class="num">${p.period}</span></span><span class="num">${i + 1} / ${heads.length}</span></p>
         <h3 class="panel__name">${esc(p.name)}</h3>
-        <div class="panel__fig num">${h.a ? was(h) : '<s style="visibility:hidden" aria-hidden="true">0</s>' /* 이전 값이 없어도 큰 숫자 높이를 옆 카드와 맞춤 */}<div><b data-count data-from="${h.a || ''}">${h.b}</b><span>${h.unit}</span></div></div>
         <p class="panel__label">${esc(h.label)}</p>
+        <div class="panel__fig num">${h.a ? was(h) : '<s style="visibility:hidden" aria-hidden="true">0</s>' /* 이전 값이 없어도 큰 숫자 높이를 옆 카드와 맞춤 */}<div><b data-count data-from="${h.a || ''}">${h.b}</b><span>${h.unit}</span></div></div>
         <p class="panel__note">${esc(h.note)}</p>
         <span class="panel__more">자세히 보기 →</span>
       </a>`)
