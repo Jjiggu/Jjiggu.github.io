@@ -1,5 +1,5 @@
 /* 첫 화면의 이름을 점으로 그리고, 그 주위에 점 몇 개를 띄워 둡니다.
-   ① 화면 밖 사방에서 모여든 점이 이름이 됨. 주위에는 느리게 떠다니는 점
+   ① 화면 밖 사방에서 모여든 점이 이름이 됨. 오른쪽 위에서는 요청 줄기가 이름 쪽으로 계속 흘러들고, 주위에는 느리게 떠다니는 점
    ② 스크롤하면 이름이 흩어지고 떠다니는 점도 사라짐
    ③ Contact에서 이름을 그리던 점이 다시 모여 이름이 됨
    Three.js(MIT)의 Points + 셰이더로 그리기 호출 한 번. 점의 자리는 시간·스크롤만으로 정해져(상태 없음) 프레임마다 CPU가 하는 일은 값 몇 개를 넘기는 것뿐.
@@ -33,7 +33,7 @@ else {
   const u = {
     uTime: { value: 0 }, uHero: { value: 0 }, uEnd: { value: 0 }, uFoot: { value: 0 }, uScroll: { value: 0 }, uVel: { value: 0 },
     uSize: { value: 2 }, uEndSize: { value: 2 }, uDpr: { value: 1 }, uHalo: { value: 3 }, uGlow: { value: 0.2 }, uPush: { value: 0 },
-    uView: v2(1, 1), uNameO: v2(), uEndO: v2(), uEndS: v2(1, 1), uMouse: v2(-9999, -9999), uMouseV: v2(), uLook: v2(),
+    uView: v2(1, 1), uNameO: v2(), uNameS: v2(1, 1), uEndO: v2(), uEndS: v2(1, 1), uMouse: v2(-9999, -9999), uMouseV: v2(), uLook: v2(),
     uInk: { value: new THREE.Color('#eef0ff') }, uSun: { value: new THREE.Color('#ffd84a') },
   };
   const material = new THREE.ShaderMaterial({
@@ -42,10 +42,10 @@ else {
     blending: THREE.CustomBlending, blendSrc: THREE.OneFactor, blendDst: THREE.OneFactor,
     vertexShader: /* glsl */ `
       uniform float uTime, uHero, uEnd, uFoot, uScroll, uVel, uSize, uEndSize, uDpr, uHalo, uPush;
-      uniform vec2 uView, uNameO, uEndO, uEndS, uMouse, uMouseV, uLook;
+      uniform vec2 uView, uNameO, uNameS, uEndO, uEndS, uMouse, uMouseV, uLook;
       attribute vec2 aEnd;   // Contact 이름 안의 자리 (글자 상자 왼쪽 위 기준)
       attribute vec4 aSeed;  // 난수: x·y 위치와 위상, z 깊이(가까울수록 크고 빠름), w 방향
-      attribute vec3 aMeta;  // x 이름으로 출발하는 시각(초), y 종류(0 떠다니는 점 · 1 이름을 그리는 점), z 강조색
+      attribute vec3 aMeta;  // x 이름으로 출발하는 시각(초), y 종류(0 떠다니는 점 · 1 이름을 그리는 점 · 2 요청 줄기), z 강조색
       varying float vAccent, vAlpha, vStretch, vCore;
       const float PI = 3.14159265;
       float arrive(float t) { float m = 1.0 - t; return 1.0 - m * m * m * m; } // 빠르게 와서 느리게 안착
@@ -69,6 +69,18 @@ else {
           alpha = mix(0.35, 0.9, depth) * (0.7 + 0.3 * sin(t * (0.5 + s.w) + s.y * 50.0)) // 천천히 깜빡임
             * (1.0 - smoothstep(0.0, 0.75, uHero)) * smoothstep(${(INTRO - 0.9).toFixed(1)}, ${(INTRO + 0.6).toFixed(1)}, t); // 이름이 자리 잡을 즈음부터 보임
           size = mix(1.6, 4.2, depth);
+        } else if (aMeta.y > 1.5) {
+          // 요청 줄기: 오른쪽 위 화면 밖에서 들어와 이름 오른쪽 끝으로 휘어 듦(3차 베지어). 스크롤하면 옅어지며 사라짐
+          float k = fract(s.y + t * mix(0.03, 0.06, depth)), m = 1.0 - k;
+          vec2 a = vec2(uView.x * 1.06, -uView.y * 0.04), b = vec2(uView.x * 0.72, uView.y * 0.26);
+          vec2 c = vec2(uView.x * 0.66, uView.y * 0.68), d = uNameO + uNameS * vec2(1.0, 0.52);
+          p = m * m * m * a + 3.0 * m * m * k * b + 3.0 * m * k * k * c + k * k * k * d;
+          vec2 tg = normalize(3.0 * m * m * (b - a) + 6.0 * m * k * (c - b) + 3.0 * k * k * (d - c));
+          float o = (s.x - 0.5) * 2.0; o *= abs(o); // 가운데가 촘촘
+          p += perp(tg) * (o * mix(uView.x * 0.1, 8.0, k) + sin(t * 0.7 + s.x * 40.0 + k * 10.0) * 7.0);
+          alpha = smoothstep(0.0, 0.12, k) * (1.0 - smoothstep(0.84, 1.0, k)) * mix(0.4, 1.0, depth)
+            * (1.0 - smoothstep(0.0, 0.75, uHero)) * smoothstep(0.2, 1.6, t); // 처음에는 서서히
+          size = mix(1.3, 3.2, depth);
         } else {
           // 화면 밖 사방의 한 점: 처음 들어오고, 스크롤하면 흩어져 나가고, Contact에서 다시 들어오는 자리
           float ang = s.x * 2.0 * PI;
@@ -162,23 +174,26 @@ else {
 
     const name = raster(h1), step = Math.max(2, Math.round(name.fs / 75)) + (lite ? 1 : 0);
     const np = pick(name, step), nName = np.length / 2;
-    const nFloat = Math.round((lite ? 120 : 280) * Math.min(1, Math.max(0.45, W / 1440))), total = nFloat + nName; // 떠다니는 점. 좁은 화면은 줄임
+    const k = Math.min(1, Math.max(0.45, W / 1440)); // 좁은 화면은 점을 줄임
+    const nFloat = Math.round((lite ? 120 : 280) * k), nRib = Math.round((lite ? 500 : 1400) * k), n0 = nFloat + nRib, total = n0 + nName; // 떠다니는 점, 요청 줄기, 이름 순
     const pos = new Float32Array(total * 3), end = new Float32Array(total * 2), seed = new Float32Array(total * 4), meta = new Float32Array(total * 3);
     for (let i = 0; i < total * 4; i++) seed[i] = Math.random();
     for (let i = 0; i < total; i++) meta[i * 3 + 2] = Math.random() < 0.06 ? 1 : 0; // 강조색 점
+    for (let i = nFloat; i < n0; i++) meta[i * 3 + 1] = 2;
     for (let i = 0; i < nName; i++) {
-      const j = nFloat + i, x = np[i * 2], y = np[i * 2 + 1];
+      const j = n0 + i, x = np[i * 2], y = np[i * 2 + 1];
       pos[j * 3] = x; pos[j * 3 + 1] = y;
       meta[j * 3] = 0.1 + Math.random() * 0.5 + (x / name.bw) * 0.3; // 왼쪽 글자부터 차례로
       meta[j * 3 + 1] = 1;
     }
+    u.uNameS.value.set(name.bw, name.bh);
     u.uSize.value = step * (name.fs < 120 ? 1.2 : 0.95); // 작은 글씨는 점을 키워야 글자가 채워져 보임
 
     // Contact 이름: 이름을 그리던 점 수만큼 자리를 뽑아 무작위로 나눠 줌
     if (endEl && endEl.offsetWidth && nName) {
       const g = raster(endEl), to = seats(g, nName), order = Array.from({ length: nName }, (_, i) => i);
       for (let i = nName - 1; i > 0; i--) { const k = (Math.random() * (i + 1)) | 0; [order[i], order[k]] = [order[k], order[i]]; }
-      for (let i = 0; i < nName; i++) { const j = nFloat + i, o = order[i]; end[j * 2] = to.at[o * 2]; end[j * 2 + 1] = to.at[o * 2 + 1]; }
+      for (let i = 0; i < nName; i++) { const j = n0 + i, o = order[i]; end[j * 2] = to.at[o * 2]; end[j * 2 + 1] = to.at[o * 2 + 1]; }
       u.uEndS.value.set(g.bw, g.bh); u.uEndSize.value = to.step * (g.fs < 120 ? 1.2 : 0.95);
     }
 
