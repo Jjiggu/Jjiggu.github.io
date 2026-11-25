@@ -16,17 +16,17 @@
     optimistic: { group: 0, set: 'DB 수준 락', name: '낙관적 락', store: 'MySQL', gate: 'version 이 같을 때만 갱신', rec: 'issued_count', stock: 50, n: 50, spread: 8, slow: 300,
       fact: '재시도가 없으면 50건 중 6건만 지급, 재시도하면 선착순이 보장되지 않아 제외' },
     pessimistic: { group: 0, set: 'DB 수준 락', name: '비관적 락', store: 'MySQL', gate: '쿠폰 행 락', rec: 'issued_count', stock: 100, n: 1000, spread: 150, slow: 3,
-      fact: '락 대기로 단순 조회 p95가 10ms → 444ms, 응답 처리량 431~704 rps' },
-    scard: { group: 0, set: 'Redis Set', name: 'SCARD + SADD', store: 'Redis', gate: '커맨드 3번 개별 실행', rec: 'Redis Set 크기', stock: 100, n: 1000, spread: 150, slow: 16,
-      fact: 'SCARD와 SADD 사이에 다른 요청의 커맨드가 끼어들어 초과 지급이 발생해 제외' },
+      fact: '락 대기로 단순 조회 p95가 10ms → 444ms, 응답 처리량 431~704 TPS' },
+    scard: { group: 0, set: 'Redis Set', name: 'SCARD + SADD', store: 'Redis', gate: '명령 3개를 따로 실행', rec: 'Redis Set 크기', stock: 100, n: 1000, spread: 150, slow: 16,
+      fact: '지급 수량을 확인하는 SCARD와 지급 대상을 등록하는 SADD 사이에 다른 요청의 명령이 실행되어 초과 지급 발생' },
     multi: { group: 0, set: 'Redis Set', name: 'MULTI/EXEC', store: 'Redis', gate: 'MULTI/EXEC 로 묶어 실행', rec: 'Redis Set 크기', stock: 100, n: 1000, spread: 150, slow: 16,
-      fact: '커맨드를 묶어 실행할 뿐 결과로 분기하지 못해, 초과 시 SREM으로 되돌리는 별도 Rollback 로직이 필요해 제외' },
+      fact: '명령을 묶어 실행할 수 있지만 실행 결과에 따른 조건 분기가 어려워 초과 지급 시 SREM으로 되돌리는 별도 롤백 로직이 필요하다고 판단해 제외' },
     watch: { group: 0, set: 'Redis Set', name: 'WATCH', store: 'Redis', gate: 'WATCH 후 MULTI/EXEC', rec: 'Redis Set 크기', stock: 100, n: 1000, spread: 150, slow: 12,
       fact: '충돌한 요청을 재처리하면서 선착순이 보장되지 않아 제외' },
     lua: { group: 0, set: 'Lua Script', name: 'Lua Script', store: 'Redis', gate: '스크립트 1번', rec: 'Redis Set 크기', stock: 100, n: 1000, spread: 150, slow: 16,
-      fact: '테스트 3회 모두 초과/중복 지급 0건, 응답 처리량 1,667~3,125 rps' },
-    pubsub: { group: 1, set: 'write-behind', name: 'Pub/Sub', store: 'Redis', gate: 'Lua 후 PUBLISH', queue: '구독자 메모리 큐', stock: 1000, n: 1500, spread: 150, slow: 8, restartAfter: 260,
-      fact: 'subscriber 프로세스를 SIGKILL로 종료하자 지급 접수 성공 응답(202)을 받은 1,000건 중 967건이 유실' },
+      fact: '테스트 3회 모두 초과, 중복 지급 0건, 응답 처리량 1,667~3,125 TPS' },
+    pubsub: { group: 1, set: 'write-behind', name: 'Pub/Sub', store: 'Redis', gate: 'Lua 후 PUBLISH', queue: 'Subscriber 메모리 큐', stock: 1000, n: 1500, spread: 150, slow: 8, restartAfter: 260,
+      fact: 'Subscriber 프로세스를 SIGKILL로 종료하자 지급 접수 성공 응답(202)을 반환한 요청 1,000건 중 967건의 지급 메시지가 유실' },
     stream: { group: 1, set: 'write-behind', name: 'Redis Streams', store: 'Redis', gate: 'Lua 한 번: XADD, SADD', queue: 'Stream', stock: 1000, n: 1500, spread: 150, slow: 40, killAt: 95, restartAfter: 36, // killAt: 여섯 번째 묶음의 INSERT·COMMIT(약 94ms)과 XACK(약 96ms) 사이 = 사례의 'DB 커밋 후 ACK 전 다운'
       fact: 'ACK를 받지 못한 메시지는 PEL에 보관되고, 재시작한 Consumer가 PEL부터 읽어 재처리. (쿠폰 ID, 회원 ID) UNIQUE 제약으로 쿠폰 중복 지급 방지' },
   };
@@ -111,7 +111,7 @@
       const killAt = key === 'pubsub' ? 216 + rand() * 94 : S.killAt;
       at(killAt, () => {
         st.alive = false; busy = false;
-        if (key === 'pubsub') { [...(cur ? [cur] : []), ...memQ.splice(0)].forEach((r) => { r.lost = true; st.lost++; }); cur = null; tr(null, 'sys', `SIGKILL: 구독자 메모리 큐의 ${st.lost}건이 프로세스와 함께 유실됨`, true); }
+        if (key === 'pubsub') { [...(cur ? [cur] : []), ...memQ.splice(0)].forEach((r) => { r.lost = true; st.lost++; }); cur = null; tr(null, 'sys', `SIGKILL: Subscriber 메모리 큐의 ${st.lost}건이 프로세스와 함께 유실됨`, true); }
         else { st.meInPel = pel.some((r) => r.me); tr(null, 'sys', pel[0]?.stored ? `SIGKILL: ${pel.length}건은 DB 커밋까지 끝났지만 ACK 전이라 PEL 에 남음` : `SIGKILL: 처리 중이던 ${pel.length}건은 ACK 전이라 PEL 에 남음`, true); }
       });
       at(killAt + S.restartAfter, () => {
@@ -155,7 +155,7 @@
         const n = ++st.recorded;
         if (n <= S.stock) { tr(r, 'eval', `MULTI, SADD, SCARD, EXEC → Set 크기 ${n}`); return finish(r, 'ok'); }
         tr(r, 'eval', `MULTI, SADD, SCARD, EXEC → Set 크기 ${n} (재고 초과)`, true);
-        at(st.now + gap(), () => redis(0.02, () => { st.recorded--; st.rollbacks++; tr(r, 'write', `SREM 으로 Rollback → Set 크기 ${st.recorded}`); finish(r, 'soldout'); }));
+        at(st.now + gap(), () => redis(0.02, () => { st.recorded--; st.rollbacks++; tr(r, 'write', `SREM 으로 롤백 → Set 크기 ${st.recorded}`); finish(r, 'soldout'); }));
       }),
       // WATCH: 읽은 뒤 Set 이 바뀌었으면 EXEC 가 nil → 처음부터 재시도. 재시도하는 동안 뒤에 온 요청이 먼저 받음
       watch: (r) => redis(0.004, () => {
@@ -318,17 +318,17 @@
     const { st, S } = sim;
     let text, tone = 'bad';
     const me = sim.me;
-    if (key === 'pubsub') { text = `강제 종료 시점에 구독자 메모리 큐의 ${fmt(st.lost)}건이 유실됐습니다. 접수 응답은 ${fmt(st.success)}건인데 DB 에는 ${fmt(st.stored)}건이 적재됐습니다.`; if (me?.lost) text = `내 요청은 접수 응답(202)을 받았지만 구독자 메모리 큐에서 유실돼 DB 에 적재되지 않았습니다. ` + text; }
-    else if (key === 'stream' && sim.me) { text = `내 요청은 ${fmt(sim.me.rank + 1)}번째로 접수됐습니다. 처리 도중 Consumer 가 강제 종료됐지만 DB 커밋 뒤 ACK 전이라 PEL 에 남아 재처리됐고, 이미 적재된 행은 UNIQUE 로 걸러져 DB 에는 한 번만 적재됐습니다. 접수 ${fmt(st.success)}건 = DB ${fmt(st.stored)}건, 유실 0건.`; tone = 'good'; }
-    else if (key === 'stream') { text = `강제 종료 뒤 PEL ${fmt(st.redelivered)}건부터 재처리했습니다. 접수 ${fmt(st.success)}건 = DB ${fmt(st.stored)}건, 유실 0건.`; tone = 'good'; }
-    else if (st.recorded > S.stock) text = `Redis Set 이 재고를 ${st.recorded - S.stock}건 넘겨 초과 지급이 발생했습니다. 레포 실측에서는 뒤의 DB 조건부 UPDATE 가 막아 DB 최종 지급은 ${S.stock}장이었습니다.`;
+    if (key === 'pubsub') { text = `강제 종료 시점에 Subscriber 메모리 큐의 ${fmt(st.lost)}건이 유실됐습니다. 접수 응답은 ${fmt(st.success)}건인데 DB 에는 ${fmt(st.stored)}건만 적재됐습니다.`; if (me?.lost) text = `내 요청은 접수 응답(202)을 받았지만 Subscriber 메모리 큐에서 유실돼 DB 에 적재되지 않았습니다. ` + text; }
+    else if (key === 'stream' && sim.me) { text = `내 요청은 ${fmt(sim.me.rank + 1)}번째로 접수됐습니다. 처리 도중 Consumer 가 강제 종료됐지만 DB 커밋 후 ACK 전이라 PEL 에 남아 재처리됐고, 이미 들어간 행은 UNIQUE 로 걸러져 DB 에는 한 번만 기록됐습니다. 접수 ${fmt(st.success)}건과 DB 적재 ${fmt(st.stored)}건이 같고, 유실은 0건입니다.`; tone = 'good'; }
+    else if (key === 'stream') { text = `강제 종료 뒤 PEL ${fmt(st.redelivered)}건부터 재처리했습니다. 접수 ${fmt(st.success)}건과 DB 적재 ${fmt(st.stored)}건이 같고, 유실은 0건입니다.`; tone = 'good'; }
+    else if (st.recorded > S.stock) text = `Redis Set 이 재고를 ${st.recorded - S.stock}건 넘겨 초과 지급이 발생했습니다. 실측에서는 뒤이어 실행되는 DB 조건부 UPDATE 가 초과분을 막아 DB 최종 지급은 ${S.stock}장이었습니다.`;
     else if (st.success > st.recorded) text = `갱신 손실이 일어났습니다. 성공 응답은 ${st.success}건인데 ${S.rec}는 ${st.recorded}입니다.`;
     else if (key === 'serializable') text = `${st.success}건만 지급됐고 나머지 ${st.fail}건은 데드락으로 롤백됐습니다.`;
-    else if (key === 'multi') { text = `수량은 맞지만 재고를 넘긴 ${fmt(st.rollbacks)}건을 SREM 으로 되돌리는 별도 Rollback 로직이 필요했습니다.`; tone = 'slow'; }
+    else if (key === 'multi') { text = `수량은 맞지만 재고를 넘긴 ${fmt(st.rollbacks)}건을 SREM 으로 되돌리는 별도 롤백 로직이 필요했습니다.`; tone = 'slow'; }
     else if (key === 'watch') { text = `수량은 맞지만 EXEC 실패로 ${fmt(st.retries)}회 재시도했고 먼저 도착한 ${S.stock}명 중 ${sim.reqs.filter((r) => r.res === 'ok' && r.id <= S.stock).length}명만 받았습니다. 선착순이 보장되지 않습니다.`; tone = 'slow'; }
     else if (st.recorded < S.stock) text = `재고가 남았는데 ${st.success}건만 지급됐습니다. 나머지 ${S.n - st.success}건은 충돌로 실패했습니다.`;
     else if (key === 'pessimistic') { text = `수량은 맞지만 한 건씩 직렬로 처리되고 먼저 도착한 ${S.stock}명 중 ${sim.reqs.filter((r) => r.res === 'ok' && r.id <= S.stock).length}명만 받았습니다. 선착순이 보장되지 않습니다.`; tone = 'slow'; }
-    else { text = `초과/중복 지급은 0건이고 Redis 가 먼저 처리한 ${S.stock}명에게만 지급됐습니다.`; tone = 'good'; }
+    else { text = `초과, 중복 지급은 0건이고 Redis 가 먼저 처리한 ${S.stock}명에게만 지급됐습니다.`; tone = 'good'; }
     if (me && !sim.isAsync) text = `${fmt(me.id)}번째로 도착한 내 요청은 ${me.res === 'ok' ? '성공 응답을 받았습니다' : me.res === 'soldout' ? '매진 응답을 받았습니다' : key === 'serializable' ? '데드락으로 롤백됐습니다' : '충돌로 실패했습니다'}. ` + text;
     el.verdict.dataset.tone = tone;
     say.textContent = text;
@@ -344,7 +344,7 @@
       const sys = trace.filter((e) => e.kind === 'sys');
       if (!sys.length) return null;
       const after = key === 'stream' ? trace.slice(trace.indexOf(sys.at(-1)) + 1).filter((e) => e.id === 0).slice(0, 3) : [];
-      return { title: 'Consumer 를 강제 종료하면', rows: [...sys, ...after].map((e) => row(e, null)), note: key === 'stream' ? 'DB 커밋 후에만 ACK 하므로 Consumer 가 다운돼도 메시지가 PEL 에 남아 재처리됩니다. 실제 Stream 은 읽은 메시지도 삭제되지 않습니다. 화면의 Stream 칸에는 아직 읽지 않은 메시지만 그렸습니다.' : '메시지를 저장하지 않는 At-Most-Once 방식이라 구독자가 종료되면 메시지도 함께 유실됩니다.' };
+      return { title: 'Consumer 를 강제 종료하면', rows: [...sys, ...after].map((e) => row(e, null)), note: key === 'stream' ? 'DB 커밋 후에만 ACK 하므로 Consumer 가 다운돼도 메시지가 PEL 에 남아 재처리됩니다. 실제 Stream 은 읽은 메시지도 삭제되지 않습니다. 화면의 Stream 칸에는 아직 읽지 않은 메시지만 그렸습니다.' : '메시지를 저장하지 않는 At-Most-Once 방식이라 Subscriber 가 종료되면 메시지도 함께 유실됩니다.' };
     }
     if (key === 'lua') {
       const lastOk = trace.findLast((e) => e.text.includes('번째')), sold = trace.find((e) => e.text.endsWith('매진'));
@@ -364,7 +364,7 @@
     }
     if (key === 'multi') {
       const over = trace[st.firstBad], back = trace.find((e) => e.id === over.id && e.kind === 'write');
-      return { title: '별도 Rollback 로직', rows: [over, back].filter(Boolean).map((e) => ({ lane: null, text: `요청 #${e.id}  ${e.text}`, bad: e.bad })), note: 'EXEC 결과를 받은 뒤에야 재고 초과를 알 수 있어, 애플리케이션이 SREM 으로 직접 되돌려야 합니다.' };
+      return { title: '별도 롤백 로직', rows: [over, back].filter(Boolean).map((e) => ({ lane: null, text: `요청 #${e.id}  ${e.text}`, bad: e.bad })), note: 'EXEC 결과를 받은 뒤에야 재고 초과를 알 수 있어, 애플리케이션이 SREM 으로 직접 되돌려야 합니다.' };
     }
     const bad = trace[st.firstBad], X = bad.id;
     const iRead = trace.findLastIndex((e, i) => i < st.firstBad && e.id === X && e.kind === 'read');
@@ -435,9 +435,10 @@
     label('요청', x0, 4);
     box(gx - gateW / 2, gateY, gateW, gateH, C.line);
     label(S.store, gx, gateY + 10, C.ink, 'center', 700);
-    if (!small) label(S.gate, gx, gateY + gateH + 8, C.mute, 'center');
-    label(sim.isAsync ? `DB coupon_issues  ${fmt(st.stored)} / ${fmt(S.stock)}행` : `쿠폰 ${S.stock}장`, gX, gY - 24, sim.isAsync && st.stored ? C.sun : C.mute);
+    if (!small && !(sim.isAsync && span * 0.16 < 135)) label(S.gate, gx, gateY + gateH + 8, C.mute, 'center');
+    label(sim.isAsync ? (small ? `DB ${fmt(st.stored)}행` : `DB coupon_issues  ${fmt(st.stored)} / ${fmt(S.stock)}행`) : `쿠폰 ${S.stock}장`, gX, gY - 24, sim.isAsync && st.stored ? C.sun : C.mute);
     ctx.strokeStyle = C.faint;
+    if (cell < 5) { const bw = W - gX - 8; ctx.strokeRect(gX + 0.5, H / 2 - 6.5, bw, 13); ctx.fillStyle = C.sun; ctx.fillRect(gX + 2, H / 2 - 5, (bw - 3) * Math.min(st.stored / S.stock, 1), 10); } // ponytail: 칸이 5px 미만이면 진행 막대로 대신
     if (cell >= 5) { ctx.beginPath(); for (let i = 0; i < S.stock; i++) ctx.rect(gX + (i % cols) * cell + 1, gY + Math.floor(i / cols) * cell + 1, cell - 2, cell - 2); ctx.stroke(); } // 칸 전체를 한 번에
 
     if (trays) { // 버려진 요청이 어디로 가는지: 매진 응답 칸 · 충돌 실패 칸
@@ -451,20 +452,20 @@
 
     // DB 에 옮겨 적기: Redis → Stream → Consumer → DB 를 메시지가 실제로 거쳐 감
     const A = sim.isAsync && (() => {
-      const cy = H / 2 + 10, bw = small ? 44 : 84, sx = left + span * 0.31, cx = left + span * 0.49, cw = small ? 60 : 116, ch = gateH * 0.66, cTop = cy - ch / 2;
+      const cy = H / 2 + 10, bw = small ? 44 : 84, sx = left + span * 0.29, cx = left + span * 0.515, cw = small ? 60 : 100, ch = gateH * 0.66, cTop = cy - ch / 2;
       return { cy, bw, sx, cx, cw, ch, cTop, sCols: Math.max(1, Math.floor((bw - 14) / 4)), cCols: Math.max(1, Math.floor((cw - 16) / 4)), lostY: cTop + ch + 30 };
     })();
     if (A) {
       const { q } = sim, isStream = key === 'stream', inCons = isStream ? q.pel.length : q.memQ.length + (q.cur() ? 1 : 0);
-      const arrow = (x1, x2, y, text, dash) => { ctx.strokeStyle = C.line; ctx.setLineDash(dash || []); ctx.beginPath(); ctx.moveTo(x1, y); ctx.lineTo(x2, y); ctx.stroke(); ctx.setLineDash([]); ctx.beginPath(); ctx.moveTo(x2, y); ctx.lineTo(x2 - 6 * Math.sign(x2 - x1), y - 4); ctx.lineTo(x2 - 6 * Math.sign(x2 - x1), y + 4); ctx.fillStyle = C.mute; ctx.fill(); if (!small) label(text, (x1 + x2) / 2, y - 18, C.mute, 'center'); };
+      const arrow = (x1, x2, y, text, dash) => { ctx.strokeStyle = C.line; ctx.setLineDash(dash || []); ctx.beginPath(); ctx.moveTo(x1, y); ctx.lineTo(x2, y); ctx.stroke(); ctx.setLineDash([]); ctx.beginPath(); ctx.moveTo(x2, y); ctx.lineTo(x2 - 6 * Math.sign(x2 - x1), y - 4); ctx.lineTo(x2 - 6 * Math.sign(x2 - x1), y + 4); ctx.fillStyle = C.mute; ctx.fill(); if (!small) { ctx.font = '600 13px Pretendard, sans-serif'; if (Math.abs(x2 - x1) > ctx.measureText(text).width + 12) label(text, (x1 + x2) / 2, y - 18, C.mute, 'center'); } };
       // Stream: 메시지가 쌓여 남는 곳. Pub/Sub 에는 이 자리가 없음
       box(A.sx - A.bw / 2, gateY, A.bw, gateH, isStream ? C.blue : C.line, isStream ? null : [3, 5]);
       label(isStream ? 'Stream' : '저장 없음', A.sx, gateY + 10, isStream ? C.ink : C.mute, 'center', 700);
       if (isStream) label(`아직 안 읽음 ${fmt(q.stream.length)}건`, A.sx, gateY + gateH + 8, q.stream.length ? C.ink : C.mute, 'center');
       // Consumer
       box(A.cx - A.cw / 2, A.cTop, A.cw, A.ch, st.alive ? C.sun : C.coral, st.alive ? null : [4, 4]);
-      label(st.alive ? (isStream ? 'Consumer' : '구독자') : 'SIGKILL', A.cx, A.cTop + 8, st.alive ? C.sun : C.coral, 'center', 700);
-      label(isStream ? `ACK 대기 (PEL) ${fmt(inCons)}건` : `메모리 큐 ${fmt(inCons)}건`, A.cx, A.cTop - 22, inCons ? C.ink : C.mute, 'center');
+      label(st.alive ? (isStream ? 'Consumer' : 'Subscriber') : 'SIGKILL', A.cx, A.cTop + 8, st.alive ? C.sun : C.coral, 'center', 700);
+      label(small ? `${isStream ? 'PEL' : '큐'} ${fmt(inCons)}` : isStream ? `ACK 대기 (PEL) ${fmt(inCons)}건` : `메모리 큐 ${fmt(inCons)}건`, A.cx, A.cTop - 22, inCons ? C.ink : C.mute, 'center');
       // 명령 흐름
       if (isStream) { arrow(gx + gateW / 2 + 4, A.sx - A.bw / 2 - 4, A.cy - 30, 'XADD'); arrow(A.sx + A.bw / 2 + 4, A.cx - A.cw / 2 - 4, A.cy - 30, 'XREADGROUP'); arrow(A.cx - A.cw / 2 - 4, A.sx + A.bw / 2 + 4, A.cy + 40, 'XACK', [3, 4]); }
       else arrow(gx + gateW / 2 + 4, A.cx - A.cw / 2 - 4, A.cy - 30, 'PUBLISH');
@@ -534,7 +535,7 @@
       ctx.strokeStyle = C.sun; ctx.stroke();
       label('내 요청', meDot.x + 21, meDot.y - 20, C.sun, 'left', 700);
     }
-    if (over) label(`${key === 'scard' ? '초과 지급' : '초과'} ${over}`, gX + (cols + 0.6) * cell, gY - 24, C.coral, 'left', 700);
+    if (over) label(`${key === 'scard' && !small ? '초과 지급' : '초과'} ${over}`, gX + cols * cell, gY - 24, C.coral, 'right', 700);
     // 문제를 일으킨 요청에 표시
     if (st.firstBad != null && !sim.isAsync && key !== 'pessimistic' && performance.now() - pulse < 2600) {
       const bad = sim.trace[st.firstBad], d = dots[bad.id - 1];

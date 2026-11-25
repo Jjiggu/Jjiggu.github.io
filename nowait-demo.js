@@ -12,13 +12,14 @@
     notice: { title: '입장 시 신분증 검사 필수', content: '주류를 판매하는 부스라 입장할 때 신분증을 확인합니다.\n호출 후 10분 안에 오지 않으면 대기가 취소될 수 있어요.' },
     banners: ['assets/nowait/banner/open.svg', 'assets/nowait/banner/menu.svg', 'assets/nowait/banner/queue.svg'], // 직접 그린 주점 홍보 배너
     card: 'assets/nowait/banner/open-card.svg', // 홈 가로 카드 배경(글자 뺀 배너)
+    bannerAlts: ['2025 대동제 야간 주점 노웨잇 포차, 18:00 - 24:00, 예시대학교 중앙광장', '오늘의 대표 메뉴 떡볶이, 어묵탕, 김치전, 콘치즈. 테이블 QR로 바로 주문', 'NOWAIT 원격 줄서기, 줄 서지 말고 놀다가 오세요. 호출되면 10분 안에 입장'],
   };
   // ponytail: 두 번째 주점은 목록·상세만 보이는 예시(대기 접수 마감). 서버 모델은 STORE 하나만 다룸. 여러 주점을 실제로 돌리려면 queueKey·캐시 키를 주점별로.
   const OTHER = {
     id: 12, code: 'moonlight', name: '달빛 주막', dept: '기계공학과', teams: 12,
     location: '예시대학교 공학관 앞마당', hours: '18:00 - 23:00',
     desc: '공과대학 학생회가 여는 달빛 주막입니다.\n\n오늘은 대기 접수가 마감됐어요.',
-    banners: ['assets/nowait/banner/moon.svg'], card: 'assets/nowait/banner/moon-card.svg',
+    banners: ['assets/nowait/banner/moon.svg'], bannerAlts: ['공과대학 학생회 주점 달빛 주막, 해물파전, 두부김치, 계란말이. 예시대학교 공학관 앞마당, 18:00 - 23:00'], card: 'assets/nowait/banner/moon-card.svg',
     menus: [{ id: 1, name: '해물파전', price: 12000 }, { id: 2, name: '두부김치', price: 10000 }, { id: 3, name: '계란말이', price: 8000 }],
   };
   const CACHE_TTL = 5 * 60_000, IN_PROGRESS_TTL = 60_000, COMPLETED_TTL = 180_000;
@@ -77,7 +78,7 @@
     async function registerWaiting(userId, partySize, idemKey, { failCommit = false } = {}) {
       emit('http', `POST /v2/waiting/${STORE.code}  Idempotency-Key: ${idemKey.slice(0, 8)}`);
       return idempotent(`waiting:register:${userId}:${STORE.code}`, idemKey, { partySize }, async () => {
-        if (active(userId)) throw new HttpError(409, '이미 대기 중'); // 멱등 키가 만료된 뒤의 재시도가 두 번째 예약을 만들지 않게
+        if (active(userId)) throw new HttpError(409, '이미 대기 중'); // 멱등키가 만료된 뒤의 재시도가 두 번째 예약을 만들지 않게
         emit('mysql', 'BEGIN, INSERT INTO reservation (status=WAITING)');
         await wait(txMs);
         if (failCommit) { emit('mysql', 'ROLLBACK (커밋 실패)'); throw new HttpError(500, '커밋 실패'); }
