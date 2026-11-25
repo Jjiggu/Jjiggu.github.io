@@ -124,7 +124,6 @@ main, section[id], footer[id], .cp { scroll-margin-top: var(--nav-h); } /* 고�
 }
 .sec-head .num { font-size: clamp(1.3rem, 1.8vw, 1.8rem); color: var(--sun); }
 .sec-head h2 { font-size: clamp(1.6rem, 2.6vw, 2.4rem); font-weight: 800; letter-spacing: -0.03em; line-height: 1.15; }
-.sec-head p { grid-column: 2; font-size: 0.95rem; color: var(--mute); }
 
 /* ───── 한눈에 보기: 넓은 화면에서는 카드 두 장씩 가로로 ───── */
 .overview { border-block: 1px solid var(--line); color: var(--ink); overflow: clip; padding: 0 var(--pad) clamp(3rem, 8vh, 5rem); }
@@ -133,7 +132,7 @@ main, section[id], footer[id], .cp { scroll-margin-top: var(--nav-h); } /* 고�
 .overview__track { display: flex; flex-direction: column; }
 .panel { position: relative; display: flex; flex-direction: column; gap: 0.6rem; padding: clamp(2rem, 5vh, 3rem) 0; border-top: 1px solid var(--line); }
 .panel__top { display: flex; justify-content: space-between; gap: 1rem; font-size: 0.9rem; font-weight: 600; color: color-mix(in srgb, var(--ink) 80%, transparent); }
-.panel__top .num { font-size: 1.1em; line-height: inherit; }
+.panel__top .num { font-size: 1.1em; line-height: inherit; white-space: nowrap; }
 .panel__top > span > .num { margin-left: 0.9em; } /* 구분 기호 대신 간격으로 소속과 기간을 나눔 */
 .panel__name { font-size: clamp(1.5rem, 2.4vw, 2.2rem); font-weight: 800; letter-spacing: -0.025em; line-height: 1.25; }
 .panel__fig { display: flex; flex-direction: column; margin-top: clamp(0.5rem, 3vh, 2rem); }
@@ -145,6 +144,7 @@ main, section[id], footer[id], .cp { scroll-margin-top: var(--nav-h); } /* 고�
 .panel__more { margin-top: 0.4rem; font-weight: 700; color: var(--sun); }
 .panel:hover .panel__more { text-decoration: underline; text-underline-offset: 4px; }
 .overview.is-h { height: 100svh; display: flex; flex-direction: column; padding-bottom: 0; }
+@media (min-width: 900px) and (prefers-reduced-motion: reduce) { .overview__track { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: var(--gutter); } } /* 가로로 넘기지 않는 모션 줄이기에서 카드가 왼쪽에만 길게 쌓이지 않게 */
 .overview.is-h .overview__track { flex: 1; min-height: 0; flex-direction: row; }
 .overview.is-h .panel {
   flex: none; width: calc((100vw - 2 * var(--pad)) / 2); justify-content: flex-start; /* 카드마다 줄 수가 달라도 윗줄이 맞게 */
@@ -335,6 +335,7 @@ main, section[id], footer[id], .cp { scroll-margin-top: var(--nav-h); } /* 고�
 .dock { font-size: 0.9rem; line-height: 1.5; }
 .dock__title { font-weight: 700; font-size: 1rem; }
 .dock__title span { color: var(--mute); font-weight: 500; white-space: nowrap; }
+@media (max-width: 600px) { .dock__title span { white-space: normal; } }
 .dock__tabs button {
   font: inherit; font-weight: 600; color: var(--ink); cursor: pointer;
   border-radius: 99px; background: transparent; border: 1.5px solid var(--line);
@@ -433,15 +434,8 @@ main, section[id], footer[id], .cp { scroll-margin-top: var(--nav-h); } /* 고�
 .admin { padding: 18px; border-radius: 18px; background: #f2f6f9; color: #333; font-size: 14px; }
 .ad-title { font-size: 20px; font-weight: 700; margin-bottom: 12px; }
 .ad-title b { color: #ff4103; }
-.ad-title small { margin-left: 8px; font-size: 14px; font-weight: 400; color: #666; }
-.ad-title--menu { margin-top: 22px; }
 .ad-cards { display: grid; gap: 10px; }
 .ad-cards li { display: grid; grid-template-columns: 1fr auto; gap: 4px 12px; align-items: center; padding: 14px 18px; border-radius: 16px; background: #fff; }
-.ad-no { font-size: 18px; font-weight: 700; color: #444; }
-.ad-no em { margin-left: 8px; font-style: normal; font-size: 12px; font-weight: 700; color: #ff5e07; background: #ffeedf; border-radius: 6px; padding: 4px 6px; }
-.ad-info { grid-column: 1; color: #888; }
-.ad-info b { color: #333; font-size: 16px; }
-.ad-cards button { grid-column: 2; grid-row: 1 / 3; display: flex; align-items: center; gap: 8px; padding: 8px 18px; border: 0; border-radius: 8px; background: #e8f3ff; color: #2c7cf6; font-size: 15px; font-weight: 600; }
 .ad-none { color: #888; }
 .ad-menus { border-radius: 16px; background: #fff; padding: 0 18px; }
 .ad-menus li { display: flex; justify-content: space-between; align-items: center; padding: 14px 0; border-top: 1px solid #eee; }
@@ -534,8 +528,6 @@ main, section[id], footer[id], .cp { scroll-margin-top: var(--nav-h); } /* 고�
 .p-buy { position: fixed; left: 10px; right: 10px; bottom: 112px; z-index: 4; display: flex; justify-content: space-between; align-items: center; padding: 0 20px; }
 .p-buy b { font-size: 24px; font-weight: 600; }
 .p-cart-head { padding-top: 76px; }
-.p-cart-head p { margin: 20px 0 0; font-size: 16px; font-weight: 600; }
-.p-cart-head p b { color: var(--p); }
 .p-cart li { padding: 20px; border-bottom: 1px solid #ececec; }
 .p-cart li > div { display: flex; justify-content: space-between; align-items: center; }
 .p-cart li > div + div { margin-top: 14px; }
@@ -574,16 +566,7 @@ main, section[id], footer[id], .cp { scroll-margin-top: var(--nav-h); } /* 고�
 .p-toast { position: fixed; left: 30px; right: 30px; bottom: 124px; z-index: 5; padding: 12px 16px; border-radius: 10px; background: rgba(22, 25, 30, 0.9); color: #fff; text-align: center; font-size: 14px; }
 .p-modal .is-one { grid-template-columns: 1fr; }
 
-.ad-title--sm { font-size: 17px; margin-top: 18px; }
-.ad-title--sm:first-child { margin-top: 0; }
-.ad-orders { display: grid; gap: 8px; }
-.ad-orders li { display: grid; grid-template-columns: auto 1fr auto; gap: 12px; align-items: center; padding: 12px 14px; border-radius: 14px; background: #fff; }
 .ad-tbl { display: grid; place-items: center; width: 36px; height: 36px; border-radius: 50%; background: #6c707a; color: #fff; font-style: normal; font-size: 18px; font-weight: 600; }
-.ad-orders time { font-size: 13px; color: #888; }
-.ad-orders p { font-size: 15px; font-weight: 600; color: #444; }
-.ad-orders s { display: inline-block; width: 1.5px; height: 14px; margin: 0 6px; background: #d5d5d5; vertical-align: -2px; }
-.ad-orders button { padding: 6px 10px; border: 0; border-radius: 8px; background: #f4f4f4; color: #666; font-size: 14px; font-weight: 600; }
-.ad-orders button.is-line { background: #fff; border: 1px solid #e6e6e6; }
 .bk__state small { color: var(--mute); font-family: ui-monospace, 'SF Mono', Menlo, monospace; }
 
 /* ───── Gasip 체험: 카드 버튼 · 상세 · 글쓰기 ───── */
@@ -810,7 +793,6 @@ div.p-srow { cursor: default; }
 .metric p, .panel__note, .ev__desc, .nw__credit { text-wrap: pretty; }
 .bk__actions button, .ad-pill, .p-chip, .p-big, .gs-write, .project__repo, .nav nav a { white-space: nowrap; }
 .nw__mock { margin: 0; }
-.nw__mock img { display: block; width: 100%; height: auto; border-radius: 16px; }
 .nw__mock figcaption { margin-top: 0.6rem; font-size: 0.8rem; color: var(--mute); }
 /* 휴대폰: 다이내믹 아일랜드 */
 .phone::after { content: ''; position: absolute; top: 20px; left: 50%; z-index: 9; width: 86px; height: 24px; margin-left: -43px; border-radius: 99px; background: #000; pointer-events: none; }
@@ -911,10 +893,11 @@ body { transition: background-color 0.3s, color 0.3s; }
 html[data-theme='light'] .project.has-accent, html[data-theme='light'] .panel.has-accent { --sun: var(--acc-l); }
 
 /* 동작 흐름 도식 (GSAP DrawSVG + MotionPath) */
+@media (max-width: 1100px) { .ev--flow.split { grid-template-columns: minmax(0, 1fr); } }
 .flow { overflow-x: auto; scrollbar-width: thin; } /* 좁은 화면에서 옆으로 밀 수 있음을 스크롤바로 알림 */
 .flow svg { display: block; width: 100%; min-width: 560px; height: auto; overflow: visible; }
 .fl-paths path { fill: none; stroke: color-mix(in srgb, var(--ink) 38%, transparent); stroke-width: 1.5; stroke-dasharray: none; }
-.fl-l { font-size: 12px; font-weight: 600; fill: var(--mute); }
+.fl-l { font-size: 12px; font-weight: 600; fill: var(--mute); paint-order: stroke; stroke: var(--navy); stroke-width: 5px; stroke-linejoin: round; } /* 선 위에 놓여도 글자가 읽히게 바탕색 테두리 */
 .fl-node rect { fill: color-mix(in srgb, var(--ink) 4%, var(--navy)); stroke: var(--line); stroke-width: 1.5; transition: stroke 0.3s, fill 0.3s; }
 .fl-node.is-on rect { stroke: var(--sun); fill: color-mix(in srgb, var(--sun) 14%, var(--navy)); }
 .fl-t { font-size: 16px; font-weight: 800; fill: var(--ink); }
@@ -954,6 +937,7 @@ html[data-theme='light'] .project.has-accent, html[data-theme='light'] .panel.ha
 .gate__hint { margin-top: 1rem; max-width: 30rem; font-size: 0.92rem; color: color-mix(in srgb, var(--ink) 78%, transparent); text-wrap: balance; text-shadow: 0 0 20px var(--navy); }
 .cover__gate :focus-visible { outline: 3px solid #fff; outline-offset: 4px; }
 @media (max-width: 899px), (prefers-reduced-motion: reduce) { /* 고정 없이(모션 줄이기 포함) 시나리오 문구와 이벤트 화면을 위아래로 */
+  .cover--crowd .cover__stage { height: auto; }
   .cover--crowd .cover__frame { height: auto; display: grid; gap: 14vh; padding: 16vh 0; }
   .cover--crowd .cover__say, .cover--crowd .cover__gate { position: relative; inset: auto; }
 }

@@ -21,7 +21,7 @@
       <header class="ev__head">
         <p class="eyebrow">직접 해 보기</p>
         <h4 class="ev__title">직접 눌러 보는 Gasip</h4>
-        <p class="ev__desc">왼쪽 휴대폰에서 리뷰 목록을 내려 보고 리뷰를 눌러 상세로 들어가거나 새 리뷰를 써 보세요. 목록 10건을 조회할 때마다 DB 가 스캔한 행 수가 오른쪽에 표시됩니다. 조회 방식 세 개는 위 사례의 해결 과정 세 단계와 같습니다.</p>
+        <p class="ev__desc">학생 화면에서 리뷰 목록을 내리거나, 리뷰를 눌러 상세 화면으로 들어가거나, 새 리뷰를 쓸 수 있습니다. 목록을 10건씩 조회할 때마다 DB가 스캔한 행 수가 옆에 표시됩니다. 조회 방식 세 개는 위 사례의 해결 과정 세 단계와 같습니다.</p>
       </header>
       <figure class="nw__mock gs__video"><video src="assets/gasip/demo.mp4#t=1" aria-label="Gasip 앱 데모 영상" controls muted playsinline preload="none"></video><figcaption>Gasip 앱 데모 영상</figcaption></figure>
     </div>
@@ -140,11 +140,11 @@
           <p>${esc(p.content)}</p>
           <footer><button type="button" data-act="like" class="${s.liked ? 'is-on' : ''}" aria-pressed="${s.liked}" aria-label="좋아요"><img src="${A}icon_thumbsup.png" alt="">${likes(p)}</button><span><img src="${A}icon_comment.png" alt="댓글">${commentsN(p)}</span><span><img src="${A}icon_view.png" alt="조회">${s.views}</span></footer></article>
         <ul class="gd-comments">${s.comments.map((c) => `<li><header><b>${esc(c.nick)}</b><time>${c.ago}</time></header><p>${esc(c.text)}</p></li>`).join('')}</ul>
-        <form class="gd-input" data-form="comment"><input type="text" name="c" placeholder="댓글을 입력해주세요." maxlength="200" autocomplete="off"><button type="submit" aria-label="댓글 등록"><img src="${A}icon_plane_right.png" width="24" height="24" alt=""></button></form>`;
+        <form class="gd-input" data-form="comment"><input type="text" name="c" aria-label="댓글" placeholder="댓글을 입력해주세요." maxlength="200" autocomplete="off"><button type="submit" aria-label="댓글 등록"><img src="${A}icon_plane_right.png" width="24" height="24" alt=""></button></form>`;
     },
     write: () => `<div class="gw-head"><button type="button" data-act="close" aria-label="닫기">✕</button><h2 role="presentation">리뷰 작성</h2><button type="button" class="gw-done" data-act="submit">완료</button></div>
         <div class="gw-body"><p class="gw-tag"><img src="${A}icon_x_circle.png" width="18" height="18" alt="">A 교수님</p><p class="gw-count" id="gw-count">${ui.draft.length}/500</p>
-        <textarea id="gw-text" maxlength="500" placeholder="여러분의 자유로운 의견을 들려주세요.&#10;&#10;부적절하거나 불쾌감을 줄 수 있는 컨텐츠는 제재를 받을 수 있습니다.">${esc(ui.draft)}</textarea></div>
+        <textarea id="gw-text" aria-label="리뷰 내용" maxlength="500" placeholder="여러분의 자유로운 의견을 들려주세요.&#10;&#10;부적절하거나 불쾌감을 줄 수 있는 컨텐츠는 제재를 받을 수 있습니다.">${esc(ui.draft)}</textarea></div>
         ${ui.toast ? `<p class="gw-toast">${ui.toast}</p>` : ''}`,
   };
   let opener = null, lastKey = 0;
